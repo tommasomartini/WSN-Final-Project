@@ -1,7 +1,6 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp message.cpp storage_node.cpp sensor_node.cpp user.cpp my_toolbox.cpp storage_node_message.cpp -o wir 
-g++ project_2.cpp event.cpp node.cpp -o wir 
+g++ project_2.cpp event.cpp node.cpp measure.cpp -o wir 
 
 -pthread -std=c++11
 
