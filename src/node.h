@@ -2,8 +2,8 @@
   This class provides a basic model for a node.
 */
 
-#ifndef __NODE_H_INCLUDED__   // if x.h hasn't been included yet...
-#define __NODE_H_INCLUDED__   //   #define this so the compiler knows it has been included
+#ifndef __NODE_H__   
+#define __NODE_H__  
 
 #include <vector>
 

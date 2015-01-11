@@ -1,5 +1,5 @@
 /*  
-  This class provides some tools statically accessible from each class;
+  This class provides some tools statically accessible from every class;
 */
 
 #ifndef __MY_TOOLBOX_H__   

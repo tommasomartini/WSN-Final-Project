@@ -1,6 +1,6 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp -o wir 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp -o wir 
 
 -pthread -std=c++11
 
@@ -19,7 +19,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp -o wir
 // #include "storage_node.h"
 // #include "sensor_node.h"
 // #include "user.h"
-// #include "my_toolbox.h"
+#include "my_toolbox.h"
 
 #include "event.h"
 
@@ -40,9 +40,9 @@ int main() {
 
   srand(time(NULL));
 
-  // MyToolbox::set_k(NUM_SENSORS);
-  // MyToolbox::set_n(NUM_STORAGE_NODES);
-  // MyToolbox::set_C1(C1);
+  MyToolbox::set_k(NUM_SENSORS);
+  MyToolbox::set_n(NUM_STORAGE_NODES);
+  MyToolbox::set_C1(C1);
 
   // cout << "max forward number = " << MyToolbox::get_max_msg_hops() << endl;
 
