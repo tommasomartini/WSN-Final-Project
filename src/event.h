@@ -32,11 +32,31 @@
 #include "agent.h"
 
 class Event {
+
+ public:
+  enum EventTypes {
+    spread_measure,
+    blacklist_sensor,
+    remove_measure,
+    user_node_query,
+    user_user_query,
+    new_storage_node,
+    sensor_ping,
+    remove_sensor,
+    add_sensor,
+    remove_node,
+    add_node,
+    network_reset
+  };
+
+ private:
   int time_;
   Agent agent_;
+  Event::EventTypes event_type_;
 
  public:
   Event(int /*time*/);
+  Event(int /*time*/, Event::EventTypes);
 
   bool operator<(Event);
   bool operator>(Event);

@@ -1,44 +1,20 @@
 #include <iostream>
 #include <map>
 #include <algorithm>    // std::max
-#include <thread>
 #include <iostream>
 
 #include "storage_node.h"
-#include "message.h"
 #include "my_toolbox.h"
-#include "storage_node_message.h"
 
   
 using namespace std;
 
-void StorageNode::activate_node() {
-  running_ = true;
-  cout << "Storage " << node_id_ << "-> ON" << endl;
-  LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
+// void StorageNode::activate_node() {
+//   LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
+// }
 
-  // thread_ = thread([=]() { // lambda function. "[]() mutable -> T{}".  [=] significa che tutte le variabili visibili (cioe' dentro la funzione start?) sono accessibili per valore- 
-  //   while (running_ == true) {
-  //     this_thread::sleep_for(chrono::milliseconds(2000));   // wait for "interval" milliseconds...
-  //     // timeout();  // ...and then execute function timeout()
-  //     // cout << "Bip " << node_id_ << endl;
-  //   }
-  // });
-}
-
-void StorageNode::stop_node() {
-  running_ = false;
-  cout << "Storage " << node_id_ << "-> closing..." << endl;
-  // thread_.join(); // waits for the thread to end
-  cout << "Storage " << node_id_ << "-> OFF" << endl;
-}
-
-StorageNodeMessage StorageNode::retrieve_data() {
-  return StorageNodeMessage(xored_message_, header_);
-}
-
-void StorageNode::manage_message(Message message) {
-
+void StorageNode::manage_message() {
+/*
   if (running_) {
     cout << "Storage " << node_id_ << "-> ON, received " << static_cast<unsigned>(message.get_message()) << endl;
     // return;
@@ -70,7 +46,7 @@ void StorageNode::manage_message(Message message) {
           Choose randomly one element between 0 and M - 1 with "rand() % M".
           Divide it by (M - 1) to normaliz between 0 and 1.
         */
-        int k = MyToolbox::get_k();
+/*        int k = MyToolbox::get_k();
         int d = LT_degree_;
         double prob = 1;
         if (d != k) {
@@ -126,4 +102,5 @@ void StorageNode::manage_message(Message message) {
   } else {
     cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(message.get_message()) << " is not to be forwarded" << endl;
   }
+  */
 }
