@@ -29,6 +29,36 @@ Event Event::execute_action() {
   // sappiamo che agent_ e' di tipo StoraegNode
   // storagenodo nodo42 = agent;
   // evento = nodo42.gestisciLa Misura();
+
+  switch(event_type_) {
+    case spread_measure:
+      break;
+    case blacklist_sensor:
+      break;
+    case remove_measure:
+      break;
+    case user_node_query:
+      break;
+    case user_user_query:
+      break;
+    case new_storage_node:
+      break;
+    case sensor_ping:
+      break;
+    case remove_sensor:
+      break;
+    case add_sensor:
+      break;
+    case remove_node:
+      break;
+    case add_node:
+      break;
+    case network_reset:
+      break;
+    default:
+      break;  // remove this break! No break in the default option!
+  }
+
   int event_time = rand() % 100;
   return Event(event_time); 
 }
