@@ -20,6 +20,7 @@ void Event::set_agent(Agent agent) {
 }
 
 Event Event::execute_action() {
+  // guarda di che tipo sono switch
   int event_time = rand() % 100;
   return Event(event_time); 
 }

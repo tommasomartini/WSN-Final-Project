@@ -21,6 +21,8 @@ class StorageNode: public Node {
   vector<unsigned char> xored_msgs_;
   vector<int> header_;  // contains node_id_'s of the nodes whose measure has been xored inside msg_
   map<int, Message> past_messages_; // this map contains the last msg received from each sensor (no matter whther I accepted it or not!)
+  // lista di sensori che supervisiono
+  // blacklist
  public:
   typedef std::chrono::milliseconds Interval;
 

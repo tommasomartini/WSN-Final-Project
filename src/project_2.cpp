@@ -56,7 +56,7 @@ int main() {
   for (int i = 0; i < 5; i++) {
     Event next_event = *(event_list.begin());
     event_list.erase(event_list.begin());
-    Event new_event = new_event.execute_action();
+    Event new_event = next_event.execute_action();
     vector<Event>::iterator event_iterator = event_list.begin();
     for (; event_iterator != event_list.end(); event_iterator++) {
       if (*event_iterator > new_event)
