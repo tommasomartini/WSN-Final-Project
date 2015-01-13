@@ -5,9 +5,11 @@
 
 #include <vector>
 
+#include "message.h"
+
 using namespace std;
 
-class Measure {
+class Measure : public Message {
  public:
   enum MeasureTypes {
     new_measure,  // single measure

@@ -30,11 +30,13 @@
 #define __EVENT_H__   
 
 #include "agent.h"
+#include "message.h"
 
 class Event {
 
  public:
   enum EventTypes {
+    sensor_generate_measure,
     spread_measure,
     blacklist_sensor,
     remove_measure,
@@ -51,7 +53,8 @@ class Event {
 
  private:
   int time_;
-  Agent agent_;
+  Agent *agent_;
+  Message message_;
   Event::EventTypes event_type_;
 
  public:
@@ -62,8 +65,10 @@ class Event {
   bool operator>(Event);
 
   int get_time() {return time_;}
-  Agent get_agent() {return agent_;}
-  void set_agent(Agent);
+  Agent* get_agent() {return agent_;}
+  Message get_message() {return message_;}
+  void set_agent(Agent*);
+  void set_message(Message);
   Event execute_action();
   /*
       guardo il tipo di evento e in base a questo chiamo un certo metodo su Agent_1
