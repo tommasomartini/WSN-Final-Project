@@ -23,6 +23,8 @@ class StorageNode: public Node {
 
   unsigned char get_xored_measure() {return xored_measure_;}
   void manage_message(); 
+
+  int do_action() {return 5;} // for debugging only
 };
 
 #endif

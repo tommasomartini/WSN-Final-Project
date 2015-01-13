@@ -1,5 +1,6 @@
 #include <stdlib.h>     /* srand, rand */
 #include <iostream>
+#include <vector>
 
 #include "event.h"
 #include "sensor_node.h"
@@ -37,11 +38,16 @@ Event Event::execute_action() {
   // evento = nodo42.gestisciLa Misura();
 
   Event new_event = Event(-1);
+  vector<Event> new_events;
+
+  int test = 0;
 
   switch(event_type_) {
     case sensor_generate_measure:
       // cout << "Sensor id: " << ((SensorNode*)agent_)->get_node_id() << endl;
-      new_event = ((SensorNode*)agent_)->generate_measure();
+      new_events = ((SensorNode*)agent_)->generate_measure();
+      // test += agent_->do_action();
+      // cout << "Risultato test: " << test << endl;
       // cout << "New event time: " << new_event.get_time() << endl; 
       // cout << "New agent id: " << ((StorageNode*)new_event.get_agent())->get_node_id() << endl; 
       break;

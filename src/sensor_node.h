@@ -1,5 +1,7 @@
 #ifndef __SENSOR_NODE_H__   
-#define __SENSOR_NODE_H__  
+#define __SENSOR_NODE_H__ 
+
+#include <vector> 
 
 #include "node.h"
 #include "storage_node.h"
@@ -22,7 +24,9 @@ class SensorNode: public Node {
 
   void set_measure(Measure);
   Measure get_measure() {return measure_;}
-  Event generate_measure();
+  vector<Event> generate_measure();
+
+  int do_action() {return 2;} // for debugging only
 };
 
 #endif

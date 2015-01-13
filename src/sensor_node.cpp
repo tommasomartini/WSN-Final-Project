@@ -1,7 +1,8 @@
 #include "sensor_node.h"
+#include "my_toolbox.h"
 
 #include <stdlib.h>     /* srand, rand */
-#include "my_toolbox.h"
+#include <vector>
 
 SensorNode::SensorNode (int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
@@ -13,7 +14,7 @@ void SensorNode::set_measure(Measure measure) {
 	measure_ = measure;
 }
 
-Event SensorNode::generate_measure() {
+vector<Event> SensorNode::generate_measure() {
   unsigned char new_measure_value = (unsigned char)(rand() % 256);  // generate a random char
   unsigned char xored_measure_value = new_measure_value ^ measure_.get_measure();
 
@@ -27,12 +28,14 @@ Event SensorNode::generate_measure() {
   measure_ = Measure(xored_measure_value, measure_id_++, node_id_, first_generated_measure_ ? Measure::new_measure : Measure::update_measure);
 
   // Create the new event
+  vector<Event> new_events;
   Event new_event(10, Event::spread_measure);
   new_event.set_agent(next_node);
   new_event.set_message(measure_);
+  new_events.push_back(new_event);
 
   // Update timetable
-  
 
-  return new_event;
+
+  return new_events;
 }
