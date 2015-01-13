@@ -11,6 +11,8 @@ int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
 int MyToolbox::C1_ = 0;
 int MyToolbox::max_msg_hops_ = 0;
+map<int, int> MyToolbox::timetable_;
+
 
 void MyToolbox::set_n(int n) {
   n_ = n;
@@ -23,6 +25,10 @@ void MyToolbox::set_k(int k) {
 void MyToolbox::set_C1(int C1) {
   C1_ = C1;
   max_msg_hops_ = ceil(C1 * n_ * log(n_));
+}
+
+void MyToolbox::set_timetable(map<int, int> timetable) {
+  timetable_ = timetable;
 }
 
 int MyToolbox::get_ideal_soliton_distribution_degree() {

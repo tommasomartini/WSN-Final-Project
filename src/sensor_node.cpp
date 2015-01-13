@@ -1,6 +1,7 @@
 #include "sensor_node.h"
 
 #include <stdlib.h>     /* srand, rand */
+#include "my_toolbox.h"
 
 SensorNode::SensorNode (int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
@@ -29,6 +30,9 @@ Event SensorNode::generate_measure() {
   Event new_event(10, Event::spread_measure);
   new_event.set_agent(next_node);
   new_event.set_message(measure_);
+
+  // Update timetable
+  
 
   return new_event;
 }
