@@ -1,18 +1,26 @@
 #include <math.h>
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
+// #include <random>   // genertion of random variables -> require -std=c++11
 
 #include "my_toolbox.h"
 
 using namespace std;
 
-
+int MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
 int MyToolbox::C1_ = 0;
 int MyToolbox::max_msg_hops_ = 0;
+int MyToolbox::bits_for_measure_ = 0;
+int MyToolbox::bits_for_id_ = 0;
+int MyToolbox::bits_for_phy_mac_overhead_ = 0;
+double MyToolbox::channel_bit_rate_ = 0;
 map<int, int> MyToolbox::timetable_;
 
+void MyToolbox::set_current_time(int current_time) {
+  current_time_ = current_time;
+}
 
 void MyToolbox::set_n(int n) {
   n_ = n;
@@ -25,6 +33,22 @@ void MyToolbox::set_k(int k) {
 void MyToolbox::set_C1(int C1) {
   C1_ = C1;
   max_msg_hops_ = ceil(C1 * n_ * log(n_));
+}
+
+void MyToolbox::set_bits_for_measure(int bits_for_measure) {
+  bits_for_measure_ = bits_for_measure;
+}
+
+void MyToolbox::set_bits_for_id(int bits_for_id) {
+  bits_for_id_ = bits_for_id;
+}
+
+void MyToolbox::set_bits_for_phy_mac_overhead(int bits_for_phy_mac_overhead) {
+  bits_for_phy_mac_overhead_ = bits_for_phy_mac_overhead;
+}
+
+void MyToolbox::set_channel_bit_rate(double channel_bit_rate) {
+  channel_bit_rate_ = channel_bit_rate;
 }
 
 void MyToolbox::set_timetable(map<int, int> timetable) {
@@ -78,4 +102,16 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
   }
 
   return k_;
+}
+
+int MyToolbox::get_robust_soliton_distribution_degree() {
+  return -1;
+}
+
+int MyToolbox::get_random_processing_time() {
+  // default_random_engine generator;
+  // normal_distribution<double> distribution(MEAN_PROCESSING_TIME, STD_DEV_PROCESSING_TIME);
+  // int rnd_proc_time = (int)(distribution(generator));
+  // return rnd_proc_time;
+  return MEAN_PROCESSING_TIME;
 }

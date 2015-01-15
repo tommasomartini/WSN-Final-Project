@@ -4,6 +4,7 @@
 
 #include "event.h"
 #include "sensor_node.h"
+#include "my_toolbox.h"
 
 Event::Event(int event_time) {
   time_ = event_time;
@@ -36,6 +37,8 @@ Event Event::execute_action() {
   // sappiamo che agent_ e' di tipo StoraegNode
   // storagenodo nodo42 = agent;
   // evento = nodo42.gestisciLa Misura();
+
+  MyToolbox::set_current_time(time_);
 
   Event new_event = Event(-1);
   vector<Event> new_events;
