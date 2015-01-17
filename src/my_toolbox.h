@@ -25,6 +25,9 @@ class MyToolbox {
   static int bits_for_phy_mac_overhead_; // number of bits for PHY and MAC overhead
   static int max_msg_hops_; // maximum number of steps a message can do from the source, in the RW
   static double channel_bit_rate_;  // bit rate of the wireless channel, in bit/seconds
+  static int ping_frequency_; // frequency at which sensors do "ping"
+  static int check_sensors_frequency_; // frequency at which node chek if its supervisioned sensors are alive
+
 
   /*  This timetable contains pairs of the type:
         - key = node_id
@@ -44,6 +47,8 @@ class MyToolbox {
   static int get_max_msg_hops() {return max_msg_hops_;}
   static double get_channel_bit_rate_() {return channel_bit_rate_;}
   static map<int, int> get_timetable() {return timetable_;}
+  static int get_ping_frequency() {return ping_frequency_;}
+  static int get_check_sensors_frequency_() {return check_sensors_frequency_;}
   // setters
   static void set_current_time(int);
   static void set_n(int);
@@ -53,6 +58,8 @@ class MyToolbox {
   static void set_bits_for_id(int);
   static void set_bits_for_phy_mac_overhead(int);
   static void set_channel_bit_rate(double);
+  static void set_ping_frequency(int);
+  static void set_check_sensors_frequency(int);
   static void set_timetable(map<int, int>);
 
   // functions
