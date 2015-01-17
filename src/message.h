@@ -4,7 +4,7 @@
 // using namespace std;
 
 class Message {
- public:
+   public:
   enum MessageTypes {
     message_type_mesure,
     message_type_blacklist,
