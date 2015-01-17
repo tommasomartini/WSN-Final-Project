@@ -1,7 +1,7 @@
 #include <math.h>
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
-// #include <random>   // genertion of random variables -> require -std=c++11
+#include <random>   // genertion of random variables -> require -std=c++11
 
 #include "my_toolbox.h"
 
@@ -16,6 +16,8 @@ int MyToolbox::bits_for_measure_ = 0;
 int MyToolbox::bits_for_id_ = 0;
 int MyToolbox::bits_for_phy_mac_overhead_ = 0;
 double MyToolbox::channel_bit_rate_ = 0;
+int MyToolbox::ping_frequency_ = 0;
+int MyToolbox::check_sensors_frequency_=0;
 map<int, int> MyToolbox::timetable_;
 
 void MyToolbox::set_current_time(int current_time) {
@@ -53,6 +55,14 @@ void MyToolbox::set_channel_bit_rate(double channel_bit_rate) {
 
 void MyToolbox::set_timetable(map<int, int> timetable) {
   timetable_ = timetable;
+}
+
+void MyToolbox::set_ping_frequency(int ping_frequency) {
+  ping_frequency_ = ping_frequency;
+}
+
+void MyToolbox::set_check_sensors_frequency(int check_sensors_frequency) {
+  check_sensors_frequency_ =check_sensors_frequency;
 }
 
 int MyToolbox::get_ideal_soliton_distribution_degree() {
