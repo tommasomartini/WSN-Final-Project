@@ -20,6 +20,8 @@ void SensorNode::set_measure(Measure measure) {
 /*  Return two events: a new measure generation from the same node and the reception of the measure by a storage node
 */
 vector<Event> SensorNode::generate_measure() {
+  vector<Event> new_events; // create the new event  
+
   unsigned char new_measure_value = (unsigned char)(rand() % 256);  // generate a random char, i.e. a random measure
   // XOR the new measure with the old one. If this is the first measure, the old one is all-zero and the result of the XOR
   // will be the new measure itself. Otherwise I am ready to send the xored_measure in order to update the XOR measures
@@ -69,6 +71,15 @@ vector<Event> SensorNode::generate_measure() {
     - other node receives my measure / try to send again -> it depends by the channel!
       I must go through the timetable...
 */
+  unsigned long rand1 = rand();
+  unsigned long rand2 = rand();
+  unsigned long rand3 = rand();
+  MyTime time_next_measure = rand1 * rand2 * rand3 % MAX_MEASURE_GENERATION_DELAY;
+  MyTime minutes = time_next_measure / ((MyTime)1000000000 * 60);
+  cout << "Next measure in " << minutes << " minutes" << endl;
+  Event next_measure_event(time_next_measure, Event::sensor_generate_measure);
+  next_measure_event.set_agent(this);
+  new_events.push_back(next_measure_event);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -82,10 +93,10 @@ vector<Event> SensorNode::generate_measure() {
       If there is no other event I can think to process it just right now.
 
       Am I free? The node could be busy! If it is busy schedule this event afterwards: V(this_sensor) + offset
-      If I am free I have to sense if the next node is free? Busy? Then schedule the event "wake up and try again"
+      If I am free I have to sense if the next node is free. Busy? Then schedule the event "wake up and try again"
       at V(next_node) + offset.
 
-      What if we both are busy?
+      What if we both are idle?
       - I can transmit right now! Schedule the event "next_node receives my message" at curr_time + message
       - update time table: this_sensor, next_node and all my neighbours (my = of this sensor)
       - remove from my event_queue this event. There is another event afterwards?
@@ -104,37 +115,62 @@ vector<Event> SensorNode::generate_measure() {
     event_to_enqueue.set_agent(this);
     event_to_enqueue.set_message(measure_);
 
+    event_queue_.push(event_to_enqueue);
+
     // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
   } else {
     cout << "Empty event queue: can process this event!" << endl;
+    map<int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+    MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+    MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
+    MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
+    if (my_available_time > current_time) { // sensor already involved in a communication or surrounded by another communication
+      cout << "Il sensore e' gia' occupato" << endl;
+      MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(measure_);
+      new_events.push_back(try_again_event);
+    } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+      cout << "Next node e' gia' occupato" << endl;
+      MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(measure_);
+      new_events.push_back(try_again_event);
+    } else {  // sender and receiver both idle, can send the message
+      cout << "Posso trasmettere! Sensore e nodo liberi" << endl;
+      // Schedule the new receive event
+      MyTime new_schedule_time = current_time + message_time;
+      Event receive_message_event(new_schedule_time, Event::storage_node_receive_measure);
+      receive_message_event.set_agent(next_node);
+      receive_message_event.set_message(measure_);
+      new_events.push_back(receive_message_event);
 
-  }
+      // Update the timetable
+      timetable.find(node_id_)->second = current_time + message_time; // update my available time
+      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+      }
+      MyToolbox::set_timetable(timetable);  // upload the updated timetable
 
-  int free_time_next_node = MyToolbox::get_timetable().find(next_node->get_node_id())->second;
-  if (free_time_next_node <= MyToolbox::get_current_time()) {   // next_node is free
-    // no one of my neighbours can receive or transmit anything
-    int near_node_id;
-    for (int i = 0; i < near_storage_nodes.size(); i++) {
-      near_node_id = near_storage_nodes.at(i)->get_node_id();
-      MyToolbox::get_timetable().find(near_node_id)->second = MyToolbox::get_current_time() + message_time;
+      // Update the event_queue_
+      if (!event_queue_.empty()) {  // if there are other events in the queue
+        Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
+        event_queue_.pop();
+        Event popped_event(current_time + message_time, top_queue_event.get_event_type());
+        popped_event.set_agent(this);
+        popped_event.set_message(top_queue_event.get_message());
+        new_events.push_back(popped_event);
+        // switch (top_queue_event.get_event_type()) {
+        //   case Event::sensor_generate_measure:
+        //     Event new_event(current_time + message_time, Event::);
+        //     break;
+        //   default:
+        //     break;  // remove this break! No break in the default option!
+        // }
+      }
     }
-  } else {
-
   }
-
-  // Create the new event
-  vector<Event> new_events;
-  Event new_event(10, Event::spread_measure);
-  new_event.set_agent(next_node);
-  new_event.set_message(measure_);
-  new_events.push_back(new_event);
-
-  
-
-
   return new_events;
-}
-
-int SensorNode::fai_cose() {
-  return 6;
 }

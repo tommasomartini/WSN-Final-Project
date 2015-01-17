@@ -44,6 +44,7 @@ class Event {
     sensor_generate_measure,
     sensor_try_to_send_measure,
     storage_node_try_to_send_measure,
+    storage_node_receive_measure,
     spread_measure,
     blacklist_sensor,
     remove_measure,
@@ -76,6 +77,7 @@ class Event {
   MyTime get_time() {return time_;}
   Agent* get_agent() {return agent_;}
   Message get_message() {return message_;}
+  EventTypes get_event_type() {return event_type_;}
   void set_agent(Agent*);
   void set_message(Message);
   vector<Event> execute_action();

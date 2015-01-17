@@ -45,7 +45,7 @@ vector<Event> Event::execute_action() {
 
   // int test = 0;
 
-  switch(event_type_) {
+  switch (event_type_) {
     case sensor_generate_measure:
       // cout << "Sensor id: " << ((SensorNode*)agent_)->get_node_id() << endl;
 

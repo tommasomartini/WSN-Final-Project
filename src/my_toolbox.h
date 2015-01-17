@@ -41,10 +41,16 @@ class MyToolbox {
   static int get_ideal_soliton_distribution_degree();
   static int get_robust_soliton_distribution_degree();  // still to implement!
   static MyTime get_random_processing_time();
+  // Return a uniform random offset a node must wait when it finds the channel busy.
+  // The value is uniformly distributed between 1ns and MAX_OFFSET ns
+  static MyTime get_retransmission_offset();
 
  private:
   static const int MEAN_PROCESSING_TIME = 100000; // 100us, in nano-seconds
   static const double STD_DEV_PROCESSING_TIME = 1000000; // 1ms, in nano-seconds
+
+  // TODO: remove this from here! Should be more accessible from a user
+  static const MyTime MAX_OFFSET = 1000000; // 1ms, in nano-seconds
 
   static MyTime current_time_; // to keep track of the time
 

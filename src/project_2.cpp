@@ -193,7 +193,7 @@ int main() {
   //   }
   // }
 
-// Event manager
+  // Event manager
   vector<Event> event_list;
 
   Event test_event(10, Event::sensor_generate_measure);
@@ -205,17 +205,21 @@ int main() {
   // event_list.push_back(Event(78));
 
   // while (!event_list.empty()) {
-  // for (int i = 0; i < 5; i++) {
-  //   Event next_event = *(event_list.begin());
-  //   event_list.erase(event_list.begin());
-  //   Event new_event = next_event.execute_action();
-  //   vector<Event>::iterator event_iterator = event_list.begin();
-  //   for (; event_iterator != event_list.end(); event_iterator++) {
-  //     if (*event_iterator > new_event)
-  //       break;
-  //   }
-  //   event_list.insert(event_iterator, new_event);
-  // }
+  for (int i = 0; i < 5; i++) {
+    Event next_event = *(event_list.begin());
+    event_list.erase(event_list.begin());
+    vector<Event> new_events = next_event.execute_action();
+
+    vector<Event>::iterator new_event_iterator = new_events.begin();
+    vector<Event>::iterator old_event_iterator = event_list.begin();
+    for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+        if (*old_event_iterator > *new_event_iterator)
+          break;
+      }
+    }
+    event_list.insert(old_event_iterator, *new_event_iterator);
+  }
 
   return 0;
 }

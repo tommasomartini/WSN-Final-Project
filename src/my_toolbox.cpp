@@ -115,3 +115,12 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   // return rnd_proc_time;
   return MEAN_PROCESSING_TIME;
 }
+
+MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
+  int rand1 = rand();
+  int rand2 = rand();
+  unsigned long long_rand = rand1 * rand2;
+  MyTime offset = long_rand % (MAX_OFFSET - 1) + 1;
+  cout << "offset: " << offset << endl;
+  return offset;
+}
