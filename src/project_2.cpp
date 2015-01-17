@@ -206,6 +206,9 @@ int main() {
 
   // while (!event_list.empty()) {
   for (int i = 0; i < 5; i++) {
+
+    // TODO: verify next event has a different schedule time than this
+
     Event next_event = *(event_list.begin());
     event_list.erase(event_list.begin());
     vector<Event> new_events = next_event.execute_action();
