@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int MyToolbox::current_time_ = 0;
+MyToolbox::MyTime MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
 int MyToolbox::C1_ = 0;
@@ -16,9 +16,9 @@ int MyToolbox::bits_for_measure_ = 0;
 int MyToolbox::bits_for_id_ = 0;
 int MyToolbox::bits_for_phy_mac_overhead_ = 0;
 double MyToolbox::channel_bit_rate_ = 0;
-map<int, int> MyToolbox::timetable_;
+map<int, MyToolbox::MyTime> MyToolbox::timetable_;
 
-void MyToolbox::set_current_time(int current_time) {
+void MyToolbox::set_current_time(MyToolbox::MyTime current_time) {
   current_time_ = current_time;
 }
 
@@ -51,7 +51,7 @@ void MyToolbox::set_channel_bit_rate(double channel_bit_rate) {
   channel_bit_rate_ = channel_bit_rate;
 }
 
-void MyToolbox::set_timetable(map<int, int> timetable) {
+void MyToolbox::set_timetable(map<int, MyTime> timetable) {
   timetable_ = timetable;
 }
 
@@ -108,7 +108,7 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
   return -1;
 }
 
-int MyToolbox::get_random_processing_time() {
+MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   // default_random_engine generator;
   // normal_distribution<double> distribution(MEAN_PROCESSING_TIME, STD_DEV_PROCESSING_TIME);
   // int rnd_proc_time = (int)(distribution(generator));

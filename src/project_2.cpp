@@ -46,7 +46,12 @@ const int SPACE_PRECISION = 1000; // how many fundamental space units in one met
   
 int main() {
 
-  srand(time(NULL));
+  // int a = 3;
+  // int b = 10000000;
+  // int c = 10000000000;
+  // cout << a + b + c << endl;
+
+  srand(time(NULL));  // generate a random seed to generate random numbers later on
 
   MyToolbox::set_k(NUM_SENSORS);
   MyToolbox::set_n(NUM_STORAGE_NODES);
@@ -63,7 +68,7 @@ int main() {
   vector<StorageNode*> storage_nodes;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
 
-  map<int, int> timetable;
+  map<int, MyToolbox::MyTime> timetable;
 
   int sensor_id = 0;
   int storage_node_id = 0;

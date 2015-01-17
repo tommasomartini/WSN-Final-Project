@@ -29,14 +29,21 @@
 #ifndef __EVENT_H__   
 #define __EVENT_H__   
 
+#include <vector>
+
 #include "agent.h"
 #include "message.h"
+#include "my_toolbox.h"
+
+using namespace std;
 
 class Event {
 
  public:
   enum EventTypes {
     sensor_generate_measure,
+    sensor_try_to_send_measure,
+    storage_node_try_to_send_measure,
     spread_measure,
     blacklist_sensor,
     remove_measure,
@@ -52,24 +59,26 @@ class Event {
   };
 
  private:
+  typedef MyToolbox::MyTime MyTime;
+
   int time_;
   Agent *agent_;
   Message message_;
   Event::EventTypes event_type_;
 
  public:
-  Event(int /*time*/);
-  Event(int /*time*/, Event::EventTypes);
+  Event(MyTime /*time*/);
+  Event(MyTime /*time*/, Event::EventTypes);
 
   bool operator<(Event);
   bool operator>(Event);
 
-  int get_time() {return time_;}
+  MyTime get_time() {return time_;}
   Agent* get_agent() {return agent_;}
   Message get_message() {return message_;}
   void set_agent(Agent*);
   void set_message(Message);
-  Event execute_action();
+  vector<Event> execute_action();
   /*
       guardo il tipo di evento e in base a questo chiamo un certo metodo su Agent_1
       Agent_1 ritorna un nuovo eveto o lo so io?

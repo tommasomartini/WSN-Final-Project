@@ -11,11 +11,42 @@
 using namespace std;
 
 class MyToolbox {
+ public:
+  typedef unsigned long MyTime;
+
+  static const double LIGHT_SPEED = 299792458; // meter / seconds
+
+  // getters
+  static MyTime get_current_time() {return current_time_;}
+  static int get_n() {return n_;}
+  static int get_k() {return k_;}
+  static int get_bits_for_measure() {return bits_for_measure_;}
+  static int get_bits_for_id() {return bits_for_id_;}
+  static int get_bits_for_phy_mac_overhead() {return bits_for_phy_mac_overhead_;}
+  static int get_max_msg_hops() {return max_msg_hops_;}
+  static double get_channel_bit_rate_() {return channel_bit_rate_;}
+  static map<int, MyTime> get_timetable() {return timetable_;}
+  // setters
+  static void set_current_time(MyTime);
+  static void set_n(int);
+  static void set_k(int);
+  static void set_C1(int);
+  static void set_bits_for_measure(int);
+  static void set_bits_for_id(int);
+  static void set_bits_for_phy_mac_overhead(int);
+  static void set_channel_bit_rate(double);
+  static void set_timetable(map<int, MyTime>);
+
+  // functions
+  static int get_ideal_soliton_distribution_degree();
+  static int get_robust_soliton_distribution_degree();  // still to implement!
+  static MyTime get_random_processing_time();
+
  private:
-  static const int MEAN_PROCESSING_TIME = 100000; // 100ms, in nano-seconds
+  static const int MEAN_PROCESSING_TIME = 100000; // 100us, in nano-seconds
   static const double STD_DEV_PROCESSING_TIME = 1000000; // 1ms, in nano-seconds
 
-  static int current_time_;
+  static MyTime current_time_; // to keep track of the time
 
   static int n_;  // number of storage nodes in the network
   static int k_;  // number of sensors in the network
@@ -30,35 +61,7 @@ class MyToolbox {
         - key = node_id
         - value = time at which the node is going to be "left free"
   */
-  static map<int, int> timetable_; 
- public:
-  static const double LIGHT_SPEED = 299792458; // meter / seconds
-
-  // getters
-  static int get_current_time() {return current_time_;}
-  static int get_n() {return n_;}
-  static int get_k() {return k_;}
-  static int get_bits_for_measure() {return bits_for_measure_;}
-  static int get_bits_for_id() {return bits_for_id_;}
-  static int get_bits_for_phy_mac_overhead() {return bits_for_phy_mac_overhead_;}
-  static int get_max_msg_hops() {return max_msg_hops_;}
-  static double get_channel_bit_rate_() {return channel_bit_rate_;}
-  static map<int, int> get_timetable() {return timetable_;}
-  // setters
-  static void set_current_time(int);
-  static void set_n(int);
-  static void set_k(int);
-  static void set_C1(int);
-  static void set_bits_for_measure(int);
-  static void set_bits_for_id(int);
-  static void set_bits_for_phy_mac_overhead(int);
-  static void set_channel_bit_rate(double);
-  static void set_timetable(map<int, int>);
-
-  // functions
-  static int get_ideal_soliton_distribution_degree();
-  static int get_robust_soliton_distribution_degree();  // still to implement!
-  static int get_random_processing_time();
+  static map<int, MyTime> timetable_; 
 };
 
 #endif

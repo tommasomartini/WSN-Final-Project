@@ -4,13 +4,13 @@
 
 #include "event.h"
 #include "sensor_node.h"
-#include "my_toolbox.h"
+// #include "my_toolbox.h"
 
-Event::Event(int event_time) {
+Event::Event(MyTime event_time) {
   time_ = event_time;
 }
 
-Event::Event(int event_time, Event::EventTypes event_type) {
+Event::Event(MyTime event_time, Event::EventTypes event_type) {
   time_ = event_time;
   event_type_ = event_type;
 }
@@ -31,23 +31,28 @@ void Event::set_message(Message message) {
   message_ = message;
 }
 
-Event Event::execute_action() {
+vector<Event> Event::execute_action() {
   // guarda di che tipo sono switch
   // se il tipo e' nodo manda misura a un altro nodo
   // sappiamo che agent_ e' di tipo StoraegNode
   // storagenodo nodo42 = agent;
   // evento = nodo42.gestisciLa Misura();
 
-  MyToolbox::set_current_time(time_);
+  MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
 
-  Event new_event = Event(-1);
+  // Event new_event = Event(-1);
   vector<Event> new_events;
 
-  int test = 0;
+  // int test = 0;
 
   switch(event_type_) {
     case sensor_generate_measure:
       // cout << "Sensor id: " << ((SensorNode*)agent_)->get_node_id() << endl;
+
+      /*  generate_measure() should return 2 events:
+          - a new measure generation of the same node
+          - the reception of the measure to a storage node
+      */ 
       new_events = ((SensorNode*)agent_)->generate_measure();
       // test += agent_->do_action();
       // cout << "Risultato test: " << test << endl;
@@ -82,6 +87,5 @@ Event Event::execute_action() {
       break;  // remove this break! No break in the default option!
   }
 
-  int event_time = rand() % 100;
-  return Event(event_time); 
+  return new_events; 
 }
