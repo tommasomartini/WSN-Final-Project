@@ -32,11 +32,11 @@ const int NUM_STORAGE_NODES = 3;
 const int NUM_SENSORS = 2;
 const int NUM_USERS = 1;
 
-//const int NUM_BITS_FOR_MEASURE = 8; // in bits
-//const int NUM_BITS_FOR_ID = 32;   // in bits
-//const int NUM_BITS_PHY_MAC_OVERHEAD =  34 * 8 + 20 * 8; // in bits
+const int NUM_BITS_FOR_MEASURE = 8; // in bits
+const int NUM_BITS_FOR_ID = 32;   // in bits
+const int NUM_BITS_PHY_MAC_OVERHEAD =  34 * 8 + 20 * 8; // in bits
 // 1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54, 125, 144, 300 Mb/s (IEEE 802.11n)
-//const double WIRELESS_CHANNEL_BITRATE = 1; // in Mb/s
+const double WIRELESS_CHANNEL_BITRATE = 1; // in Mb/s
 const int PING_FREQUENCY = 10; //numero a caso
 const int CHECK_SENSORS_FREQUENCY = 50; //numero a caso
 
@@ -54,10 +54,10 @@ int main() {
   MyToolbox::set_k(NUM_SENSORS);
   MyToolbox::set_n(NUM_STORAGE_NODES);
   MyToolbox::set_C1(C1);
-  //MyToolbox::set_bits_for_measure(NUM_BITS_FOR_MEASURE);
-  //MyToolbox::set_bits_for_id(NUM_BITS_FOR_ID);
-  //MyToolbox::set_bits_for_phy_mac_overhead(NUM_BITS_PHY_MAC_OVERHEAD);
- // MyToolbox::set_channel_bit_rate(WIRELESS_CHANNEL_BITRATE * 1000000);
+  MyToolbox::set_bits_for_measure(NUM_BITS_FOR_MEASURE);
+  MyToolbox::set_bits_for_id(NUM_BITS_FOR_ID);
+  MyToolbox::set_bits_for_phy_mac_overhead(NUM_BITS_PHY_MAC_OVERHEAD);
+  MyToolbox::set_channel_bit_rate(WIRELESS_CHANNEL_BITRATE * 1000000);
   MyToolbox::set_ping_frequency(PING_FREQUENCY);
   MyToolbox::set_ping_frequency(CHECK_SENSORS_FREQUENCY);
 
@@ -92,7 +92,7 @@ int main() {
     // all_nodes.push_back(node);
   }
 
- // MyToolbox::set_timetable(timetable);
+ MyToolbox::set_timetable(timetable);
 
   SensorNode *sensor1;
   SensorNode *sensor2;
