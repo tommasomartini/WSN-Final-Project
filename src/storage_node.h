@@ -5,6 +5,8 @@
 #include <map>
 
 #include "node.h"
+#include "measure.h"
+#include "event.h"
 
 using namespace std;
 
@@ -22,7 +24,8 @@ class StorageNode: public Node {
   StorageNode(int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
 
   unsigned char get_xored_measure() {return xored_measure_;}
-  void manage_message(); 
+  void manage_message();
+  vector<Event> manage_measure(Measure); 
 
   int do_action() {return 5;} // for debugging only
 };

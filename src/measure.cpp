@@ -1,7 +1,7 @@
 #include "measure.h"
 
 Measure::Measure() {
-  message_type_ = message_type_mesure;
+  message_type_ = message_type_measure;
 
   measure_ = 0;
   measure_id_ = 0;
@@ -10,7 +10,7 @@ Measure::Measure() {
 }
 
 Measure::Measure(unsigned char measure) {
-  message_type_ = message_type_mesure;
+  message_type_ = message_type_measure;
 
   measure_ = measure;
   measure_id_ = 0;
@@ -19,7 +19,7 @@ Measure::Measure(unsigned char measure) {
 }
 
 Measure::Measure(unsigned char measure, int measure_id, int source_sensor_id, Measure::MeasureTypes measure_type) {
-  message_type_ = message_type_mesure;
+  message_type_ = message_type_measure;
   
   measure_ = measure;
   measure_id_ = measure_id;

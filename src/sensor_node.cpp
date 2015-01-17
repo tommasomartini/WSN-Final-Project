@@ -162,13 +162,6 @@ vector<Event> SensorNode::generate_measure() {
         popped_event.set_agent(this);
         popped_event.set_message(top_queue_event.get_message());
         new_events.push_back(popped_event);
-        // switch (top_queue_event.get_event_type()) {
-        //   case Event::sensor_generate_measure:
-        //     Event new_event(current_time + message_time, Event::);
-        //     break;
-        //   default:
-        //     break;  // remove this break! No break in the default option!
-        // }
       }
     }
   }

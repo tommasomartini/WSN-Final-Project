@@ -43,6 +43,7 @@ vector<Event> Event::execute_action() {
   // Event new_event = Event(-1);
   vector<Event> new_events;
 
+  // cout << "vediamo: " << ((Measure)message_).get_measure_id() << endl;
   // int test = 0;
 
   switch (event_type_) {
@@ -58,6 +59,9 @@ vector<Event> Event::execute_action() {
       // cout << "Risultato test: " << test << endl;
       // cout << "New event time: " << new_event.get_time() << endl; 
       // cout << "New agent id: " << ((StorageNode*)new_event.get_agent())->get_node_id() << endl; 
+      break;
+    case storage_node_receive_measure:
+      // new_events = ((StorageNode*)agent_)->manage_measure(mm);
       break;
     case spread_measure:
       break;

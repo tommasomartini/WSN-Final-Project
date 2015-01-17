@@ -21,7 +21,6 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "sensor_node.h"
 // #include "user.h"
 #include "my_toolbox.h"
-
 #include "event.h"
 
 using namespace std;
@@ -196,8 +195,15 @@ int main() {
   // Event manager
   vector<Event> event_list;
 
-  Event test_event(10, Event::sensor_generate_measure);
-  test_event.set_agent(sensors.at(0));
+  // Event test_event(10, Event::sensor_generate_measure);
+  // test_event.set_agent(sensors.at(0));
+  // test_event.execute_action();
+
+
+  Measure mmeasure(18, 11, 0, Measure::new_measure);
+  Event test_event(0, Event::storage_node_receive_measure);
+  test_event.set_agent(storage_nodes.at(0));
+  test_event.set_message(mmeasure);
   test_event.execute_action();
 
   // event_list.push_back(Event(7));
@@ -205,24 +211,24 @@ int main() {
   // event_list.push_back(Event(78));
 
   // while (!event_list.empty()) {
-  for (int i = 0; i < 5; i++) {
+  // for (int i = 0; i < 5; i++) {
 
-    // TODO: verify next event has a different schedule time than this
+  //   // TODO: verify next event has a different schedule time than this
 
-    Event next_event = *(event_list.begin());
-    event_list.erase(event_list.begin());
-    vector<Event> new_events = next_event.execute_action();
+  //   Event next_event = *(event_list.begin());
+  //   event_list.erase(event_list.begin());
+  //   vector<Event> new_events = next_event.execute_action();
 
-    vector<Event>::iterator new_event_iterator = new_events.begin();
-    vector<Event>::iterator old_event_iterator = event_list.begin();
-    for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-        if (*old_event_iterator > *new_event_iterator)
-          break;
-      }
-    }
-    event_list.insert(old_event_iterator, *new_event_iterator);
-  }
+  //   vector<Event>::iterator new_event_iterator = new_events.begin();
+  //   vector<Event>::iterator old_event_iterator = event_list.begin();
+  //   for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+  //     for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+  //       if (*old_event_iterator > *new_event_iterator)
+  //         break;
+  //     }
+  //   }
+  //   event_list.insert(old_event_iterator, *new_event_iterator);
+  // }
 
   return 0;
 }
