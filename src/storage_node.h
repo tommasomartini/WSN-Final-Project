@@ -5,6 +5,8 @@
 #include <map>
 
 #include "node.h"
+#include "event.h"
+
 
 using namespace std;
 
@@ -14,7 +16,8 @@ class StorageNode: public Node {
   unsigned char xored_measure_;
   map<int, int> last_measures_; // pairs <sensor_id, last_measure_id>
   vector<int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the superisor of
-  vector<int> blacklist_;  // list of the sensor id's no more in the network
+  map<int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
+  vector<int> my_blacklist_;  // list of the sensor id's no more in the network
 
  public:
   StorageNode() : Node () {}
@@ -23,6 +26,11 @@ class StorageNode: public Node {
 
   unsigned char get_xored_measure() {return xored_measure_;}
   void manage_message(); 
+  void set_supervision_map_(int, int);
+  vector<Event> check_sensors(int);
+  vector<Event> spread_blacklist(int,BlacklistMessage);
+  
+
 
   int do_action() {return 5;} // for debugging only
 };
