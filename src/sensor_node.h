@@ -25,6 +25,7 @@ class SensorNode: public Node {
   void set_measure(Measure);
   Measure get_measure() {return measure_;}
   vector<Event> generate_measure();
+  vector<Event> sensor_ping(int);
 
   int do_action() {return 2;} // for debugging only
 };

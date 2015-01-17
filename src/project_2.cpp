@@ -241,8 +241,8 @@ int main() {
      test_event4.set_agent(storage_nodes.at(0));
      test_event4.set_blacklist(list);
      test_event4 = test_event4.execute_action();
-  */
-   
+  
+  */ 
   
   return 0;
 }

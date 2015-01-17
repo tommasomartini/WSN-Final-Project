@@ -62,7 +62,7 @@ Event Event::execute_action() {
       break;
     case blacklist_sensor:
         new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
-         //cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
+        // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
         break;
     case remove_measure:
       break;
