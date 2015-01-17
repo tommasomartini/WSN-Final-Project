@@ -77,3 +77,27 @@ vector<Event> SensorNode::generate_measure() {
 
   return new_events;
 }
+
+
+vector<Event> SensorNode::sensor_ping(int event_time){
+    map<int, int> timetable_ = MyToolbox::get_timetable();
+    // my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
+    vector<Event> new_events;
+    if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
+        Event new_event(timetable_.find(my_supervisor_id_)->second, Event::sensor_ping);
+        new_event.set_agent(this);  
+        new_events.push_back(new_event);
+    }
+    else {
+        for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
+            if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
+                StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
+                supervisior_node->set_supervision_map_(node_id_,event_time);     
+            }
+        }
+        Event new_event(event_time+MyToolbox::get_ping_frequency(), Event::sensor_ping);   
+        new_event.set_agent(this);
+        new_events.push_back(new_event);
+    }
+    return new_events;
+}
