@@ -170,7 +170,7 @@ vector<Event> SensorNode::generate_measure() {
 
 
 vector<Event> SensorNode::sensor_ping(int event_time){
-    map<int, int> timetable_ = MyToolbox::get_timetable();
+    map<int, MyTime> timetable_ = MyToolbox::get_timetable();
      //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
     vector<Event> new_events;
     if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake

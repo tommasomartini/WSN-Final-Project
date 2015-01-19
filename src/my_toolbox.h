@@ -2,6 +2,13 @@
   This class provides some tools statically accessible from every class;
 */
 
+  /*
+
+
+
+  Arianna puzza!!
+  */
+
 #ifndef __MY_TOOLBOX_H__   
 #define __MY_TOOLBOX_H__  
 
@@ -14,7 +21,7 @@ class MyToolbox {
  public:
   typedef unsigned long MyTime;
 
-  static const double LIGHT_SPEED = 299792458; // meter / seconds
+  static constexpr double LIGHT_SPEED = 299792458; // meter / seconds
 
   // getters
   static MyTime get_current_time() {return current_time_;}
@@ -52,7 +59,7 @@ class MyToolbox {
 
  private:
   static const int MEAN_PROCESSING_TIME = 100000; // 100us, in nano-seconds
-  static const double STD_DEV_PROCESSING_TIME = 1000000; // 1ms, in nano-seconds
+  static constexpr double STD_DEV_PROCESSING_TIME = 1000000; // 1ms, in nano-seconds
 
   // TODO: remove this from here! Should be more accessible from a user
   static const MyTime MAX_OFFSET = 1000000; // 1ms, in nano-seconds

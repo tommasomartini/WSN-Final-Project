@@ -42,22 +42,29 @@ class Event {
 
  public:
   enum EventTypes {
+    // Tom
     sensor_generate_measure,
     sensor_try_to_send_measure,
     storage_node_try_to_send_measure,
     storage_node_receive_measure,
     spread_measure,
+
+    // Arianna
     blacklist_sensor,
+    sensor_ping,
+    check_sensors,
+
+    // To do
     remove_measure,
     user_node_query,
     user_user_query,
     new_storage_node,
-    sensor_ping,
-    check_sensors,
     remove_sensor,
     add_sensor,
     remove_node,
     add_node,
+
+    // Not to do
     network_reset
   };
 

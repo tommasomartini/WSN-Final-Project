@@ -1,7 +1,7 @@
 #include "blacklist_message.h"
 
 BlacklistMessage::BlacklistMessage() {
-    sensor_id_=NULL;
+    sensor_id_=nullptr;
     hop_counter_=0;
     length_=0;
 }
