@@ -31,6 +31,10 @@ void Event::set_message(Message message) {
   message_ = message;
 }
 
+void Event::set_blacklist(BlacklistMessage blacklist) {
+  list_ = blacklist;
+}
+
 vector<Event> Event::execute_action() {
   // guarda di che tipo sono switch
   // se il tipo e' nodo manda misura a un altro nodo
@@ -66,7 +70,9 @@ vector<Event> Event::execute_action() {
     case spread_measure:
       break;
     case blacklist_sensor:
-      break;
+        new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
+        // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
+        break;
     case remove_measure:
       break;
     case user_node_query:
@@ -76,6 +82,12 @@ vector<Event> Event::execute_action() {
     case new_storage_node:
       break;
     case sensor_ping:
+        new_events = ((SensorNode*)agent_)->sensor_ping(time_);
+        //cout <<"Il nuovo evento creato è al tempo "<<new_events.at(0).get_time()<<endl;
+      break;
+    case check_sensors:
+        new_events = ((StorageNode*)agent_)->check_sensors(time_);
+        //cout <<"Il nuovo evento creato da check è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
     case remove_sensor:
       break;

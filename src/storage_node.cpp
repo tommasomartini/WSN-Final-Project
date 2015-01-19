@@ -19,6 +19,15 @@ vector<Event> manage_measure(Measure measure) {
   return new_events;
 } 
 
+void StorageNode::set_supervision_map_(int sensor_id, int new_time){
+    if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end() ){
+        supervisioned_map_.insert(std::pair<int, int>(sensor_id,new_time));
+
+    }
+    else
+    supervisioned_map_.find(sensor_id)->second = new_time;
+}
+
 void StorageNode::manage_message() {
 /*
   if (running_) {
@@ -109,4 +118,58 @@ void StorageNode::manage_message() {
     cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(message.get_message()) << " is not to be forwarded" << endl;
   }
   */
+}
+
+vector<Event> StorageNode::check_sensors(int event_time){       //assumption: sensors always wake up
+    vector<Event> new_events;
+    int expired_sensors[supervisioned_map_.size()];
+    int i = 0;
+    bool new_blacklist_element = false;
+
+    for (auto& x: supervisioned_map_){
+        if(x.second +(3*MyToolbox::get_ping_frequency())< event_time){  // don't ping in last 3*ping_frequency
+            my_blacklist_.push_back( x.first);
+            new_blacklist_element = true;
+            expired_sensors[i] =  x.first;
+            i++;    
+        }
+    }
+    for(int j=0; j<i; j++)
+        supervisioned_map_.erase(supervisioned_map_.find(expired_sensors[j])); 
+   
+    if (new_blacklist_element == true){     //make event for spread blacklist
+        int* ex_sensors=expired_sensors;
+        BlacklistMessage list(ex_sensors,i);
+        int next_node_index = rand() % near_storage_nodes.size();
+        StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+        Event new_event(event_time, Event::blacklist_sensor); //to add propagation time?
+        new_event.set_agent(next_node);   
+        new_event.set_blacklist(list);
+        new_events.push_back(new_event);
+    }
+    Event new_event(event_time + MyToolbox::get_check_sensors_frequency_(), Event::check_sensors); 
+    new_event.set_agent(this);   
+    new_events.push_back(new_event);
+    
+    return new_events;
+}
+
+vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage list){
+    vector<Event> new_events;
+    for(int i=0; i<list.get_length(); i++){
+        if ( last_measures_.find(list.get_id_list()[i]) != last_measures_.end() )
+            my_blacklist_.push_back(list.get_id_list()[i]);
+    }  
+    int hop_limit = MyToolbox::get_max_msg_hops();
+    if (list.get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+        list.increase_hop_counter();
+        int next_node_index = rand() % near_storage_nodes.size();
+        StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+        Event new_event(event_time, Event::blacklist_sensor); // event_time has to consider timetable + backoff time (+ propagation time??)
+        new_event.set_agent(next_node);   
+        new_event.set_blacklist(list);
+        new_events.push_back(new_event);
+    }
+    
+    return new_events;
 }

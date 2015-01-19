@@ -34,6 +34,7 @@
 #include "agent.h"
 #include "message.h"
 #include "my_toolbox.h"
+#include "blacklist_message.h"
 
 using namespace std;
 
@@ -52,6 +53,7 @@ class Event {
     user_user_query,
     new_storage_node,
     sensor_ping,
+    check_sensors,
     remove_sensor,
     add_sensor,
     remove_node,
@@ -66,6 +68,7 @@ class Event {
   Agent *agent_;
   Message message_;
   Event::EventTypes event_type_;
+  BlacklistMessage list_;
 
  public:
   Event(MyTime /*time*/);
@@ -78,9 +81,15 @@ class Event {
   Agent* get_agent() {return agent_;}
   Message get_message() {return message_;}
   EventTypes get_event_type() {return event_type_;}
+  BlacklistMessage get_blacklist() {return list_;}
+
   void set_agent(Agent*);
   void set_message(Message);
+  void set_blacklist(BlacklistMessage);
+
   vector<Event> execute_action();
+
+
   /*
       guardo il tipo di evento e in base a questo chiamo un certo metodo su Agent_1
       Agent_1 ritorna un nuovo eveto o lo so io?
