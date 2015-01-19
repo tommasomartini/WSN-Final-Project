@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <itemPath>../src/agent.h</itemPath>
+      <itemPath>../src/blacklist_message.h</itemPath>
+      <itemPath>../src/event.h</itemPath>
+      <itemPath>../src/measure.h</itemPath>
+      <itemPath>../src/message.h</itemPath>
+      <itemPath>../src/my_toolbox.h</itemPath>
+      <itemPath>../src/node.h</itemPath>
+      <itemPath>../src/sensor_node.h</itemPath>
+      <itemPath>../src/storage_node.h</itemPath>
+      <itemPath>../src/storage_node_message.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>../src/blacklist_message.cpp</itemPath>
+      <itemPath>../src/event.cpp</itemPath>
+      <itemPath>../src/measure.cpp</itemPath>
+      <itemPath>../src/message.cpp</itemPath>
+      <itemPath>../src/my_toolbox.cpp</itemPath>
+      <itemPath>../src/node.cpp</itemPath>
+      <itemPath>../src/project_2.cpp</itemPath>
+      <itemPath>../src/sensor_node.cpp</itemPath>
+      <itemPath>../src/storage_node.cpp</itemPath>
+      <itemPath>../src/storage_node_message.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <commandLine>-std=c++11</commandLine>
+        </ccTool>
+      </compileType>
+      <item path="../src/agent.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/blacklist_message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/blacklist_message.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/event.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/event.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/measure.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/measure.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/message.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/my_toolbox.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/my_toolbox.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/project_2.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/sensor_node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/sensor_node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/storage_node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/storage_node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/storage_node_message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/storage_node_message.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+      </compileType>
+      <item path="../src/agent.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/blacklist_message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/blacklist_message.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/event.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/event.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/measure.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/measure.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/message.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/my_toolbox.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/my_toolbox.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/project_2.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/sensor_node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/sensor_node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/storage_node.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/storage_node.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/storage_node_message.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/storage_node_message.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

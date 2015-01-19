@@ -30,6 +30,7 @@ class StorageNode: public Node {
   void set_supervision_map_(int, int);
   vector<Event> check_sensors(int);
   vector<Event> spread_blacklist(int,BlacklistMessage);
+  vector<Event> remove_mesure(Measure);
 
   int do_action() {return 5;} // for debugging only
 };

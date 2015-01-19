@@ -147,9 +147,11 @@ vector<Event> StorageNode::check_sensors(int event_time){       //assumption: se
         new_event.set_blacklist(list);
         new_events.push_back(new_event);
     }
-    Event new_event(event_time + MyToolbox::get_check_sensors_frequency_(), Event::check_sensors); 
-    new_event.set_agent(this);   
-    new_events.push_back(new_event);
+    if(supervisioned_map_.size()!=0){
+        Event new_event(event_time + MyToolbox::get_check_sensors_frequency_(), Event::check_sensors); 
+        new_event.set_agent(this);   
+        new_events.push_back(new_event);
+    }
     
     return new_events;
 }
@@ -173,3 +175,23 @@ vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage lis
     
     return new_events;
 }
+
+  vector<Event> StorageNode::remove_mesure(Measure message_to_remove){
+      vector<Event> new_events;
+      last_measures_.insert(pair<int, int> (1,1));
+      if (last_measures_.find(message_to_remove.get_source_sensor_id()) != last_measures_.end()){
+          xored_measure_ = xored_measure_ ^ message_to_remove.get_measure();
+          last_measures_.erase(last_measures_.find(message_to_remove.get_source_sensor_id())); 
+      }
+      int hop_limit = MyToolbox::get_max_msg_hops();
+      if (message_to_remove.get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+        message_to_remove.increase_hop_counter();
+        int next_node_index = rand() % near_storage_nodes.size();
+        StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+        Event new_event(10, Event::remove_measure); // to set event time!!!!!!!
+        new_event.set_agent(next_node);   
+        new_event.set_message(message_to_remove);
+        new_events.push_back(new_event);
+    }
+    return new_events;
+  }

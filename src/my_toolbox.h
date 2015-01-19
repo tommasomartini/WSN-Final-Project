@@ -6,7 +6,7 @@
 
 
 
-  Arianna puzza!!
+  Arianna non puzza!!
   */
 
 #ifndef __MY_TOOLBOX_H__   
@@ -58,7 +58,6 @@ class MyToolbox {
   static MyTime get_retransmission_offset();
 
  private:
-     //vvv
      
      
   static const int MEAN_PROCESSING_TIME = 100000; // 100us, in nano-seconds
