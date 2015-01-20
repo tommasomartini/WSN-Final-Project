@@ -76,7 +76,14 @@ vector<Event> Event::execute_action() {
         // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
         break;
     case remove_measure:
+    {
+        unsigned char message_to_remove = 0;    // da sistemare
+        int id_to_remove = 1;                   // da sistemare
+        Measure mess (message_to_remove);       // da sistemare
+        mess.set_source_sensor_id(id_to_remove);// da sistemare
+        new_events = ((StorageNode*)agent_)->remove_mesure(mess);
       break;
+    }
     case user_node_query:
       break;
     case user_user_query:

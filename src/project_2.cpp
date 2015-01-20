@@ -260,7 +260,12 @@ int main() {
      test_event4.set_blacklist(list);
      test_event4 = test_event4.execute_action();
   
-  */ 
+  
+  
+  Event test_event4(71,Event::remove_measure);
+     test_event4.set_agent(storage_nodes.at(0));
+     vector<Event> aaa = test_event4.execute_action();
+  */
   
   return 0;
 }
