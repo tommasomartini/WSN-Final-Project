@@ -15,17 +15,15 @@ using namespace std;
 
 vector<Event> manage_measure(Measure measure) {
   vector<Event> new_events;
-
   return new_events;
 } 
 
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
     if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end() ){
         supervisioned_map_.insert(std::pair<int, int>(sensor_id,new_time));
-
     }
     else
-    supervisioned_map_.find(sensor_id)->second = new_time;
+      supervisioned_map_.find(sensor_id)->second = new_time;
 }
 
 void StorageNode::manage_message() {

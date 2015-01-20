@@ -2,13 +2,6 @@
   This class provides some tools statically accessible from every class;
 */
 
-  /*
-
-
-
-  Arianna puzza!!
-  */
-
 #ifndef __MY_TOOLBOX_H__   
 #define __MY_TOOLBOX_H__  
 

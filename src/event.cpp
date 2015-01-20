@@ -47,6 +47,8 @@ vector<Event> Event::execute_action() {
   // Event new_event = Event(-1);
   vector<Event> new_events;
 
+  Measure mm = (Measure)message_;
+
   // cout << "vediamo: " << ((Measure)message_).get_measure_id() << endl;
   // int test = 0;
 
@@ -65,7 +67,7 @@ vector<Event> Event::execute_action() {
       // cout << "New agent id: " << ((StorageNode*)new_event.get_agent())->get_node_id() << endl; 
       break;
     case storage_node_receive_measure:
-      // new_events = ((StorageNode*)agent_)->manage_measure(mm);
+      // new_events = ((StorageNode*)agent_)->manage_measure((Measure)message_));
       break;
     case spread_measure:
       break;
