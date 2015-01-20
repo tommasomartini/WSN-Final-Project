@@ -113,7 +113,7 @@ vector<Event> SensorNode::generate_measure() {
     // a significant schedule time!
     Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
     event_to_enqueue.set_agent(this);
-    event_to_enqueue.set_message(measure_);
+    event_to_enqueue.set_message(&measure_);
 
     event_queue_.push(event_to_enqueue);
 
@@ -129,14 +129,14 @@ vector<Event> SensorNode::generate_measure() {
       MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
       try_again_event.set_agent(this);
-      try_again_event.set_message(measure_);
+      try_again_event.set_message(&measure_);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       cout << "Next node e' gia' occupato" << endl;
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
       try_again_event.set_agent(this);
-      try_again_event.set_message(measure_);
+      try_again_event.set_message(&measure_);
       new_events.push_back(try_again_event);
     } else {  // sender and receiver both idle, can send the message
       cout << "Posso trasmettere! Sensore e nodo liberi" << endl;
@@ -144,7 +144,7 @@ vector<Event> SensorNode::generate_measure() {
       MyTime new_schedule_time = current_time + message_time;
       Event receive_message_event(new_schedule_time, Event::storage_node_receive_measure);
       receive_message_event.set_agent(next_node);
-      receive_message_event.set_message(measure_);
+      receive_message_event.set_message(&measure_);
       new_events.push_back(receive_message_event);
 
       // Update the timetable

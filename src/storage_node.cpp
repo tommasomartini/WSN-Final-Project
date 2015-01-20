@@ -13,7 +13,7 @@ using namespace std;
 //   LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
 // }
 
-vector<Event> manage_measure(Measure measure) {
+vector<Event> manage_measure(Measure *measure) {
   vector<Event> new_events;
   return new_events;
 } 
@@ -188,7 +188,7 @@ vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage lis
         StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
         Event new_event(10, Event::remove_measure); // to set event time!!!!!!!
         new_event.set_agent(next_node);   
-        new_event.set_message(message_to_remove);
+        new_event.set_message(&message_to_remove);
         new_events.push_back(new_event);
     }
     return new_events;

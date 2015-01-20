@@ -208,7 +208,7 @@ int main() {
   Measure mmeasure(18, 11, 0, Measure::new_measure);
   Event test_event(0, Event::storage_node_receive_measure);
   test_event.set_agent(storage_nodes.at(0));
-  test_event.set_message(mmeasure);
+  test_event.set_message(&mmeasure);
   test_event.execute_action();
 
   // event_list.push_back(Event(7));

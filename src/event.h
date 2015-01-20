@@ -73,7 +73,7 @@ class Event {
 
   int time_;
   Agent *agent_;
-  Message message_;
+  Message *message_;
   Event::EventTypes event_type_;
   BlacklistMessage list_;
 
@@ -86,12 +86,12 @@ class Event {
 
   MyTime get_time() {return time_;}
   Agent* get_agent() {return agent_;}
-  Message get_message() {return message_;}
+  Message* get_message() {return message_;}
   EventTypes get_event_type() {return event_type_;}
   BlacklistMessage get_blacklist() {return list_;}
 
   void set_agent(Agent*);
-  void set_message(Message);
+  void set_message(Message*);
   void set_blacklist(BlacklistMessage);
 
   vector<Event> execute_action();

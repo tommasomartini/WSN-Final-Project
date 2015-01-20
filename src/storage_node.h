@@ -26,7 +26,7 @@ class StorageNode: public Node {
 
   unsigned char get_xored_measure() {return xored_measure_;}
   void manage_message();
-  vector<Event> manage_measure(Measure); 
+  vector<Event> manage_measure(Measure*); 
   void set_supervision_map_(int, int);
   vector<Event> check_sensors(int);
   vector<Event> spread_blacklist(int,BlacklistMessage);
