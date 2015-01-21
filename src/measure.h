@@ -12,8 +12,8 @@ using namespace std;
 class Measure : public Message {
  public:
   enum MeasureTypes {
-    new_measure,  // single measure
-    update_measure  // XOR of new measure and old measure
+    measure_type_new,  // single measure
+    measure_type_update  // XOR of new measure and old measure
   };
 
  private:
@@ -31,7 +31,7 @@ class Measure : public Message {
   void set_measure(unsigned char /*measure*/);
   void set_measure_id(int measure_id);
   void set_source_sensor_id(int);
-  void set_message_type(Measure::MeasureTypes);
+  void set_measure_type(Measure::MeasureTypes);
   
   unsigned char get_measure() {return measure_;}
   int get_measure_id() {return measure_id_;}

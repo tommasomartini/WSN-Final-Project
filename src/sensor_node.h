@@ -33,6 +33,8 @@ class SensorNode: public Node {
   int my_supervisor_id_;
   int measure_id_;
   bool first_generated_measure_;
+
+  vector<Event> send_measure(StorageNode* next_node);
 };
 
 #endif

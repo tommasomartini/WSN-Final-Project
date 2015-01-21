@@ -205,7 +205,7 @@ int main() {
   // test_event.execute_action();
 
 
-  Measure mmeasure(18, 11, 0, Measure::new_measure);
+  Measure mmeasure(18, 11, 0, Measure::measure_type_new);
   Event test_event(0, Event::storage_node_receive_measure);
   test_event.set_agent(storage_nodes.at(0));
   test_event.set_message(&mmeasure);

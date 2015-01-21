@@ -6,7 +6,7 @@ Measure::Measure() {
   measure_ = 0;
   measure_id_ = 0;
   source_sensor_id_ = 0;
-  measure_type_ = Measure::new_measure;
+  measure_type_ = Measure::measure_type_new;
 }
 
 Measure::Measure(unsigned char measure) {
@@ -15,7 +15,7 @@ Measure::Measure(unsigned char measure) {
   measure_ = measure;
   measure_id_ = 0;
   source_sensor_id_ = 0;
-  measure_type_ = Measure::new_measure;
+  measure_type_ = Measure::measure_type_new;
 }
 
 Measure::Measure(unsigned char measure, int measure_id, int source_sensor_id, Measure::MeasureTypes measure_type) {
@@ -39,8 +39,8 @@ void Measure::set_source_sensor_id(int source_sensor_id) {
   source_sensor_id_ = source_sensor_id;
 }
 
-void Measure::set_message_type(Measure::MeasureTypes message_type) {
-  measure_type_ = message_type;
+void Measure::set_measure_type(Measure::MeasureTypes measure_type) {
+  measure_type_ = measure_type;
 }
   
 int Measure::increase_hop_counter() {
