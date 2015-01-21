@@ -13,7 +13,8 @@ using namespace std;
 //   LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
 // }
 
-vector<Event> StorageNode::manage_measure(Measure *measure) {
+<<<<<<< HEAD
+vector<Event> StorageNode::manage_measure(Measure* measure) {
   vector<Event> new_events;
   return new_events;
 } 

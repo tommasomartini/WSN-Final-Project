@@ -7,13 +7,17 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/sensor_node.h</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/measure.h</file>
             <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/event.h</file>
             <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/my_toolbox.h</file>
-            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/sensor_node.cpp</file>
             <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/blacklist_message.h</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/message.cpp</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/storage_node.h</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/storage_node.cpp</file>
             <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/blacklist_message.cpp</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/message.h</file>
             <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/event.cpp</file>
+            <file>file:/Users/Arianna/Desktop/WSN-Final-Project/src/measure.cpp</file>
         </group>
     </open-files>
 </project-private>

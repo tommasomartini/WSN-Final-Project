@@ -4,8 +4,13 @@
 
 #include "event.h"
 #include "sensor_node.h"
+<<<<<<< HEAD
 #include "measure.h"
 // #include "storage_node.h"
+=======
+#include "storage_node.h"
+#include "measure.h"
+>>>>>>> 23ee708ca60042f98569adb5087433d785de4637
 // #include "my_toolbox.h"
 
 Event::Event(MyTime event_time) {
@@ -68,6 +73,7 @@ vector<Event> Event::execute_action() {
       // cout << "New event time: " << new_event.get_time() << endl; 
       // cout << "New agent id: " << ((StorageNode*)new_event.get_agent())->get_node_id() << endl; 
       break;
+<<<<<<< HEAD
     }
     case storage_node_receive_measure: {
       new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
