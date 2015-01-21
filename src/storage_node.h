@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class StorageNode: public Node {
+class StorageNode : public Node {
 
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
