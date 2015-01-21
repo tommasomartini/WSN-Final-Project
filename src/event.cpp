@@ -5,6 +5,7 @@
 #include "event.h"
 #include "sensor_node.h"
 #include "storage_node.h"
+#include "measure.h"
 // #include "my_toolbox.h"
 
 Event::Event(MyTime event_time) {
@@ -68,7 +69,7 @@ vector<Event> Event::execute_action() {
       // cout << "New agent id: " << ((StorageNode*)new_event.get_agent())->get_node_id() << endl; 
       break;
     case storage_node_receive_measure:
-      // new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
+       new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
       break;
     case spread_measure:
       break;
