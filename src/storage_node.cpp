@@ -71,6 +71,14 @@ vector<Event> StorageNode::manage_measure(Measure* measure) {
   return new_events;
 } 
 
+vector<Event> StorageNode::try_retx_measure(Measure* measure, int next_node_id) {
+  // StorageNode* next_node = near_storage_nodes.find
+  // return send_measure(next_node, measure);
+
+  vector<Event> new_events;
+  return new_events;
+}
+
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
     if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end() ){
         supervisioned_map_.insert(std::pair<int, int>(sensor_id,new_time));
@@ -261,7 +269,7 @@ vector<Event> StorageNode::send_measure(StorageNode* next_node, Measure* measure
       if (!event_queue_.empty()) {  // if there are other events in the queue
         cout << "Altri eventi in coda" << endl;
         Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
-        event_queue_.pop(); // remove the oldest event form the queue
+        event_queue_.pop(); // remove the oldest event frrm the queue
         Event popped_event(current_time + message_time, top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time
         popped_event.set_agent(this);
         popped_event.set_message(top_queue_event.get_message());

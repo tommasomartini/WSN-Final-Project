@@ -14,19 +14,26 @@ using namespace std;
 class StorageNode : public Node {
 
  public:
+  // Constructrs
   StorageNode() : Node () {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
   StorageNode(int node_id) : Node (node_id) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
   StorageNode(int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
 
+  // Getters
   unsigned char get_xored_measure() {return xored_measure_;}
-  void manage_message();
-  vector<Event> manage_measure(Measure*); 
-  void set_supervision_map_(int, int);
-  vector<Event> check_sensors(int);
-  vector<Event> spread_blacklist(int,BlacklistMessage);
-  vector<Event> remove_mesure(Measure);
 
-  int do_action() {return 5;} // for debugging only
+  // Setters
+  void set_supervision_map_(int, int);
+
+  // Event execution methods
+  vector<Event> manage_measure(Measure*); // Tom
+  vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
+  vector<Event> check_sensors(int); // Arianna
+  vector<Event> spread_blacklist(int,BlacklistMessage); // Arianna
+  vector<Event> remove_mesure(Measure); // Arianna
+
+  // Debugging
+  int do_action() {return 5;}
 
  private:
   typedef MyToolbox::MyTime MyTime;

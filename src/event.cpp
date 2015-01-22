@@ -53,8 +53,11 @@ vector<Event> Event::execute_action() {
       new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
       break;
     }
-    case spread_measure:
+    case storage_node_try_to_send_measure: {
+      int next_node_id = message_->get_receiver_node_id();
+      new_events = ((StorageNode*)agent_)->try_retx_measure((Measure*)message_, next_node_id);
       break;
+    }
     case blacklist_sensor: {
       new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
       // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;

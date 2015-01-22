@@ -4,7 +4,7 @@
 // using namespace std;
 
 class Message {
-   public:
+ public:
   enum MessageTypes {
     message_type_measure,
     message_type_blacklist,
@@ -13,7 +13,11 @@ class Message {
     message_type_new_node
   } message_type_;
 
-  // int test_int; // for debugging purposes only
+  int get_receiver_node_id() {return receiver_node_id_;}
+  void set_receiver_node_id(int);
+
+ private:
+  int receiver_node_id_;
 };
 
 #endif

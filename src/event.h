@@ -36,6 +36,8 @@
 #include "my_toolbox.h"
 #include "blacklist_message.h"
 
+    // #include "node.h"
+
 using namespace std;
 
 class Event {
@@ -47,7 +49,6 @@ class Event {
     sensor_try_to_send_measure,
     storage_node_try_to_send_measure,
     storage_node_receive_measure,
-    spread_measure,
 
     // Arianna
     blacklist_sensor,
