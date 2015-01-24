@@ -46,7 +46,8 @@ OBJECTFILES= \
 	${OBJECTDIR}/_ext/1360937237/sensor_node.o \
 	${OBJECTDIR}/_ext/1360937237/storage_node.o \
 	${OBJECTDIR}/_ext/1360937237/storage_node_message.o \
-	${OBJECTDIR}/_ext/1360937237/user.o
+	${OBJECTDIR}/_ext/1360937237/user.o \
+	${OBJECTDIR}/_ext/1360937237/user_message.o
 
 
 # C Compiler Flags
@@ -132,6 +133,11 @@ ${OBJECTDIR}/_ext/1360937237/user.o: ../src/user.cpp
 	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/user.o ../src/user.cpp
+
+${OBJECTDIR}/_ext/1360937237/user_message.o: ../src/user_message.cpp 
+	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/user_message.o ../src/user_message.cpp
 
 # Subprojects
 .build-subprojects:

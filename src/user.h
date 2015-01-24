@@ -40,8 +40,8 @@ class User:  public Node{
   bool message_passing(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
   vector<Event> move_user(int);  // the user "walks" randomly among the area
-  vector<Event> user_send_to_user(User*, int );
-  void set_output_symbol(); 
+  vector<Event> user_send_to_user(User*, int);
+  vector<Event> user_receive_data(int);  
   
    protected:
   typedef map<int, unsigned char>::iterator my_iterator;  // define my type of iterator

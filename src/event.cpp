@@ -85,7 +85,10 @@ vector<Event> Event::execute_action() {
     case node_send_to_user:
       break;
     case user_send_to_user:
-        // new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
+         new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
+      break;
+      case user_receive_data:
+         new_events = ((User*)agent_)->user_receive_data(time_);
       break;
     case new_storage_node:
       break;
