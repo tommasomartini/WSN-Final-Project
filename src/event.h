@@ -54,9 +54,9 @@ class Event {
     blacklist_sensor,
     sensor_ping,
     check_sensors,
+    remove_measure,
 
     // To do
-    remove_measure,
     user_node_query,
     user_user_query,
     new_storage_node,
