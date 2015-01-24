@@ -211,8 +211,9 @@ int main() {
 
 
   Measure mmeasure(18, 11, 0, Measure::measure_type_new);
-  Event test_event(0, Event::storage_node_receive_measure);
-  test_event.set_agent(storage_nodes.at(0));
+  mmeasure.set_receiver_node_id(1);
+  Event test_event(0, Event::sensor_try_to_send);
+  test_event.set_agent(sensors.at(0));
   test_event.set_message(&mmeasure);
   test_event.execute_action();
 

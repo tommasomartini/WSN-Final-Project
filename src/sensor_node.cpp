@@ -113,7 +113,7 @@ vector<Event> SensorNode::generate_measure() {
   //   // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
   //   // I will unfold it and I will build up a brand new event with its pieces and then I will set
   //   // a significant schedule time!
-  //   Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
+  //   Event event_to_enqueue(0, Event::sensor_try_to_send);
   //   event_to_enqueue.set_agent(this);
   //   event_to_enqueue.set_message(&measure_);
 
@@ -129,14 +129,14 @@ vector<Event> SensorNode::generate_measure() {
   //   if (my_available_time > current_time) { // sensor already involved in a communication or surrounded by another communication
   //     cout << "Il sensore e' gia' occupato" << endl;
   //     MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
-  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
   //     try_again_event.set_agent(this);
   //     try_again_event.set_message(&measure_);
   //     new_events.push_back(try_again_event);
   //   } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
   //     cout << "Next node e' gia' occupato" << endl;
   //     MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
-  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
   //     try_again_event.set_agent(this);
   //     try_again_event.set_message(&measure_);
   //     new_events.push_back(try_again_event);
@@ -259,7 +259,7 @@ vector<Event> SensorNode::send_measure(StorageNode* next_node) {
     // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
     // I will unfold it and I will build up a brand new event with its pieces and then I will set
     // a significant schedule time!
-    Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
+    Event event_to_enqueue(0, Event::sensor_try_to_send);
     event_to_enqueue.set_agent(this);
     event_to_enqueue.set_message(&measure_);
 
@@ -275,14 +275,14 @@ vector<Event> SensorNode::send_measure(StorageNode* next_node) {
     if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
       cout << "Il sensore e' gia' occupato" << endl;
       MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(&measure_);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       cout << "Next node e' gia' occupato" << endl;
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(&measure_);
       new_events.push_back(try_again_event);
@@ -348,7 +348,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
     // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
     // I will unfold it and I will build up a brand new event with its pieces and then I will set
     // a significant schedule time!
-    Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
+    Event event_to_enqueue(0, Event::sensor_try_to_send);
     event_to_enqueue.set_agent(this);
     event_to_enqueue.set_message(message);
 
@@ -364,14 +364,14 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
     if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
       cout << "Il sensore e' gia' occupato" << endl;
       MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       cout << "Next node e' gia' occupato" << endl;
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
