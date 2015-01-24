@@ -79,12 +79,12 @@ vector<Event> Event::execute_action() {
         new_events = ((StorageNode*)agent_)->remove_mesure((Measure*)message_);
       break;
     case move_user:
-        new_events = ((User*)agent_)->move_user(time_);
+        // new_events = ((User*)agent_)->move_user(time_);
       break;
     case node_send_to_user:
       break;
     case user_send_to_user:
-        new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
+        // new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
       break;
     case new_storage_node:
       break;
@@ -98,16 +98,6 @@ vector<Event> Event::execute_action() {
       //cout <<"Il nuovo evento creato da check è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
     }
-    case remove_sensor:
-      break;
-    case add_sensor:
-      break;
-    case remove_node:
-      break;
-    case add_node:
-      break;
-    case network_reset:
-      break;
     default:
       break;  // remove this break! No break in the default option!
   }

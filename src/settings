@@ -1,0 +1,22 @@
+NUM_STORAGE_NODES = 3
+NUM_SENSORS = 2
+NUM_USERS = 1
+
+NUM_BITS_FOR_MEASURE = 8
+NUM_BITS_FOR_ID = 32
+NUM_BITS_PHY_MAC_OVERHEAD = 34 * 8 + 20 * 8
+
+WIRELESS_CHANNEL_BITRATE = 1
+
+PING_FREQUENCY = 10; //numero a caso
+CHECK_SENSORS_FREQUENCY = 50; //numero a caso
+
+C1 = 1;
+
+RAY_LENGTH = 20
+
+SQUARE_SIZE = 5
+SPACE_PRECISION = 1000
+
+const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
+const int TX_RANGE = 10; // tx_range in meters

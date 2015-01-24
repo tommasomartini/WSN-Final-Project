@@ -130,11 +130,11 @@ void MyToolbox::set_near_user(Node* node){
 }
 
 void MyToolbox::remove_near_storage_node(Node* node, StorageNode *storage_node) {
-  node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
+  // node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
 }
 
 void MyToolbox::remove_near_user(Node* node, User *user) {
-  node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
+  // node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
 }
 
 User* MyToolbox::new_user(){

@@ -7,6 +7,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 */
 
 #include <iostream>
+#include <fstream>    /* read, write from or to files */
 #include <vector>
 #include <map>
 #include <stdlib.h>     /* srand, rand */
@@ -46,13 +47,48 @@ const int SPACE_PRECISION = 1000; // how many fundamental space units in one met
 
 const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
 const int TX_RANGE = 10; // tx_range in meters
+
+string file_name = "file di provaaa";
+void import_settings(string nn) {
+  cout << "Importing settings from file: " << nn << endl;
+}
   
 int main() {
 
-  // int a = 3;
-  // int b = 10000000;
-  // int c = 10000000000;
-  // cout << a + b + c << endl;
+  // import_settings(file_name);
+
+  // ofstream myfile ("example.txt");
+  // if (myfile.is_open())
+  // {
+  //   myfile << "This is a line.\n";
+  //   myfile << "This is another line.\n";
+  //   myfile.close();
+  // }
+  // else cout << "Unable to open file";
+
+  // string line;
+  // ifstream myfile2 ("example.txt");
+  // if (myfile2.is_open())
+  // {
+  //   while ( getline (myfile2,line) )
+  //   {
+  //     cout << line << '\n';
+  //   }
+  //   myfile2.close();
+  // }
+
+  // else cout << "Unable to open file"; 
+  // std::string s = "scott>=tiger>=mushroom";
+  // std::string delimiter = ">=";
+
+  // size_t pos = 0;
+  // std::string token;
+  // while ((pos = s.find(delimiter)) != std::string::npos) {
+  //     token = s.substr(0, pos);
+  //     std::cout << token << std::endl;
+  //     s.erase(0, pos + delimiter.length());
+  // }
+  // std::cout << s << std::endl;
 
   srand(time(NULL));  // generate a random seed to generate random numbers later on
 
@@ -223,12 +259,12 @@ int main() {
   // test_event.execute_action();
 
 
-  Measure mmeasure(18, 11, 0, Measure::measure_type_new);
-  mmeasure.set_receiver_node_id(1);
-  Event test_event(0, Event::sensor_try_to_send);
-  test_event.set_agent(sensors.at(0));
-  test_event.set_message(&mmeasure);
-  test_event.execute_action();
+  // Measure mmeasure(18, 11, 0, Measure::measure_type_new);
+  // mmeasure.set_receiver_node_id(1);
+  // Event test_event(0, Event::sensor_try_to_send);
+  // test_event.set_agent(sensors.at(0));
+  // test_event.set_message(&mmeasure);
+  // test_event.execute_action();
 
   // event_list.push_back(Event(7));
   // event_list.push_back(Event(8));

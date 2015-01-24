@@ -7,13 +7,15 @@
 
 #include <vector> 
 #include <map> 
+
 #include "agent.h"
 
-using namespace std;
 class SensorNode;
 class StorageNode;
 class User;
 class Node;
+
+using namespace std;
 
 class MyToolbox {
  public:
@@ -21,9 +23,15 @@ class MyToolbox {
 
   static constexpr double LIGHT_SPEED = 299792458; // meter / seconds
   
+  // Vectors of the nodes
   static vector<SensorNode*> sensor_nodes_;
   static vector<StorageNode*> storage_nodes_;
-  static vector<User*> users_;  
+  static vector<User*> users_;
+
+  // Maps <node_id, node_reference>
+  static map<int, Node*>* sensors_map_ptr;
+  static map<int, Node*>* storage_nodes_map_ptr; 
+  static map<int, User*>* users_map_ptr; 
 
   // getters
   static MyTime get_current_time() {return current_time_;}
