@@ -41,7 +41,7 @@ class SensorNode: public Node {
   int measure_id_;
   bool first_generated_measure_;
 
-  vector<Event> send_measure(StorageNode*);
+  vector<Event> send_measure(StorageNode*); // DEPRECATED
   vector<Event> send(StorageNode*, Message*);
 };
 
