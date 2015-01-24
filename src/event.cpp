@@ -38,9 +38,6 @@ void Event::set_message(Message *message) {
   message_ = message;
 }
 
-void Event::set_agent_to_reply(Agent *agent) {
-  agent_to_reply_ = agent;
-}
 
 vector<Event> Event::execute_action() {
 

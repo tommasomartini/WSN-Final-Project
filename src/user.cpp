@@ -202,16 +202,20 @@ vector<Event> User::move_user(int event_time) {
                 
         // creates event user_node_query with all near nodes
         for(int i=0; i<near_storage_nodes.size(); i++){
+            UserMessage* message;
+            message->set_user_to_reply(this);
             Event new_event(event_time, Event::node_send_to_user); //event time distanziarli
             new_event.set_agent(near_storage_nodes.at(i));
-            new_event.set_agent_to_reply(this);
+            new_event.set_message(message);
             new_events.push_back(new_event);
         }
         // creates event user_user_query with all near users
         for(int i=0; i<near_users.size(); i++){
+            UserMessage* message;
+            message->set_user_to_reply(this);
             Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
             new_event.set_agent(near_users.at(i));
-            new_event.set_agent_to_reply(this);
+            new_event.set_message(message);
             new_events.push_back(new_event);
         }
         // create next move_user
