@@ -2,10 +2,12 @@
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
 #include <random>   // genertion of random variables -> require -std=c++11
-
 #include "my_toolbox.h"
-
+#include "node.h"
+#include "storage_node.h"
+#include "user.h"
 using namespace std;
+
 
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
@@ -19,6 +21,17 @@ double MyToolbox::channel_bit_rate_ = 0;
 map<int, MyToolbox::MyTime> MyToolbox::timetable_;
 int MyToolbox::ping_frequency_ = 0;
 int MyToolbox::check_sensors_frequency_=0;
+double MyToolbox::user_velocity_=0;
+long MyToolbox::user_update_time_=0;
+int MyToolbox::tx_range_=0;
+int MyToolbox::space_precision_=0;
+int MyToolbox::square_size_=0;
+
+vector<SensorNode*> MyToolbox::sensor_nodes_;
+vector<StorageNode*> MyToolbox::storage_nodes_;
+vector<User*> MyToolbox::users_;
+
+
 
 void MyToolbox::set_current_time(MyToolbox::MyTime current_time) {
   current_time_ = current_time;
@@ -64,7 +77,73 @@ void MyToolbox::set_ping_frequency(int ping_frequency) {
 void MyToolbox::set_check_sensors_frequency(int check_sensors_frequency) {
   check_sensors_frequency_ =check_sensors_frequency;
 }
+void MyToolbox::set_user_velocity(double velocity){
+    user_velocity_ = velocity;
+}
 
+void MyToolbox::set_user_update_time() {
+    user_update_time_ = (tx_range_/user_velocity_)*pow(10,9);    // time for do tx_range
+}
+
+void MyToolbox::set_tx_range(int range) {
+    tx_range_=range;
+}
+
+void MyToolbox::set_space_precision(int space_precision){
+    space_precision_=space_precision;
+}
+
+void MyToolbox::set_square_size(int square_size){
+    square_size_=square_size;
+}
+
+void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor){
+    sensor_nodes_=sensor;
+}
+
+void MyToolbox::set_storage_nodes(vector<StorageNode*> storage){
+    storage_nodes_=storage;
+}
+
+void MyToolbox::set_users(vector<User*> user){
+    users_=user;
+}
+
+void MyToolbox::set_near_storage_node(Node* node){
+    for(int i = 0; i< node->near_storage_nodes.size(); i++)
+          MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(i));
+      
+    for(int i = 0; i< storage_nodes_.size(); i++){
+          if (Node::are_nodes_near(storage_nodes_.at(i),node) == true)
+              node->add_near_sensor_node(storage_nodes_.at(i));
+      }
+}
+
+void MyToolbox::set_near_user(Node* node){
+    for(int i = 0; i< node->near_users.size(); i++)
+          MyToolbox::remove_near_user(node, (User*)node->near_users.at(i));
+      
+    for(int i = 0; i< users_.size(); i++){
+          if (Node::are_nodes_near(users_.at(i),node) == true)
+              node->add_near_user(users_.at(i));
+      }  
+}
+
+void MyToolbox::remove_near_storage_node(Node* node, StorageNode *storage_node) {
+  node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
+}
+
+void MyToolbox::remove_near_user(Node* node, User *user) {
+  node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
+}
+
+User* MyToolbox::new_user(){
+    double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+    double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+    User* new_user = new User(users_.size(),y_coord,x_coord);
+    users_.push_back (new_user);
+    return new_user;
+}
 int MyToolbox::get_ideal_soliton_distribution_degree() {
 
   /*
