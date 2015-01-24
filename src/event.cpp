@@ -79,7 +79,8 @@ vector<Event> Event::execute_action() {
         new_events = ((StorageNode*)agent_)->remove_mesure((Measure*)message_);
       break;
     case move_user:
-        // new_events = ((User*)agent_)->move_user(time_);
+        new_events = ((User*)agent_)->move_user(time_);
+        cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
       break;
     case node_send_to_user:
       break;

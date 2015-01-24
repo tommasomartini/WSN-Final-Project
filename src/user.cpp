@@ -191,6 +191,12 @@ vector<Event> User::move_user(int event_time) {
         // find new near_storage and near_user
         MyToolbox::set_near_storage_node(this);
         MyToolbox::set_near_user(this);
+        
+        cout<<"nuove coordinate y="<<y_coord_;
+        cout<<"quanti nodi ho vicino? "<<near_storage_nodes.size()<<endl;
+        cout<<"quanti user ho vicino?"<<near_users.size()<<endl;
+
+                
         // creates event user_node_query with all near nodes
         for(int i=0; i<near_storage_nodes.size(); i++){
             Event new_event(event_time, Event::node_send_to_user); //event time distanziarli
@@ -216,11 +222,14 @@ vector<Event> User::move_user(int event_time) {
 vector<Event> User::user_send_to_user(User* user, int event_time){
     vector<Event> new_events; 
     if(user_on_==true){
-        output_symbols_.insert(output_symbols_.end(), user->output_symbols_.begin(), user->output_symbols_.end()); // controlla è tardi!
+        cout<<"size old "<<user->output_symbols_.size()<<endl;
+//        cout<<"ci aggiungo "<<user->output_symbols_<<.end();
+        user->output_symbols_.insert(user->output_symbols_.end(), output_symbols_.begin(), output_symbols_.end()); // controlla è tardi!
+        cout<<"size new "<<user->output_symbols_.size()<<endl;
         //try message passing
-        if (message_passing()){ 
+        if (user->message_passing()){ 
             // the user succeed message passing, now delete this user and create a new user
-            user_on_=false;
+            user->user_on_=false;
             User *new_user = MyToolbox::new_user();
             Event new_event(event_time+10, Event::move_user); //event time da cambiare
             new_event.set_agent(new_user);
@@ -228,4 +237,11 @@ vector<Event> User::user_send_to_user(User* user, int event_time){
         }
     }   
     return new_events;
+}
+
+//-->ONLY FOR CHECK <--- TO REMOVE!!
+void User::set_output_symbol(){
+   vector <int> a = {1,2};
+    StorageNodeMessage* s =new StorageNodeMessage('0',a);
+    output_symbols_.push_back({'0',a});
 }

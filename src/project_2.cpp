@@ -28,7 +28,7 @@ using namespace std;
 // Parameters
 const int NUM_STORAGE_NODES = 3;
 const int NUM_SENSORS = 2;
-const int NUM_USERS = 1;
+const int NUM_USERS = 3;
 
 const int NUM_BITS_FOR_MEASURE = 8; // in bits
 const int NUM_BITS_FOR_ID = 32;   // in bits
@@ -46,7 +46,8 @@ const int SQUARE_SIZE = 5;  // in meters
 const int SPACE_PRECISION = 1000; // how many fundamental space units in one meter
 
 const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
-const int TX_RANGE = 10; // tx_range in meters
+
+const int TX_RANGE = 1; // tx_range in meters
 
 string file_name = "file di provaaa";
 void import_settings(string nn) {
@@ -117,15 +118,12 @@ int main() {
   map<int, Node*> sensors_map;
   map<int, Node*> storage_nodes_map;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
-    
-  MyToolbox::set_sensor_nodes(sensors);
-  MyToolbox::set_storage_nodes(storage_nodes);
-  MyToolbox::set_users(users);
   
   map<int, MyToolbox::MyTime> timetable;
 
   int sensor_id = 0;
   int storage_node_id = 0;
+  int user_id = 0;
 
   double y_coord;
   double x_coord;
@@ -214,13 +212,18 @@ int main() {
   }
 
   // // Create the users
-  // for (int i = 1; i <= NUM_USERS; i++) {
-  //   y_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-  //   x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-  //   User *user = new User(node_id++, y_coord, x_coord);
-  //   users.push_back(user);
-  // }
-
+   for (int i = 1; i <= NUM_USERS; i++) {
+     y_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
+     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
+     User *user = new User(user_id++, y_coord, x_coord);
+     users.push_back(user);
+   }
+ 
+  MyToolbox::set_sensor_nodes(sensors);
+  MyToolbox::set_storage_nodes(storage_nodes);
+  MyToolbox::set_users(users);
+  
+  
   // for (User *user : users) {
   //   y1 = user->get_y_coord();
   //   x1 = user->get_x_coord();
@@ -321,7 +324,21 @@ int main() {
   Event test_event4(71,Event::remove_measure);
      test_event4.set_agent(storage_nodes.at(0));
      vector<Event> aaa = test_event4.execute_action();
-  */
   
+  */
+  // for (User *user : users) {
+  //   cout<<"y "<<user->get_y_coord()<<"x "<<user->get_x_coord();}
+
+   // Event test_event2(30, Event::move_user);
+   //test_event2.set_agent(users.at(0));
+   //vector<Event> aaa = test_event2.execute_action();
+   
+   
+   users.at(1)->set_output_symbol();
+   Event test_event2(33, Event::user_send_to_user);
+   test_event2.set_agent(users.at(1));
+   test_event2.set_agent_to_reply(users.at(0));
+   vector<Event> aaa = test_event2.execute_action();
+
   return 0;
 }

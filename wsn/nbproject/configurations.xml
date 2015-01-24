@@ -11,6 +11,7 @@
       <itemPath>../src/message.h</itemPath>
       <itemPath>../src/my_toolbox.h</itemPath>
       <itemPath>../src/node.h</itemPath>
+      <itemPath>../src/node_dispatcher.h</itemPath>
       <itemPath>../src/sensor_node.h</itemPath>
       <itemPath>../src/storage_node.h</itemPath>
       <itemPath>../src/storage_node_message.h</itemPath>
@@ -29,6 +30,7 @@
       <itemPath>../src/message.cpp</itemPath>
       <itemPath>../src/my_toolbox.cpp</itemPath>
       <itemPath>../src/node.cpp</itemPath>
+      <itemPath>../src/node_dispatcher.cpp</itemPath>
       <itemPath>../src/project_2.cpp</itemPath>
       <itemPath>../src/sensor_node.cpp</itemPath>
       <itemPath>../src/storage_node.cpp</itemPath>
