@@ -58,6 +58,10 @@ vector<Event> Event::execute_action() {
       new_events = ((SensorNode*)agent_)->generate_measure(); 
       break;
     }
+    case sensor_try_to_send: {
+      new_events = ((SensorNode*)agent_)->try_retx(message_, message_->get_receiver_node_id()); 
+      break;
+    }
     case storage_node_receive_measure: {
       new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
       break;
@@ -81,10 +85,6 @@ vector<Event> Event::execute_action() {
       break;
     case user_send_to_user:
         new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
-      break;
-    case user_node_query:
-      break;
-    case user_user_query:
       break;
     case new_storage_node:
       break;

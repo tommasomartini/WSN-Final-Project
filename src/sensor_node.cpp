@@ -5,7 +5,7 @@
 #include <map>
 
 #include "sensor_node.h"
-// #include "my_toolbox.h"
+#include "node_dispatcher.h"
 
 SensorNode::SensorNode (int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
@@ -71,7 +71,7 @@ vector<Event> SensorNode::generate_measure() {
     - other node receives my measure / try to send again -> it depends by the channel!
       I must go through the timetable...
 */
-  new_events = send_measure(next_node);
+  new_events = send(next_node, &measure_);
   unsigned long rand1 = rand();
   unsigned long rand2 = rand();
   unsigned long rand3 = rand();
@@ -112,7 +112,7 @@ vector<Event> SensorNode::generate_measure() {
   //   // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
   //   // I will unfold it and I will build up a brand new event with its pieces and then I will set
   //   // a significant schedule time!
-  //   Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
+  //   Event event_to_enqueue(0, Event::sensor_try_to_send);
   //   event_to_enqueue.set_agent(this);
   //   event_to_enqueue.set_message(&measure_);
 
@@ -128,14 +128,14 @@ vector<Event> SensorNode::generate_measure() {
   //   if (my_available_time > current_time) { // sensor already involved in a communication or surrounded by another communication
   //     cout << "Il sensore e' gia' occupato" << endl;
   //     MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
-  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
   //     try_again_event.set_agent(this);
   //     try_again_event.set_message(&measure_);
   //     new_events.push_back(try_again_event);
   //   } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
   //     cout << "Next node e' gia' occupato" << endl;
   //     MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
-  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+  //     Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
   //     try_again_event.set_agent(this);
   //     try_again_event.set_message(&measure_);
   //     new_events.push_back(try_again_event);
@@ -168,6 +168,12 @@ vector<Event> SensorNode::generate_measure() {
   // }
   
   return new_events;
+}
+
+vector<Event> SensorNode::try_retx(Message* message, int next_node_id) {
+  map<int, Node*>* nodes_map = NodeDispatcher::storage_nodes_map_ptr;
+  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
+  return send(next_node, message);
 }
 
 vector<Event> SensorNode::sensor_ping(int event_time){
@@ -220,7 +226,8 @@ vector<Event> SensorNode::sensor_ping(int event_time){
                  All the other nodes will wait for an offset! Just this sensor will try to execute all
                  of its events in a row (I think... :S )
 */
-vector<Event> SensorNode::send_measure(StorageNode* next_node) {
+
+vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   vector<Event> new_events;
 
   // Compute the message time
@@ -246,15 +253,14 @@ vector<Event> SensorNode::send_measure(StorageNode* next_node) {
   MyTime message_time = propagation_time + processing_time + transfer_time;
   cout << "Message time = " << message_time << " ns" << endl;
 
-  // Update the timetable
   if (!event_queue_.empty()) {  // already some pending event
     cout << "At least an event in the event queue: enqueue this event too." << endl;
     // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
     // I will unfold it and I will build up a brand new event with its pieces and then I will set
     // a significant schedule time!
-    Event event_to_enqueue(0, Event::sensor_try_to_send_measure);
+    Event event_to_enqueue(0, Event::sensor_try_to_send);
     event_to_enqueue.set_agent(this);
-    event_to_enqueue.set_message(&measure_);
+    event_to_enqueue.set_message(message);
 
     event_queue_.push(event_to_enqueue);
 
@@ -268,24 +274,24 @@ vector<Event> SensorNode::send_measure(StorageNode* next_node) {
     if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
       cout << "Il sensore e' gia' occupato" << endl;
       MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
-      try_again_event.set_message(&measure_);
+      try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       cout << "Next node e' gia' occupato" << endl;
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
-      Event try_again_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
-      try_again_event.set_message(&measure_);
+      try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else {  // sender and receiver both idle, can send the message
       cout << "Posso trasmettere! I nodi sono liberi" << endl;
       // Schedule the new receive event
       MyTime new_schedule_time = current_time + message_time;
-      Event receive_message_event(new_schedule_time, Event::sensor_try_to_send_measure);
+      Event receive_message_event(new_schedule_time, Event::storage_node_receive_measure);
       receive_message_event.set_agent(next_node);
-      receive_message_event.set_message(&measure_);
+      receive_message_event.set_message(message);
       new_events.push_back(receive_message_event);
 
       // Update the timetable

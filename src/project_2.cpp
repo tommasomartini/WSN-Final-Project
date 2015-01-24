@@ -1,20 +1,16 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp -o wir -std=c++11 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp node_dispatcher.cpp -o wir -std=c++11 
 
 -pthread -std=c++11
 
 */
 
 #include <iostream>
-// #include <stdio.h>
 #include <vector>
 #include <map>
 #include <stdlib.h>     /* srand, rand */
-// #include <thread>
-// #include <chrono>
 #include <math.h>   // pow, sqrt
-// #include <time.h>       /* time */
 
 #include "node.h"
 #include "storage_node.h"
@@ -24,6 +20,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "my_toolbox.h"
 #include "event.h"
 #include "user.h"
+#include "node_dispatcher.h"
 
 using namespace std;
 
@@ -80,6 +77,9 @@ int main() {
   vector<SensorNode*> sensors;
   vector<StorageNode*> storage_nodes;
   vector<User*> users;
+
+  map<int, Node*> sensors_map;
+  map<int, Node*> storage_nodes_map;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
     
   MyToolbox::set_sensor_nodes(sensors);
@@ -98,6 +98,7 @@ int main() {
     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
     SensorNode *node = new SensorNode(sensor_id++, y_coord, x_coord);
     sensors.push_back(node);
+    sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
     // all_nodes.push_back(node);
   }
 
@@ -106,11 +107,14 @@ int main() {
     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
     StorageNode *node = new StorageNode(storage_node_id++, y_coord, x_coord);
     storage_nodes.push_back(node);
+    storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<int, int>(node->get_node_id(), 0));
     // all_nodes.push_back(node);
   }
 
- MyToolbox::set_timetable(timetable);
+  NodeDispatcher::sensors_map_ptr = &sensors_map;
+  NodeDispatcher::storage_nodes_map_ptr = &storage_nodes_map;
+  MyToolbox::set_timetable(timetable);
 
   SensorNode *sensor1;
   SensorNode *sensor2;
@@ -220,8 +224,9 @@ int main() {
 
 
   Measure mmeasure(18, 11, 0, Measure::measure_type_new);
-  Event test_event(0, Event::storage_node_receive_measure);
-  test_event.set_agent(storage_nodes.at(0));
+  mmeasure.set_receiver_node_id(1);
+  Event test_event(0, Event::sensor_try_to_send);
+  test_event.set_agent(sensors.at(0));
   test_event.set_message(&mmeasure);
   test_event.execute_action();
 

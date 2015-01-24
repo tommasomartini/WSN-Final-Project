@@ -46,7 +46,7 @@ class Event {
   enum EventTypes {
     // Tom
     sensor_generate_measure,
-    sensor_try_to_send_measure,
+    sensor_try_to_send,
     storage_node_try_to_send_measure,
     storage_node_receive_measure,
 
@@ -56,13 +56,10 @@ class Event {
     check_sensors,
     remove_measure,
     move_user,
+    user_send_to_user,
 
     // To do
     node_send_to_user,
-    user_send_to_user,
-    
-    user_node_query,
-    user_user_query,
     new_storage_node,
     remove_sensor,
     add_sensor,

@@ -2,6 +2,7 @@
 #define __NODE_H__  
 
 #include <vector>
+#include <map>
 #include <queue>
 
 #include "agent.h"
@@ -18,6 +19,9 @@ class Node : public Agent {
   vector<Node*> near_storage_nodes;
   vector<Node*> near_sensor_nodes;
   vector<Node*> near_users;
+
+  map<int, Node*>* near_sensors_;
+  map<int, Node*>* near_storage_nodes_;
 
   Node();
   Node(int /*node_id*/);

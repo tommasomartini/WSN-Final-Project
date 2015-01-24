@@ -41,6 +41,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/_ext/1360937237/message.o \
 	${OBJECTDIR}/_ext/1360937237/my_toolbox.o \
 	${OBJECTDIR}/_ext/1360937237/node.o \
+	${OBJECTDIR}/_ext/1360937237/node_dispatcher.o \
 	${OBJECTDIR}/_ext/1360937237/project_2.o \
 	${OBJECTDIR}/_ext/1360937237/sensor_node.o \
 	${OBJECTDIR}/_ext/1360937237/storage_node.o \
@@ -101,6 +102,11 @@ ${OBJECTDIR}/_ext/1360937237/node.o: ../src/node.cpp
 	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/node.o ../src/node.cpp
+
+${OBJECTDIR}/_ext/1360937237/node_dispatcher.o: ../src/node_dispatcher.cpp 
+	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/node_dispatcher.o ../src/node_dispatcher.cpp
 
 ${OBJECTDIR}/_ext/1360937237/project_2.o: ../src/project_2.cpp 
 	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237

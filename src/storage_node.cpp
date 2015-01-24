@@ -5,8 +5,7 @@
 #include <math.h>
 
 #include "storage_node.h"
-#include "my_toolbox.h"
-
+#include "node_dispatcher.h"
   
 using namespace std;
 
@@ -73,11 +72,9 @@ vector<Event> StorageNode:: manage_measure(Measure* measure) {
 } 
 
 vector<Event> StorageNode::try_retx_measure(Measure* measure, int next_node_id) {
-  // StorageNode* next_node = near_storage_nodes.find
-  // return send_measure(next_node, measure);
-
-  vector<Event> new_events;
-  return new_events;
+  map<int, Node*>* nodes_map = NodeDispatcher::storage_nodes_map_ptr;
+  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
+  return send_measure(next_node, measure);
 }
 
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
