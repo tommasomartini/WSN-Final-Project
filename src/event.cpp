@@ -63,7 +63,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case storage_node_receive_measure: {
-      new_events = ((StorageNode*)agent_)->manage_measure((Measure*)message_);
+      new_events = ((StorageNode*)agent_)->receive_measure((Measure*)message_);
       break;
     }
     case storage_node_try_to_send_measure: {
@@ -79,15 +79,13 @@ vector<Event> Event::execute_action() {
         new_events = ((StorageNode*)agent_)->remove_mesure((Measure*)message_);
       break;
     case move_user:
-        new_events = ((User*)agent_)->move_user(time_);
-        cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
+        // new_events = ((User*)agent_)->move_user(time_);
+        // cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
       break;
     case node_send_to_user:
       break;
     case user_send_to_user:
         // new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
-      break;
-    case new_storage_node:
       break;
     case sensor_ping: {
       new_events = ((SensorNode*)agent_)->sensor_ping(time_);

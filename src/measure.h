@@ -40,6 +40,7 @@ class Measure : public Message {
   Measure::MeasureTypes get_measure_type() {return measure_type_;}
 
   int increase_hop_counter();
+  unsigned int get_message_size();
 };
 
 #endif

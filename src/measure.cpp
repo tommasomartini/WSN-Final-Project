@@ -1,4 +1,5 @@
 #include "measure.h"
+#include "my_toolbox.h"
 
 Measure::Measure() {
   message_type_ = message_type_measure;
@@ -41,6 +42,18 @@ void Measure::set_source_sensor_id(int source_sensor_id) {
 
 void Measure::set_measure_type(Measure::MeasureTypes measure_type) {
   measure_type_ = measure_type;
+}
+
+unsigned int Measure::get_message_size() {
+  unsigned int message_size = 0;
+  int num_measures = measure_type_ == measure_type_new ? 1 : 2; // new or update measure? It may contain 1 or 2 measures
+  message_size += MyToolbox::get_bits_for_measure() * num_measures; 
+  message_size += MyToolbox::get_bits_for_measure_id();
+  message_size += MyToolbox::get_bits_for_id();
+  message_size += MyToolbox::get_bits_for_hop_counter();
+  message_size += 1;  // new/update measure
+  message_size += MyToolbox::get_bits_for_phy_mac_overhead();
+  return message_size;
 }
   
 int Measure::increase_hop_counter() {

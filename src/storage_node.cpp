@@ -9,14 +9,13 @@
   
 using namespace std;
 
-
-vector<Event> StorageNode:: manage_measure(Measure* measure) {
+/**********************
+    Event execution methods
+**********************/
+vector<Event> StorageNode::receive_measure(Measure* measure) {
   vector<Event> new_events;
-
   int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
-  cout << "Storage " << node_id_ << "-> new measure from sensor " << source_id << endl;
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
-    cout << "New measure from a sensor" << endl;
     /*
       Sampling interval must be larger smaller than the smallest interval probability.
       I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
@@ -33,39 +32,28 @@ vector<Event> StorageNode:: manage_measure(Measure* measure) {
     int k = MyToolbox::get_k();
     int d = LT_degree_;
     double prob = 1;
-    printf("Storage %i-> k=%i, d=%i, prob=%3.2f\n", node_id_, k, d, prob);
     if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
       int M = 10 * max(k/d, k/(k - d)); // if d == k this gives a zero denominator
       prob = (rand() % M) / (double)(M - 1);
     }
-    printf("Storage %i-> k=%i, d=%i, prob=%3.2f\n", node_id_, k, d, prob);
     // accept the new msg with probability d/k
     if (prob <= LT_degree_ / k) { // accept it!
       xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-      cout << "Storage " << node_id_ << "-> accept new msg from sensor " << source_id << ". Now stores " << static_cast<unsigned>(xored_measure_) << endl;
       last_measures_.insert(pair<int, int>(source_id, measure->get_measure_id()));  // save this measure
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-    cout << "Update measure from a sensor" << endl;
     if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
       xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-      cout << "Storage " << node_id_ << "-> accept update from sensor " << source_id << ". Now stores " << static_cast<unsigned>(xored_measure_) << endl;
       last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
     }
-  } else {
-    cout << "Storage " << node_id_ << "-> Error! Neither new_msg nor update " << endl;
   }
 
   measure->increase_hop_counter();
   int hop_limit = MyToolbox::get_max_msg_hops();
-  cout << "Hop counter from my toolbox: " << hop_limit << endl;
   if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     int next_node_index = rand() % near_storage_nodes.size();
     StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-    cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(measure->get_measure()) << " to node " << next_node->get_node_id() << endl;
     new_events = send_measure(next_node, measure);
-  } else {
-    cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(measure->get_measure()) << " is not to be forwarded" << endl;
   }
 
   return new_events;
@@ -75,6 +63,12 @@ vector<Event> StorageNode::try_retx_measure(Measure* measure, int next_node_id) 
   map<int, Node*>* nodes_map = NodeDispatcher::storage_nodes_map_ptr;
   StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
   return send_measure(next_node, measure);
+}
+
+vector<Event> StorageNode::try_retx(Message* message, int next_node_id) {
+  map<int, Node*>* nodes_map = NodeDispatcher::storage_nodes_map_ptr;
+  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
+  return send(next_node, message);
 }
 
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
@@ -188,6 +182,93 @@ vector<Event> StorageNode::remove_mesure(Measure* message_to_remove){
                  All the other nodes will wait for an offset! Just this sensor will try to execute all
                  of its events in a row (I think... :S )
 */
+vector<Event> StorageNode::send(Node* next_node, Message* message) {
+  vector<Event> new_events;
+
+  // Compute the message time
+  double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
+  MyTime propagation_time = (MyTime)((distance / MyToolbox::LIGHT_SPEED) * pow(10, 9));   // in nano-seconds
+  MyTime processing_time = MyToolbox::get_random_processing_time();
+  unsigned int num_total_bits = message->get_message_size();
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 9) / MyToolbox::get_channel_bit_rate_()); // in nano-seconds
+  MyTime message_time = propagation_time + processing_time + transfer_time;
+
+  // Update the timetable
+  if (!event_queue_.empty()) {  // already some pending event
+    // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
+    // I will unfold it and I will build up a brand new event with its pieces and then I will set
+    // a significant schedule time!
+    Event event_to_enqueue(0, Event::storage_node_try_to_send);
+    event_to_enqueue.set_agent(this);
+    event_to_enqueue.set_message(message);
+    event_queue_.push(event_to_enqueue);
+
+    // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
+  } else {  // no pending events
+    map<int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+    MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+    MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
+    MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
+    if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
+      MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(message);
+      new_events.push_back(try_again_event);
+    } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+      MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send_measure);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(message);
+      new_events.push_back(try_again_event);
+    } else {  // sender and receiver both idle, can send the message
+      // Schedule the new receive event
+      MyTime new_schedule_time = current_time + message_time;
+      // Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+      Event::EventTypes this_event_type;
+      switch (message->message_type_) {
+        case Message::message_type_measure: {
+          this_event_type = Event::storage_node_receive_measure;
+          break;
+        }
+        case Message::message_type_blacklist: {
+          this_event_type = Event::blacklist_sensor;
+          break;
+        }
+        case Message::message_type_remove_measure: {
+          this_event_type = Event::remove_measure;
+          break;
+        }
+        default:
+          this_event_type = Event::storage_node_receive_measure;
+      }
+      Event receive_message_event(new_schedule_time, this_event_type);
+      receive_message_event.set_agent(next_node);
+      receive_message_event.set_message(message);
+      new_events.push_back(receive_message_event);
+
+      // Update the timetable
+      timetable.find(node_id_)->second = current_time + message_time; // update my available time
+      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+      }
+      MyToolbox::set_timetable(timetable);  // upload the updated timetable
+
+      // Update the event_queue_
+      if (!event_queue_.empty()) {  // if there are other events in the queue
+        Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
+        event_queue_.pop(); // remove the oldest event frrm the queue
+        Event popped_event(current_time + message_time + MyToolbox::get_tx_offset(), top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time
+        popped_event.set_agent(this);
+        popped_event.set_message(top_queue_event.get_message());
+        new_events.push_back(popped_event); // schedule the next event
+      }
+    }
+  }
+  
+  return new_events;
+}
+
 vector<Event> StorageNode::send_measure(StorageNode* next_node, Measure* measure) {
   vector<Event> new_events;
 

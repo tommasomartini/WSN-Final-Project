@@ -1,6 +1,6 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp node_dispatcher.cpp -o wir -std=c++11 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp node_dispatcher.cpp user.cpp -o wir -std=c++11 
 
 -pthread -std=c++11
 
@@ -49,10 +49,10 @@ const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
 
 const int TX_RANGE = 1; // tx_range in meters
 
-string file_name = "file di provaaa";
-void import_settings(string nn) {
-  cout << "Importing settings from file: " << nn << endl;
-}
+// const string file_name = "file di provaaa";
+// void import_settings(string nn) {
+//   cout << "Importing settings from file: " << nn << endl;
+// }
   
 int main() {
 
@@ -334,11 +334,11 @@ int main() {
    //vector<Event> aaa = test_event2.execute_action();
    
    
-   users.at(1)->set_output_symbol();
-   Event test_event2(33, Event::user_send_to_user);
-   test_event2.set_agent(users.at(1));
-   test_event2.set_agent_to_reply(users.at(0));
-   vector<Event> aaa = test_event2.execute_action();
+   // users.at(1)->set_output_symbol();
+   // Event test_event2(33, Event::user_send_to_user);
+   // test_event2.set_agent(users.at(1));
+   // test_event2.set_agent_to_reply(users.at(0));
+   // vector<Event> aaa = test_event2.execute_action();
 
   return 0;
 }

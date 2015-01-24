@@ -2,12 +2,13 @@
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
 #include <random>   // genertion of random variables -> require -std=c++11
+
 #include "my_toolbox.h"
 #include "node.h"
 #include "storage_node.h"
 #include "user.h"
-using namespace std;
 
+using namespace std;
 
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
@@ -17,6 +18,8 @@ int MyToolbox::max_msg_hops_ = 0;
 int MyToolbox::bits_for_measure_ = 0;
 int MyToolbox::bits_for_id_ = 0;
 int MyToolbox::bits_for_phy_mac_overhead_ = 0;
+int MyToolbox::bits_for_measure_id_ = 0;
+int MyToolbox::bits_for_hop_counter_ = 0;
 double MyToolbox::channel_bit_rate_ = 0;
 map<int, MyToolbox::MyTime> MyToolbox::timetable_;
 int MyToolbox::ping_frequency_ = 0;
@@ -60,6 +63,14 @@ void MyToolbox::set_bits_for_id(int bits_for_id) {
 
 void MyToolbox::set_bits_for_phy_mac_overhead(int bits_for_phy_mac_overhead) {
   bits_for_phy_mac_overhead_ = bits_for_phy_mac_overhead;
+}
+
+void MyToolbox::set_bits_for_measure_id(int bits_for_measure_id) {
+  bits_for_measure_id_ = bits_for_measure_id;
+}
+
+void MyToolbox::set_bits_for_hop_counter(int bits_for_hop_counter) {
+  bits_for_hop_counter_ = bits_for_hop_counter;
 }
 
 void MyToolbox::set_channel_bit_rate(double channel_bit_rate) {
@@ -200,11 +211,11 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
-  // default_random_engine generator;
-  // normal_distribution<double> distribution(MEAN_PROCESSING_TIME, STD_DEV_PROCESSING_TIME);
-  // int rnd_proc_time = (int)(distribution(generator));
-  // return rnd_proc_time;
-  return MEAN_PROCESSING_TIME;
+  default_random_engine generator;
+  normal_distribution<double> distribution(MEAN_PROCESSING_TIME, STD_DEV_PROCESSING_TIME);
+  MyTime rnd_proc_time = (MyTime)(distribution(generator));
+  return rnd_proc_time;
+  // return MEAN_PROCESSING_TIME;
 }
 
 MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
@@ -215,3 +226,13 @@ MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
   cout << "offset: " << offset << endl;
   return offset;
 }
+
+MyToolbox::MyTime MyToolbox::get_tx_offset() {
+  int rand1 = rand();
+  int rand2 = rand();
+  unsigned long long_rand = rand1 * rand2;
+  MyTime offset = long_rand % (MAX_OFFSET - 1) + 1;
+  cout << "offset: " << offset << endl;
+  return offset;
+}
+

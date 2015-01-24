@@ -47,7 +47,8 @@ class Event {
     // Tom
     sensor_generate_measure,
     sensor_try_to_send,
-    storage_node_try_to_send_measure,
+    storage_node_try_to_send,
+    storage_node_try_to_send_measure, // TO DEPRECATE
     storage_node_receive_measure,
 
     // Arianna

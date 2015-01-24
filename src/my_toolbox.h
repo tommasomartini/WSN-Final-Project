@@ -40,6 +40,8 @@ class MyToolbox {
   static int get_bits_for_measure() {return bits_for_measure_;}
   static int get_bits_for_id() {return bits_for_id_;}
   static int get_bits_for_phy_mac_overhead() {return bits_for_phy_mac_overhead_;}
+  static int get_bits_for_measure_id() {return bits_for_measure_id_;}
+  static int get_bits_for_hop_counter() {return bits_for_hop_counter_;}
   static int get_max_msg_hops() {return max_msg_hops_;}
   static double get_channel_bit_rate_() {return channel_bit_rate_;}
   static map<int, MyTime> get_timetable() {return timetable_;}
@@ -47,7 +49,7 @@ class MyToolbox {
   static int get_check_sensors_frequency_() {return check_sensors_frequency_;}
   static int get_tx_range() {return tx_range_;}
   static long get_user_update_time(){return user_update_time_;} 
-  static int get_user_size(){return users_.size();}
+  static int get_user_size() {return users_.size();}
   static int get_space_precision(){return space_precision_;}
   static int get_square_size(){return square_size_;} 
 
@@ -59,6 +61,8 @@ class MyToolbox {
   static void set_bits_for_measure(int);
   static void set_bits_for_id(int);
   static void set_bits_for_phy_mac_overhead(int);
+  static void set_bits_for_measure_id(int);
+  static void set_bits_for_hop_counter(int);
   static void set_channel_bit_rate(double);
   static void set_timetable(map<int, MyTime>);
   static void set_ping_frequency(int);
@@ -86,6 +90,7 @@ class MyToolbox {
   // Return a uniform random offset a node must wait when it finds the channel busy.
   // The value is uniformly distributed between 1ns and MAX_OFFSET ns
   static MyTime get_retransmission_offset();
+  static MyTime get_tx_offset();
 
  private:
   static const int MEAN_PROCESSING_TIME = 100000; // 100us, in nano-seconds
@@ -102,6 +107,8 @@ class MyToolbox {
   static int bits_for_measure_; // number of bits to represent a measure
   static int bits_for_id_; // number of bits to represent a node identifier
   static int bits_for_phy_mac_overhead_; // number of bits for PHY and MAC overhead
+  static int bits_for_measure_id_;  // number of bits to represent a measure id
+  static int bits_for_hop_counter_; // number of bits to represent the hop_counter
   static int max_msg_hops_; // maximum number of steps a message can do from the source, in the RW
   static double channel_bit_rate_;  // bit rate of the wireless channel, in bit/seconds
   static int ping_frequency_; // frequency at which sensors do "ping"
