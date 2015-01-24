@@ -2,6 +2,7 @@
 #define __NODE_H__  
 
 #include <vector>
+#include <map>
 #include <queue>
 
 #include "agent.h"
@@ -17,6 +18,9 @@ class Node : public Agent {
   // TODO: sostituire con una mappa <id, riferimento al nodo> ?
   vector<Node*> near_storage_nodes;
   vector<Node*> near_sensor_nodes;
+
+  map<int, Node*>* near_sensors_;
+  map<int, Node*>* near_storage_nodes_;
 
   Node();
   Node(int /*node_id*/);

@@ -23,6 +23,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 // #include "user.h"
 #include "my_toolbox.h"
 #include "event.h"
+#include "node_dispatcher.h"
 
 using namespace std;
 
@@ -70,6 +71,10 @@ int main() {
 // Set up the network
   vector<SensorNode*> sensors;
   vector<StorageNode*> storage_nodes;
+
+
+  map<int, Node*> sensors_map;
+  map<int, Node*> storage_nodes_map;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
 
   map<int, MyToolbox::MyTime> timetable;
@@ -84,6 +89,7 @@ int main() {
     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
     SensorNode *node = new SensorNode(sensor_id++, y_coord, x_coord);
     sensors.push_back(node);
+    sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
     // all_nodes.push_back(node);
   }
 
@@ -92,11 +98,14 @@ int main() {
     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
     StorageNode *node = new StorageNode(storage_node_id++, y_coord, x_coord);
     storage_nodes.push_back(node);
+    storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<int, int>(node->get_node_id(), 0));
     // all_nodes.push_back(node);
   }
 
- MyToolbox::set_timetable(timetable);
+  NodeDispatcher::sensors_map_ptr = &sensors_map;
+  NodeDispatcher::storage_nodes_map_ptr = &storage_nodes_map;
+  MyToolbox::set_timetable(timetable);
 
   SensorNode *sensor1;
   SensorNode *sensor2;
