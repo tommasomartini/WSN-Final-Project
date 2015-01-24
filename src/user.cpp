@@ -9,6 +9,8 @@
 #include "stdlib.h"
 #include "event.h"
 #include "storage_node.h"
+#include "user_message.h"
+#include "outdated_measure.h"
 
 using namespace std;
 
@@ -174,6 +176,7 @@ bool User::message_passing() {
     cout << "s" << _id << " = " << static_cast<int>(_val) << endl;
   }
   cout << "- - - \n\n" << endl;
+  input_symbols_=resolved_symbols;
 
   return message_passing_succeeded;
 }
@@ -219,7 +222,8 @@ vector<Event> User::move_user(int event_time) {
   return new_events;
 }
 
-vector<Event> User::user_send_to_user(User* user, int event_time){
+vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
+    User* user = message->get_user_to_reply();
     vector<Event> new_events;
     cout<<"entrata";
     if(user_on_==true){
@@ -240,11 +244,13 @@ vector<Event> User::user_send_to_user(User* user, int event_time){
     return new_events;
 }
 
-vector<Event> User::user_receive_data(int event_time){
+vector<Event> User::user_receive_data(int event_time, UserMessage* message){
     vector<Event> new_events;
     cout<<"entrata";
     if(user_on_==true){
-        
+        // add data
+        StorageNodeMessage message_to_add(message->get_xored_message(),message->get_sensor_id() );
+        output_symbols_.push_back(message_to_add);
         //try message passing
         if (message_passing()){ 
             // the user succeed message passing, now delete this user and create a new user
@@ -255,6 +261,22 @@ vector<Event> User::user_receive_data(int event_time){
             new_events.push_back(new_event);
             
             //if there are elements in black_list spread mesaures
+            //creare messagio id misura e evento spread
+            map<int, unsigned char> outdated_symbols;
+            for (int i=0; i<message->get_blacklist().get_length(); i++){
+                if ( input_symbols_.find(message->get_blacklist().get_id_list()[i])!= input_symbols_.end()){
+                    int id = message->get_blacklist().get_id_list()[i];
+                    unsigned char symbol = input_symbols_.find(id)->second; 
+                    outdated_symbols.insert(pair<int,unsigned char>(id,symbol));
+                    }
+            }
+            OutdatedMeasure* symbols_to_remove = new OutdatedMeasure(outdated_symbols);
+            int next_node_index = rand() % near_storage_nodes.size();
+            StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+            Event event(event_time, Event::remove_measure); //event time da cambiare
+            event.set_agent(next_node);
+            event.set_message(symbols_to_remove);
+            new_events.push_back(event);
         }
     }   
     return new_events;

@@ -12,6 +12,7 @@
       <itemPath>../src/my_toolbox.h</itemPath>
       <itemPath>../src/node.h</itemPath>
       <itemPath>../src/node_dispatcher.h</itemPath>
+      <itemPath>../src/outdated_measure.h</itemPath>
       <itemPath>../src/sensor_node.h</itemPath>
       <itemPath>../src/storage_node.h</itemPath>
       <itemPath>../src/storage_node_message.h</itemPath>
@@ -32,6 +33,7 @@
       <itemPath>../src/my_toolbox.cpp</itemPath>
       <itemPath>../src/node.cpp</itemPath>
       <itemPath>../src/node_dispatcher.cpp</itemPath>
+      <itemPath>../src/outdated_measure.cpp</itemPath>
       <itemPath>../src/project_2.cpp</itemPath>
       <itemPath>../src/sensor_node.cpp</itemPath>
       <itemPath>../src/storage_node.cpp</itemPath>
@@ -93,6 +95,10 @@
       <item path="../src/node_dispatcher.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/node_dispatcher.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/outdated_measure.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/outdated_measure.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../src/project_2.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -166,6 +172,10 @@
       <item path="../src/node_dispatcher.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/node_dispatcher.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../src/outdated_measure.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/outdated_measure.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../src/project_2.cpp" ex="false" tool="1" flavor2="0">
       </item>

@@ -8,6 +8,8 @@
 #include "storage_node.h"
 #include "measure.h"
 #include "user.h"
+#include "outdated_measure.h"
+#include "blacklist_message.h"
 // #include "my_toolbox.h"
 
 
@@ -34,10 +36,6 @@ void Event::set_agent(Agent *agent) {
 
 void Event::set_message(Message *message) {
   message_ = message;
-}
-
-void Event::set_blacklist(BlacklistMessage blacklist) {
-  list_ = blacklist;
 }
 
 void Event::set_agent_to_reply(Agent *agent) {
@@ -72,11 +70,11 @@ vector<Event> Event::execute_action() {
       break;
     }
     case blacklist_sensor:
-        new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
+        new_events = ((StorageNode*)agent_)->spread_blacklist(time_, (BlacklistMessage*)message_);
         // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
         break;
     case remove_measure:
-        new_events = ((StorageNode*)agent_)->remove_mesure((Measure*)message_);
+        new_events = ((StorageNode*)agent_)->remove_mesure((OutdatedMeasure*)message_);
       break;
     case move_user:
         new_events = ((User*)agent_)->move_user(time_);
@@ -85,10 +83,10 @@ vector<Event> Event::execute_action() {
     case node_send_to_user:
       break;
     case user_send_to_user:
-         new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
+         new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);
       break;
       case user_receive_data:
-         new_events = ((User*)agent_)->user_receive_data(time_);
+         new_events = ((User*)agent_)->user_receive_data(time_,(UserMessage*)message_);
       break;
     case new_storage_node:
       break;

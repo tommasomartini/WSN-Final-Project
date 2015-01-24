@@ -42,6 +42,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/_ext/1360937237/my_toolbox.o \
 	${OBJECTDIR}/_ext/1360937237/node.o \
 	${OBJECTDIR}/_ext/1360937237/node_dispatcher.o \
+	${OBJECTDIR}/_ext/1360937237/outdated_measure.o \
 	${OBJECTDIR}/_ext/1360937237/project_2.o \
 	${OBJECTDIR}/_ext/1360937237/sensor_node.o \
 	${OBJECTDIR}/_ext/1360937237/storage_node.o \
@@ -108,6 +109,11 @@ ${OBJECTDIR}/_ext/1360937237/node_dispatcher.o: ../src/node_dispatcher.cpp
 	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/node_dispatcher.o ../src/node_dispatcher.cpp
+
+${OBJECTDIR}/_ext/1360937237/outdated_measure.o: ../src/outdated_measure.cpp 
+	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1360937237/outdated_measure.o ../src/outdated_measure.cpp
 
 ${OBJECTDIR}/_ext/1360937237/project_2.o: ../src/project_2.cpp 
 	${MKDIR} -p ${OBJECTDIR}/_ext/1360937237

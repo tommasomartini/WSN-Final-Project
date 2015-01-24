@@ -14,6 +14,7 @@
 #include "storage_node.h"
 #include "storage_node_message.h"
 #include "event.h"
+#include "user_message.h"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ class User:  public Node{
   int user_id_;
   bool user_on_ = true;
  
-  map <unsigned char, int> input_symbols_;  // list of the decoded measures and id of correspondent sensor
+  map <int,unsigned char> input_symbols_;  // list of the decoded measures and id of correspondent sensor
   // vector<Message> output_symbols_; // list of the xored messages retrieved from the storage nodes
   vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes
 
@@ -40,8 +41,8 @@ class User:  public Node{
   bool message_passing(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
   vector<Event> move_user(int);  // the user "walks" randomly among the area
-  vector<Event> user_send_to_user(User*, int);
-  vector<Event> user_receive_data(int);  
+  vector<Event> user_send_to_user(UserMessage*, int);
+  vector<Event> user_receive_data(int, UserMessage*);  
   
    protected:
   typedef map<int, unsigned char>::iterator my_iterator;  // define my type of iterator
