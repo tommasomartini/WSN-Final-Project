@@ -81,7 +81,7 @@ int main() {
   vector<StorageNode*> storage_nodes;
   vector<User*> users;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
-  
+    
   MyToolbox::set_sensor_nodes(sensors);
   MyToolbox::set_storage_nodes(storage_nodes);
   MyToolbox::set_users(users);

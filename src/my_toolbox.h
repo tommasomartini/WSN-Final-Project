@@ -69,7 +69,7 @@ class MyToolbox {
   
   static void remove_near_storage_node(Node*, StorageNode*);    //remove a StorageNode from the near_storage_node of Node
   static void remove_near_user(Node*, User*);   //remove a User from the near_suser of Node
-  static void new_user(User*);
+  static User* new_user();
   
   // functions
   static int get_ideal_soliton_distribution_degree();

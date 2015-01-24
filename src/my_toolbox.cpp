@@ -137,8 +137,12 @@ void MyToolbox::remove_near_user(Node* node, User *user) {
   node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
 }
 
-void MyToolbox::new_user(User *user){
-    users_.push_back (user);
+User* MyToolbox::new_user(){
+    double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+    double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+    User* new_user = new User(users_.size(),y_coord,x_coord);
+    users_.push_back (new_user);
+    return new_user;
 }
 int MyToolbox::get_ideal_soliton_distribution_degree() {
 

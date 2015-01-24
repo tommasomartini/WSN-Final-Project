@@ -221,13 +221,10 @@ vector<Event> User::user_send_to_user(User* user, int event_time){
         if (message_passing()){ 
             // the user succeed message passing, now delete this user and create a new user
             user_on_=false;
-            double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-            double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-          //  User *user_new = new User(MyToolbox::get_user_size(), y_coord, x_coord);
-          //  MyToolbox::new_user(user_new);
-          //  Event new_event(event_time+10, Event::move_user); //event time da cambiare
-          //  new_event.set_agent(user_new);
-          //  new_events.push_back(new_event);
+            User *new_user = MyToolbox::new_user();
+            Event new_event(event_time+10, Event::move_user); //event time da cambiare
+            new_event.set_agent(new_user);
+            new_events.push_back(new_event);
         }
     }   
     return new_events;
