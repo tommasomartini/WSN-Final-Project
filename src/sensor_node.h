@@ -17,12 +17,19 @@ class SensorNode: public Node {
   // SensorNode (int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {measure_id_ = 0;}
   SensorNode (int node_id, double y_coord, double x_coord);
 
+  // setters
   void set_measure(Measure);
-  Measure get_measure() {return measure_;}
-  vector<Event> generate_measure();
-  vector<Event> sensor_ping(int);
 
-  int do_action() {return 2;} // for debugging only
+  // getters
+  Measure get_measure() {return measure_;}
+
+  // Event execution methods
+  vector<Event> generate_measure(); // Tom
+  vector<Event> try_retx(Message*, int /*next_node_id*/); // Tom
+  vector<Event> sensor_ping(int); // Arianna
+
+  // Debugging
+  int do_action() {return 2;}
 
  private:
   typedef MyToolbox::MyTime MyTime;
@@ -34,7 +41,8 @@ class SensorNode: public Node {
   int measure_id_;
   bool first_generated_measure_;
 
-  vector<Event> send_measure(StorageNode* next_node);
+  vector<Event> send_measure(StorageNode*);
+  vector<Event> send(StorageNode*, Message*);
 };
 
 #endif

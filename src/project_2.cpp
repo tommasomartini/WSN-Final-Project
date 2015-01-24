@@ -1,20 +1,16 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp -o wir -std=c++11 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp node_dispatcher.cpp -o wir -std=c++11 
 
 -pthread -std=c++11
 
 */
 
 #include <iostream>
-// #include <stdio.h>
 #include <vector>
 #include <map>
 #include <stdlib.h>     /* srand, rand */
-// #include <thread>
-// #include <chrono>
 #include <math.h>   // pow, sqrt
-// #include <time.h>       /* time */
 
 #include "node.h"
 #include "storage_node.h"
