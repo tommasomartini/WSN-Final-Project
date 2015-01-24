@@ -5,6 +5,11 @@
 #include "event.h"
 #include "sensor_node.h"
 #include "measure.h"
+#include "storage_node.h"
+#include "measure.h"
+#include "user.h"
+// #include "my_toolbox.h"
+
 
 Event::Event(MyTime event_time) {
   time_ = event_time;
@@ -35,6 +40,10 @@ void Event::set_blacklist(BlacklistMessage blacklist) {
   list_ = blacklist;
 }
 
+void Event::set_agent_to_reply(Agent *agent) {
+  agent_to_reply_ = agent;
+}
+
 vector<Event> Event::execute_action() {
 
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
@@ -58,19 +67,21 @@ vector<Event> Event::execute_action() {
       new_events = ((StorageNode*)agent_)->try_retx_measure((Measure*)message_, next_node_id);
       break;
     }
-    case blacklist_sensor: {
-      new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
-      // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
+    case blacklist_sensor:
+        new_events = ((StorageNode*)agent_)->spread_blacklist(time_, list_);
+        // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
+        break;
+    case remove_measure:
+        new_events = ((StorageNode*)agent_)->remove_mesure((Measure*)message_);
       break;
-    }
-    case remove_measure: {
-      unsigned char message_to_remove = 0;    // da sistemare
-      int id_to_remove = 1;                   // da sistemare
-      Measure mess (message_to_remove);       // da sistemare
-      mess.set_source_sensor_id(id_to_remove);// da sistemare
-      new_events = ((StorageNode*)agent_)->remove_mesure(mess);
+    case move_user:
+        new_events = ((User*)agent_)->move_user(time_);
       break;
-    }
+    case node_send_to_user:
+      break;
+    case user_send_to_user:
+        new_events = ((User*)agent_)->user_send_to_user((User*)agent_to_reply_,time_);
+      break;
     case user_node_query:
       break;
     case user_user_query:

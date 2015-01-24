@@ -54,9 +54,13 @@ class Event {
     blacklist_sensor,
     sensor_ping,
     check_sensors,
+    remove_measure,
+    move_user,
 
     // To do
-    remove_measure,
+    node_send_to_user,
+    user_send_to_user,
+    
     user_node_query,
     user_user_query,
     new_storage_node,
@@ -77,6 +81,7 @@ class Event {
   Message *message_;
   Event::EventTypes event_type_;
   BlacklistMessage list_;
+  Agent *agent_to_reply_;
 
  public:
   Event(MyTime /*time*/);
@@ -90,11 +95,13 @@ class Event {
   Message* get_message() {return message_;}
   EventTypes get_event_type() {return event_type_;}
   BlacklistMessage get_blacklist() {return list_;}
+  Agent* get_user_to_reply() {return agent_to_reply_;}
 
   void set_agent(Agent*);
   void set_message(Message*);
   void set_blacklist(BlacklistMessage);
-
+  void set_agent_to_reply(Agent*);
+  
   vector<Event> execute_action();
 
 

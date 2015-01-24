@@ -23,6 +23,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 // #include "user.h"
 #include "my_toolbox.h"
 #include "event.h"
+#include "user.h"
 
 using namespace std;
 
@@ -45,6 +46,9 @@ const double RAY_LENGTH = 20.;  // in meters
 
 const int SQUARE_SIZE = 5;  // in meters
 const int SPACE_PRECISION = 1000; // how many fundamental space units in one meter
+
+const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
+const int TX_RANGE = 10; // tx_range in meters
   
 int main() {
 
@@ -64,14 +68,24 @@ int main() {
   MyToolbox::set_channel_bit_rate(WIRELESS_CHANNEL_BITRATE * 1000000);
   MyToolbox::set_ping_frequency(PING_FREQUENCY);
   MyToolbox::set_ping_frequency(CHECK_SENSORS_FREQUENCY);
+  MyToolbox::set_space_precision(SPACE_PRECISION);
+  MyToolbox::set_square_size(SQUARE_SIZE);
+  MyToolbox::set_user_velocity(USER_VELOCITY);
+  MyToolbox::set_user_update_time();
+  MyToolbox::set_tx_range(TX_RANGE);
 
   // cout << "max forward number = " << MyToolbox::get_max_msg_hops() << endl;
 
 // Set up the network
   vector<SensorNode*> sensors;
   vector<StorageNode*> storage_nodes;
+  vector<User*> users;
   // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
-
+  
+  MyToolbox::set_sensor_nodes(sensors);
+  MyToolbox::set_storage_nodes(storage_nodes);
+  MyToolbox::set_users(users);
+  
   map<int, MyToolbox::MyTime> timetable;
 
   int sensor_id = 0;
@@ -234,7 +248,8 @@ int main() {
   //   }
   //   event_list.insert(old_event_iterator, *new_event_iterator);
   // }
-
+  
+  
   // check correctness Arianna's part 
   /*
   map <int,int> mappa;

@@ -17,6 +17,7 @@ class Node : public Agent {
   // TODO: sostituire con una mappa <id, riferimento al nodo> ?
   vector<Node*> near_storage_nodes;
   vector<Node*> near_sensor_nodes;
+  vector<Node*> near_users;
 
   Node();
   Node(int /*node_id*/);
@@ -28,6 +29,8 @@ class Node : public Agent {
   double get_x_coord() {return x_coord_;}
   void add_near_storage_node(Node*);
   void add_near_sensor_node(Node*);
+  void add_near_user(Node*);
+  static bool are_nodes_near(Node*, Node*);
 
  protected:
   int node_id_;
@@ -37,6 +40,7 @@ class Node : public Agent {
       not going to be effectively executed.
   */ 
   queue<Event> event_queue_; 
+  
 };
 
 #endif

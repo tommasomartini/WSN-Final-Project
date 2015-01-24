@@ -6,35 +6,14 @@
 #include "user.h"
 #include "storage_node_message.h"
 #include "my_toolbox.h"
+#include "stdlib.h"
+#include "event.h"
+#include "storage_node.h"
 
 using namespace std;
 
-User::User (int user_id) {
-  user_id_ = user_id;
-}
 
-User::User(int user_id, double initial_y_coord, double initial_x_coord) {
-  user_id_ = user_id;
-  y_coord_ = initial_y_coord;
-  x_coord_ = initial_x_coord;
-}
-
-void User::add_near_storage_node(StorageNode *storage_node) {
-  near_storage_nodes.push_back(storage_node);
-}
-
-void User::add_near_sensor_node(SensorNode *sensor_node) {
-  near_sensor_nodes.push_back(sensor_node);
-}
-
-void User::remove_near_storage_node(StorageNode *storage_node) {
-  near_storage_nodes.erase(find(near_storage_nodes.begin(), near_storage_nodes.end(), storage_node));
-}
-
-void User::remove_near_sensor_node(SensorNode *sensor_node) {
-  near_sensor_nodes.erase(find(near_sensor_nodes.begin(), near_sensor_nodes.end(), sensor_node));
-}
-
+/*
 void User::switch_on_user() {
   user_on_ = true;
 
@@ -59,12 +38,16 @@ void User::switch_on_user() {
     return;
   }
 } 
+*/
 
+/*
 void User::switch_off_user() {
   user_on_ = false;
   // thread_.join();
 }
+ */
 
+/*
 void User::collect_data(Message xored_message) {
   if (CRC_check(xored_message)) {
     StorageNodeMessage message(xored_message.get_message(), xored_message.header_);
@@ -73,6 +56,7 @@ void User::collect_data(Message xored_message) {
     cout << "CRC chek failed for messagr from node " << xored_message.get_source_sensor_id() << endl;
   }
 }
+*/
 
 bool User::message_passing() {
 
@@ -109,6 +93,8 @@ bool User::message_passing() {
         we must first remove row 4 and then row 2. Otherwise, after removing row 2, the row which first was row 4 is now row 3
         and we remove the current row 4, which is not what we intended to remove!
     */
+
+
     int index_to_remove;
     for (int i = links_to_remove.size() - 1; i >= 0 ; i--) {  // remove the links of the resolved symbols
       index_to_remove = links_to_remove.at(i);  // index of output_symbols_ to remove
@@ -196,6 +182,53 @@ bool User::CRC_check(Message message) {
   return true;
 }
 
-void User::move() {
-  cout << "User::move is still to be implemented" << endl;
+vector<Event> User::move_user(int event_time) {
+    vector<Event> new_events;
+    if(user_on_==true){ 
+        // simulate the user moving
+        y_coord_=y_coord_+(-MyToolbox::get_tx_range() + rand() % 2*MyToolbox::get_tx_range());    //controlla che abbia un senso
+        x_coord_=x_coord_+(-MyToolbox::get_tx_range() + rand() % 2*MyToolbox::get_tx_range());
+        // find new near_storage and near_user
+        MyToolbox::set_near_storage_node(this);
+        MyToolbox::set_near_user(this);
+        // creates event user_node_query with all near nodes
+        for(int i=0; i<near_storage_nodes.size(); i++){
+            Event new_event(event_time, Event::node_send_to_user); //event time distanziarli
+            new_event.set_agent(near_storage_nodes.at(i));
+            new_event.set_agent_to_reply(this);
+            new_events.push_back(new_event);
+        }
+        // creates event user_user_query with all near users
+        for(int i=0; i<near_users.size(); i++){
+            Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
+            new_event.set_agent(near_users.at(i));
+            new_event.set_agent_to_reply(this);
+            new_events.push_back(new_event);
+        }
+        // create next move_user
+        Event new_event(event_time+MyToolbox::get_user_update_time(),Event::move_user);
+        new_event.set_agent(this);
+        new_events.push_back(new_event);
+        }
+  return new_events;
+}
+
+vector<Event> User::user_send_to_user(User* user, int event_time){
+    vector<Event> new_events; 
+    if(user_on_==true){
+        output_symbols_.insert(output_symbols_.end(), user->output_symbols_.begin(), user->output_symbols_.end()); // controlla è tardi!
+        //try message passing
+        if (message_passing()){ 
+            // the user succeed message passing, now delete this user and create a new user
+            user_on_=false;
+            double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+            double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+          //  User *user_new = new User(MyToolbox::get_user_size(), y_coord, x_coord);
+          //  MyToolbox::new_user(user_new);
+          //  Event new_event(event_time+10, Event::move_user); //event time da cambiare
+          //  new_event.set_agent(user_new);
+          //  new_events.push_back(new_event);
+        }
+    }   
+    return new_events;
 }

@@ -30,7 +30,7 @@ class StorageNode : public Node {
   vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
   vector<Event> check_sensors(int); // Arianna
   vector<Event> spread_blacklist(int,BlacklistMessage); // Arianna
-  vector<Event> remove_mesure(Measure); // Arianna
+  vector<Event> remove_mesure(Measure*); // Arianna
 
   // Debugging
   int do_action() {return 5;}
@@ -46,6 +46,7 @@ class StorageNode : public Node {
   vector<int> my_blacklist_;  // list of the sensor id's no more in the network
 
   vector<Event> send_measure(StorageNode* next_node, Measure* measure);
+ 
 };
 
 #endif
