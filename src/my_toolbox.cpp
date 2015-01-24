@@ -123,9 +123,11 @@ void MyToolbox::set_near_user(Node* node){
     for(int i = 0; i< node->near_users.size(); i++)
           MyToolbox::remove_near_user(node, (User*)node->near_users.at(i));
       
+    cout<<"numero user"<<users_.size()<<endl;
     for(int i = 0; i< users_.size(); i++){
           if (Node::are_nodes_near(users_.at(i),node) == true)
-              node->add_near_user(users_.at(i));
+          {  node->add_near_user(users_.at(i));
+          cout<<"sono dentro"<<endl;}
       }  
 }
 

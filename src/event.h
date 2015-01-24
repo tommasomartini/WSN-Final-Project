@@ -57,6 +57,7 @@ class Event {
     remove_measure,
     move_user,
     user_send_to_user,
+    user_receive_data,
 
     // To do
     node_send_to_user,
