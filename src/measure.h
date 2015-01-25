@@ -18,28 +18,30 @@ class Measure : public Message {
 
  private:
   unsigned char measure_;
-  int measure_id_;  // id of this measure
-  int source_sensor_id_;  // id of the sensor who generated this measure
-  int hop_counter_;
+  unsigned int measure_id_;  // id of this measure
+  unsigned int source_sensor_id_;  // id of the sensor who generated this measure
+  unsigned int hop_counter_;
   Measure::MeasureTypes measure_type_;
   
  public: 
-  Measure();  // to use for debug purposes only. Remove later on?
-  Measure(unsigned char /*measure*/);
-  Measure(unsigned char, int /*measure_id*/, int /*source_sensor_id*/, Measure::MeasureTypes);
+  Measure();  // Cannot remove. Needed in SensorNode::SensorNode()
+  Measure(unsigned char /*measure*/);   // TODO to remove??
+  Measure(unsigned char, unsigned int /*measure_id*/, unsigned int /*source_sensor_id*/, Measure::MeasureTypes);
 
-  void set_measure(unsigned char /*measure*/);
-  void set_measure_id(int measure_id);
-  void set_source_sensor_id(int);
-  void set_measure_type(Measure::MeasureTypes);
-  
+  // getters
   unsigned char get_measure() {return measure_;}
-  int get_measure_id() {return measure_id_;}
-  int get_source_sensor_id() {return source_sensor_id_;}
+  unsigned int get_measure_id() {return measure_id_;}
+  unsigned int get_source_sensor_id() {return source_sensor_id_;}
   int get_hop_counter() {return hop_counter_;}
   Measure::MeasureTypes get_measure_type() {return measure_type_;}
 
-  int increase_hop_counter();
+  // setters
+  // void set_measure(unsigned char /*measure*/);
+  // void set_source_sensor_id(unsigned int);
+  // void set_measure_type(Measure::MeasureTypes);
+
+  // functions
+  unsigned int increase_hop_counter();
   unsigned int get_message_size();
 };
 

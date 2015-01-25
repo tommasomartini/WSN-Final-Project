@@ -1,26 +1,36 @@
-#include "node.h"
-#include "my_toolbox.h"
 #include <math.h>
 
+#include "node.h"
+#include "my_toolbox.h"
+
+/**************************************
+    Constructors
+**************************************/
 Node::Node() {
-  node_id_ = -1;
+  node_id_ = 0;
 }
 
-Node::Node(int node_id) {
+Node::Node(unsigned int node_id) {
   node_id_ = node_id;
 }
 
-Node::Node(int node_id, double y_coord, double x_coord) {
+Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   node_id_ = node_id;
   y_coord_ = y_coord;
   x_coord_ = x_coord;
 }
 
+/**************************************
+    Setters
+**************************************/
 void Node::set_position(double y_coord, double x_coord) {
   y_coord_ = y_coord;
   x_coord_ = x_coord;
 }
 
+/**************************************
+    Functions
+**************************************/
 void Node::add_near_storage_node(Node *node) {
   near_storage_nodes.push_back(node);
 }

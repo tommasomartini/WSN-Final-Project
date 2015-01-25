@@ -16,11 +16,9 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "node.h"
 #include "storage_node.h"
 #include "sensor_node.h"
-#include "blacklist_message.h"
 #include "my_toolbox.h"
 #include "event.h"
 #include "user.h"
-#include "node_dispatcher.h"
 
 using namespace std;
 
@@ -77,6 +75,8 @@ void import_settings() {
           MyToolbox::num_storage_nodes = (int)num;
         } else if (value_name == "num_sensors") {
           MyToolbox::num_sensors = (int)num;
+        } else if (value_name == "max_num_users") {
+          MyToolbox::max_num_users = (int)num;
         } else if (value_name == "num_users") {
           MyToolbox::num_users = (int)num;
         } else if (value_name == "num_bits_for_id") {
@@ -115,6 +115,8 @@ void import_settings() {
           MyToolbox::max_tx_offset = (MyTime)num;
         } else if (value_name == "max_tx_offset_ping") {
           MyToolbox::max_tx_offset_ping = (MyTime)num;
+        } else if (value_name == "max_measure_generation_delay") {
+          MyToolbox::max_measure_generation_delay = (MyTime)num;
         }
       }
     }
@@ -128,6 +130,8 @@ void import_settings() {
 int main() {
 
   import_settings();
+
+  MyToolbox::initialize_toolbox();
 
   srand(time(NULL));  // generate a random seed to generate random numbers later on
 
@@ -152,15 +156,15 @@ int main() {
   vector<StorageNode*> storage_nodes;
   vector<User*> users;
 
-  map<int, Node*> sensors_map;
-  map<int, Node*> storage_nodes_map;
-  map<int, Node*> users_map;
+  map<unsigned int, Node*> sensors_map;
+  map<unsigned int, Node*> storage_nodes_map;
+  map<unsigned int, Node*> users_map;
   
-  map<int, MyToolbox::MyTime> timetable;
+  map<unsigned int, MyToolbox::MyTime> timetable;
 
-  int sensor_id = 0;
-  int storage_node_id = 0;
-  int user_id = 0;
+  // int sensor_id = 0;
+  // int storage_node_id = 0;
+  // int user_id = 0;
 
   double y_coord;
   double x_coord;
@@ -168,7 +172,7 @@ int main() {
   for (int i = 1; i <= MyToolbox::num_sensors; i++) {
     y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
     x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    SensorNode *node = new SensorNode(sensor_id++, y_coord, x_coord);
+    SensorNode *node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
     node->near_sensors_ = &sensors_map;
     node->near_storage_nodes_ = &storage_nodes_map;
     sensors.push_back(node);
@@ -178,21 +182,21 @@ int main() {
   for (int i = 1; i <= MyToolbox::num_storage_nodes; i++) {
     y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
     x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    StorageNode *node = new StorageNode(storage_node_id++, y_coord, x_coord);
+    StorageNode *node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
     node->near_sensors_ = &sensors_map;
     node->near_storage_nodes_ = &storage_nodes_map;
     storage_nodes.push_back(node);
     storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<int, int>(node->get_node_id(), 0));
   }
-  // Create the users
-  for (int i = 1; i <= MyToolbox::num_users; i++) {
-    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    User *user = new User(user_id++, y_coord, x_coord);
-    users.push_back(user);
-    users_map.insert(pair<int, Node*>(user->get_node_id(), user));
-  }
+  // // Create the users
+  // for (int i = 1; i <= MyToolbox::num_users; i++) {
+  //   y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+  //   x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+  //   User *user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
+  //   users.push_back(user);
+  //   users_map.insert(pair<int, Node*>(user->get_node_id(), user));
+  // }
 
   MyToolbox::sensors_map_ptr = &sensors_map;
   MyToolbox::storage_nodes_map_ptr = &storage_nodes_map; 
@@ -265,6 +269,82 @@ int main() {
 
   // Event test_event(10, Event::sensor_generate_measure);
   // test_event.set_agent(sensors.at(0));
+  // Measure mmeasure(18, 11, 0, Measure::measure_type_new);
+  // mmeasure.set_receiver_node_id(1);
+  // Event test_event(0, Event::sensor_try_to_send);
+  // test_event.set_agent(sensors.at(0));
+  // test_event.set_message(&mmeasure);
+  // test_event.execute_action();
+
+  // event_list.push_back(Event(7));
+  // event_list.push_back(Event(8));
+  // event_list.push_back(Event(78));
+
+  // while (!event_list.empty()) {
+  // for (int i = 0; i < 5; i++) {
+
+  //   // TODO: verify next event has a different schedule time than this
+
+  //   Event next_event = *(event_list.begin());
+  //   event_list.erase(event_list.begin());
+  //   vector<Event> new_events = next_event.execute_action();
+
+  //   vector<Event>::iterator new_event_iterator = new_events.begin();
+  //   vector<Event>::iterator old_event_iterator = event_list.begin();
+  //   for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+  //     for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+  //       if (*old_event_iterator > *new_event_iterator)
+  //         break;
+  //     }
+  //   }
+  //   event_list.insert(old_event_iterator, *new_event_iterator);
+  // }
+  
+  
+  // check correctness Arianna's part 
+  /*
+  map <int,int> mappa;
+  mappa[0]=1;
+  mappa[1]=4;
+  
+  MyToolbox::set_timetable(mappa);
+  Event test_event2(30, Event::sensor_ping);
+  test_event2.set_agent(sensors.at(0));
+  
+  
+   test_event2 = test_event2.execute_action();
+  
+   Event test_event3(70, Event::check_sensors);
+  test_event3.set_agent(storage_nodes.at(0));
+     test_event3 = test_event3.execute_action();
+
+     Event test_event4(71,Event::blacklist_sensor);
+     int a=0;
+     int*biiii= &a;
+        BlacklistMessage list(biiii,1);
+     test_event4.set_agent(storage_nodes.at(0));
+     test_event4.set_blacklist(list);
+     test_event4 = test_event4.execute_action();
+  
+  
+  
+  Event test_event4(71,Event::remove_measure);
+     test_event4.set_agent(storage_nodes.at(0));
+     vector<Event> aaa = test_event4.execute_action();
+  
+  */
+  // for (User *user : users) {
+  //   cout<<"y "<<user->get_y_coord()<<"x "<<user->get_x_coord();}
+
+    //Event test_event2(30, Event::move_user);
+   //test_event2.set_agent(users.at(0));
+   //vector<Event> aaa = test_event2.execute_action();
+   
+//   users.at(1)->set_output_symbol();
+ //  Event test_event3(33, Event::user_send_to_user);
+  // test_event3.set_agent(users.at(1));
+  // test_event3.set_agent_to_reply(users.at(0));
+  // vector<Event> aaaa = test_event3.execute_action();
   // test_event.execute_action();
 
 

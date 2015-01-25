@@ -63,7 +63,7 @@ vector<Event> Event::execute_action() {
     }
     case storage_node_try_to_send_measure: {
       int next_node_id = message_->get_receiver_node_id();
-      new_events = ((StorageNode*)agent_)->try_retx_measure((Measure*)message_, next_node_id);
+      new_events = ((StorageNode*)agent_)->try_retx(message_, next_node_id);
       break;
     }
     case blacklist_sensor:

@@ -5,18 +5,28 @@
 #include <map>
 
 #include "sensor_node.h"
-#include "node_dispatcher.h"
+#include "storage_node.h"
+#include "measure.h"
 
-SensorNode::SensorNode (int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
+/**************************************
+    Constructors
+**************************************/
+SensorNode::SensorNode (unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
   first_generated_measure_ = true;
   measure_ = Measure();
 }
 
-void SensorNode::set_measure(Measure measure) {
-	measure_ = measure;
-}
+/**************************************
+    Setters
+**************************************/
+// void SensorNode::set_measure(Measure measure) {
+// 	measure_ = measure;
+// }
 
+/**************************************
+    Event execution methods
+**************************************/
 /*  Return two events: a new measure generation from the same node and the reception of the measure by a storage node
 */
 vector<Event> SensorNode::generate_measure() {
@@ -29,14 +39,14 @@ vector<Event> SensorNode::generate_measure() {
   unsigned char xored_measure_value = new_measure_value ^ measure_.get_measure(); 
 
   // choose the first storage_node randomly
-  int next_node_index = rand() % near_storage_nodes.size();
+  unsigned int next_node_index = rand() % near_storage_nodes.size();
   StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
   // cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(new_measure_value) << " to node " << next_node->get_node_id() << endl;
   my_supervisor_id_ = next_node->get_node_id(); // remember my supervisor
 
   // Create a measure object
   measure_ = Measure(xored_measure_value, measure_id_++, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
-
+  measure_.set_receiver_node_id(next_node->get_node_id());
 /*
     2 events:
     - generate new measure -> no problem: it can happen in any time
@@ -47,9 +57,9 @@ vector<Event> SensorNode::generate_measure() {
   unsigned long rand1 = rand();
   unsigned long rand2 = rand();
   unsigned long rand3 = rand();
-  MyTime time_next_measure = rand1 * rand2 * rand3 % MAX_MEASURE_GENERATION_DELAY;
-  MyTime minutes = time_next_measure / ((MyTime)1000000000 * 60);
-  cout << "Next measure in " << minutes << " minutes" << endl;
+  MyTime time_next_measure = rand1 * rand2 * rand3 % MyToolbox::max_measure_generation_delay;
+  // MyTime minutes = time_next_measure / ((MyTime)1000000000 * 60);
+  // cout << "Next measure in " << minutes << " minutes" << endl;
   Event next_measure_event(time_next_measure, Event::sensor_generate_measure);
   next_measure_event.set_agent(this);
   new_events.push_back(next_measure_event);
@@ -57,14 +67,14 @@ vector<Event> SensorNode::generate_measure() {
   return new_events;
 }
 
-vector<Event> SensorNode::try_retx(Message* message, int next_node_id) {
-  map<int, Node*>* nodes_map = NodeDispatcher::storage_nodes_map_ptr;
+vector<Event> SensorNode::try_retx(Message* message, unsigned int next_node_id) {
+  map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
   StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
   return send(next_node, message);
 }
 
 vector<Event> SensorNode::sensor_ping(int event_time){
-    map<int, MyTime> timetable_ = MyToolbox::get_timetable();
+    map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
      //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
     vector<Event> new_events;
     if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
@@ -89,8 +99,9 @@ vector<Event> SensorNode::sensor_ping(int event_time){
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Private methods
+/**************************************
+    Private methods
+**************************************/
 
 /*  First of all: does this sensor have a pending event? A yet-to-deliver measure?
         I can see this through my Node::event_queue. If it is empty I have not, otherwise
@@ -119,16 +130,17 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
 
   // Compute the message time
   double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
-  MyTime propagation_time = (MyTime)((distance / MyToolbox::LIGHT_SPEED) * pow(10, 9));   // in nano-seconds
+  MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
   MyTime processing_time = MyToolbox::get_random_processing_time();
   int num_total_bits = message->get_message_size();
-  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 9) / MyToolbox::get_channel_bit_rate_()); // in nano-seconds
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 9) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
 
   if (!event_queue_.empty()) {  // already some pending event
-    // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
-    // I will unfold it and I will build up a brand new event with its pieces and then I will set
-    // a significant schedule time!
+    /* I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
+       I will unfold it and I will build up a brand new event with its pieces and then I will set
+       a significant schedule time!
+    */
     Event event_to_enqueue(0, Event::sensor_try_to_send);
     event_to_enqueue.set_agent(this);
     event_to_enqueue.set_message(message);
@@ -136,18 +148,44 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
 
     // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
   } else {  // no pending events
-    map<int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+    map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
     MyTime current_time = MyToolbox::get_current_time();  // current time of the system
     MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
     MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
     if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
-      MyTime new_schedule_time = my_available_time + MyToolbox::get_retransmission_offset();
+      MyTime offset;
+      switch (message->message_type_) {
+        case Message::message_type_measure: {
+          offset = MyToolbox::get_tx_offset();
+          break;
+        }
+        case Message::message_type_ping: {
+          offset = MyToolbox::get_tx_offset_ping();
+          break;
+        }
+        default:
+          break;
+      }
+      MyTime new_schedule_time = my_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-      MyTime new_schedule_time = next_node_available_time + MyToolbox::get_retransmission_offset();
+      MyTime offset;
+      switch (message->message_type_) {
+        case Message::message_type_measure: {
+          offset = MyToolbox::get_tx_offset();
+          break;
+        }
+        case Message::message_type_ping: {
+          offset = MyToolbox::get_tx_offset_ping();
+          break;
+        }
+        default:
+          break;
+      }
+      MyTime new_schedule_time = next_node_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
@@ -167,7 +205,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
           break;
         }
         default:
-          this_event_type = Event::storage_node_receive_measure;
+          break;
       }
       Event receive_message_event(new_schedule_time, this_event_type);
       receive_message_event.set_agent(next_node);

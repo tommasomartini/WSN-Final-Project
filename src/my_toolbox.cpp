@@ -10,9 +10,14 @@
 
 using namespace std;
 
+MyToolbox::MyTime MyToolbox::current_time_ = 0;
+map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
+unsigned int MyToolbox::node_id_ = 0;
+
 //  Global values
 int MyToolbox::num_storage_nodes = 0;
 int MyToolbox::num_sensors = 0;
+int MyToolbox::max_num_users = 0;
 int MyToolbox::num_users = 0;
 
 int MyToolbox::num_bits_for_id = 0;
@@ -41,16 +46,19 @@ MyToolbox::MyTime MyToolbox::std_dev_processing_time = 0;
 MyToolbox::MyTime MyToolbox::max_tx_offset = 0;
 MyToolbox::MyTime MyToolbox::max_tx_offset_ping = 0;
 
-map<int, Node*>* MyToolbox::sensors_map_ptr;
-map<int, Node*>* MyToolbox::storage_nodes_map_ptr; 
-map<int, Node*>* MyToolbox::users_map_ptr; 
+MyToolbox::MyTime MyToolbox::max_measure_generation_delay = 0;
 
+map<unsigned int, Node*>* MyToolbox::sensors_map_ptr;
+map<unsigned int, Node*>* MyToolbox::storage_nodes_map_ptr; 
+map<unsigned int, Node*>* MyToolbox::users_map_ptr; 
+
+
+// TODO remove everything hereafter
 vector<SensorNode*> MyToolbox::sensor_nodes_;
 vector<StorageNode*> MyToolbox::storage_nodes_;
 vector<User*> MyToolbox::users_;
   
 
-MyToolbox::MyTime MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
 int MyToolbox::C1_ = 0;
@@ -61,7 +69,6 @@ int MyToolbox::bits_for_phy_mac_overhead_ = 0;
 int MyToolbox::bits_for_measure_id_ = 0;
 int MyToolbox::bits_for_hop_counter_ = 0;
 double MyToolbox::channel_bit_rate_ = 0;
-map<int, MyToolbox::MyTime> MyToolbox::timetable_;
 int MyToolbox::ping_frequency_ = 0;
 int MyToolbox::check_sensors_frequency_=0;
 double MyToolbox::user_velocity_=0;
@@ -71,10 +78,19 @@ int MyToolbox::space_precision_=0;
 int MyToolbox::square_size_=0;
 
 
-
+/**************************************
+    Setters
+**************************************/
 void MyToolbox::set_current_time(MyToolbox::MyTime current_time) {
   current_time_ = current_time;
 }
+
+void MyToolbox::set_timetable(map<unsigned int, MyTime> timetable) {
+  timetable_ = timetable;
+}
+
+
+///////////////////////////////////////////////////// TODO remove
 
 void MyToolbox::set_n(int n) {
   n_ = n;
@@ -111,10 +127,6 @@ void MyToolbox::set_bits_for_hop_counter(int bits_for_hop_counter) {
 
 void MyToolbox::set_channel_bit_rate(double channel_bit_rate) {
   channel_bit_rate_ = channel_bit_rate;
-}
-
-void MyToolbox::set_timetable(map<int, MyTime> timetable) {
-  timetable_ = timetable;
 }
 
 void MyToolbox::set_ping_frequency(int ping_frequency) {
@@ -186,6 +198,19 @@ void MyToolbox::remove_near_user(Node* node, User *user) {
   // node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////7
+
+/**************************************
+    Functions
+**************************************/
+void MyToolbox::initialize_toolbox() {
+  cout << "Devo ancora fare l'inizializzazione!!" << endl;
+}
+
+unsigned int MyToolbox::get_node_id() {
+  return node_id_++;
+}
+
 User* MyToolbox::new_user(){
     double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
     double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
@@ -248,18 +273,17 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   default_random_engine generator;
-  normal_distribution<double> distribution(MEAN_PROCESSING_TIME, STD_DEV_PROCESSING_TIME);
+  normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
   MyTime rnd_proc_time = (MyTime)(distribution(generator));
   return rnd_proc_time;
-  // return MEAN_PROCESSING_TIME;
 }
 
 MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
   int rand1 = rand();
   int rand2 = rand();
   unsigned long long_rand = rand1 * rand2;
-  MyTime offset = long_rand % (MAX_OFFSET - 1) + 1;
-  cout << "offset: " << offset << endl;
+  MyTime offset = long_rand % (max_tx_offset - 1) + 1;
+  // cout << "offset: " << offset << endl;
   return offset;
 }
 
@@ -267,8 +291,18 @@ MyToolbox::MyTime MyToolbox::get_tx_offset() {
   int rand1 = rand();
   int rand2 = rand();
   unsigned long long_rand = rand1 * rand2;
-  MyTime offset = long_rand % (MAX_OFFSET - 1) + 1;
-  cout << "offset: " << offset << endl;
+  MyTime offset = long_rand % (max_tx_offset - 1) + 1;
+  // cout << "offset: " << offset << endl;
   return offset;
 }
+
+MyToolbox::MyTime MyToolbox::get_tx_offset_ping() {
+  int rand1 = rand();
+  int rand2 = rand();
+  unsigned long long_rand = rand1 * rand2;
+  MyTime offset = long_rand % (max_tx_offset_ping - 1) + 1;
+  // cout << "offset: " << offset << endl;
+  return offset;
+}
+
 

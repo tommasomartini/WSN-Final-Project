@@ -8,7 +8,7 @@ UserMessage::UserMessage() {
     blacklist_=BlacklistMessage();
 }
 
-UserMessage::UserMessage(unsigned char xored_message, vector<int> sensor_ids,BlacklistMessage blacklist) {
+UserMessage::UserMessage(unsigned char xored_message, vector<unsigned int> sensor_ids,BlacklistMessage blacklist) {
     xored_message_= xored_message;
     sensor_ids_=sensor_ids;
     blacklist_=blacklist;
@@ -18,7 +18,7 @@ void UserMessage:: set_xored_message(unsigned char xored_message){
     xored_message_=xored_message;
 }
 
-void UserMessage:: set_sensor_id(vector<int> sensor_id){
+void UserMessage:: set_sensor_id(vector<unsigned int> sensor_id){
     sensor_ids_=sensor_id;
 }
 

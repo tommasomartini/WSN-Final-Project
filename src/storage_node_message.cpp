@@ -2,7 +2,7 @@
 
 #include "storage_node_message.h"
 
-StorageNodeMessage::StorageNodeMessage(unsigned char xored_message, vector<int> sensor_ids) {
+StorageNodeMessage::StorageNodeMessage(unsigned char xored_message, vector<unsigned int> sensor_ids) {
   xored_message_ = xored_message;
   sensor_ids_ = sensor_ids;
 }

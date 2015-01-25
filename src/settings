@@ -1,5 +1,6 @@
 num_storage_nodes=3
 num_sensors=2
+max_num_users=1
 num_users=1
 
 num_bits_for_id=16;
@@ -22,8 +23,10 @@ space_precision=1000 how many units in a meter
 user_velocity=0.8 m/s
 user_update_time=2;
 
-mean_processing_time = 100000 ns
-std_dev_processing_time = 1000000 ns
+mean_processing_time=100000 ns
+std_dev_processing_time=1000000 ns
 
-max_tx_offset = 1000000 ns
-max_tx_offset_ping = 1000000 ns
+max_tx_offset=1000000 ns
+max_tx_offset_ping=1000000 ns
+
+max_measure_generation_delay=3600000000000 ns

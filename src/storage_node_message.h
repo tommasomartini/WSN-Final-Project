@@ -10,8 +10,8 @@ class StorageNodeMessage {
   // vector<int> sensor_ids_;
  public:
   unsigned char xored_message_;
-  vector<int> sensor_ids_;
-  StorageNodeMessage(unsigned char /*xored_message*/, vector<int> /*sensor_ids*/);
+  vector<unsigned int> sensor_ids_;
+  StorageNodeMessage(unsigned char /*xored_message*/, vector<unsigned int> /*sensor_ids*/);
 
   // TODO remove?
   // unsigned char get_message() {return xored_message_;}
