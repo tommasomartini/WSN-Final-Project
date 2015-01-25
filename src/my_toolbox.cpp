@@ -10,6 +10,46 @@
 
 using namespace std;
 
+//  Global values
+int MyToolbox::num_storage_nodes = 0;
+int MyToolbox::num_sensors = 0;
+int MyToolbox::num_users = 0;
+
+int MyToolbox::num_bits_for_id = 0;
+int MyToolbox::num_bits_for_measure = 0;
+int MyToolbox::num_bits_phy_mac_overhead = 0;
+int MyToolbox::num_bits_for_measure_id = 0;
+
+double MyToolbox::bitrate = 0;
+double MyToolbox::ray_length = 0;
+double MyToolbox::tx_range = 0;
+
+int MyToolbox::ping_frequency = 0;
+int MyToolbox::check_sensors_frequency = 0; 
+
+double MyToolbox::C1 = 0;
+
+int MyToolbox::square_size = 0;
+int MyToolbox::space_precision = 0;
+
+double MyToolbox::user_velocity = 0;
+MyToolbox::MyTime MyToolbox::user_update_time = 0;
+
+MyToolbox::MyTime MyToolbox::mean_processing_time = 0;
+MyToolbox::MyTime MyToolbox::std_dev_processing_time = 0;
+
+MyToolbox::MyTime MyToolbox::max_tx_offset = 0;
+MyToolbox::MyTime MyToolbox::max_tx_offset_ping = 0;
+
+map<int, Node*>* MyToolbox::sensors_map_ptr;
+map<int, Node*>* MyToolbox::storage_nodes_map_ptr; 
+map<int, Node*>* MyToolbox::users_map_ptr; 
+
+vector<SensorNode*> MyToolbox::sensor_nodes_;
+vector<StorageNode*> MyToolbox::storage_nodes_;
+vector<User*> MyToolbox::users_;
+  
+
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
@@ -29,10 +69,6 @@ long MyToolbox::user_update_time_=0;
 int MyToolbox::tx_range_=0;
 int MyToolbox::space_precision_=0;
 int MyToolbox::square_size_=0;
-
-vector<SensorNode*> MyToolbox::sensor_nodes_;
-vector<StorageNode*> MyToolbox::storage_nodes_;
-vector<User*> MyToolbox::users_;
 
 
 

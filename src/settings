@@ -1,22 +1,29 @@
-NUM_STORAGE_NODES = 3
-NUM_SENSORS = 2
-NUM_USERS = 1
+num_storage_nodes=3
+num_sensors=2
+num_users=1
 
-NUM_BITS_FOR_MEASURE = 8
-NUM_BITS_FOR_ID = 32
-NUM_BITS_PHY_MAC_OVERHEAD = 34 * 8 + 20 * 8
+num_bits_for_id=16;
+num_bits_for_measure=80000
+num_bits_phy_mac_overhead=160
+num_bits_for_measure_id=3
 
-WIRELESS_CHANNEL_BITRATE = 1
+bitrate=1 in MBit/s
+ray_length=20 in m
+tx_range=10
 
-PING_FREQUENCY = 10; //numero a caso
-CHECK_SENSORS_FREQUENCY = 50; //numero a caso
+ping_frequency=10
+check_sensors_frequency=50    
 
-C1 = 1;
+C1=1
 
-RAY_LENGTH = 20
+square_size=5 in m 
+space_precision=1000 how many units in a meter
 
-SQUARE_SIZE = 5
-SPACE_PRECISION = 1000
+user_velocity=0.8 m/s
+user_update_time=2;
 
-const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
-const int TX_RANGE = 10; // tx_range in meters
+mean_processing_time = 100000 ns
+std_dev_processing_time = 1000000 ns
+
+max_tx_offset = 1000000 ns
+max_tx_offset_ping = 1000000 ns

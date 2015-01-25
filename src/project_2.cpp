@@ -17,7 +17,6 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "storage_node.h"
 #include "sensor_node.h"
 #include "blacklist_message.h"
-// #include "user.h"
 #include "my_toolbox.h"
 #include "event.h"
 #include "user.h"
@@ -48,48 +47,87 @@ const int SPACE_PRECISION = 1000; // how many fundamental space units in one met
 const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
 
 const int TX_RANGE = 1; // tx_range in meters
+///////////////////////////////////////////////////////////////////////////////////
 
-// const string file_name = "file di provaaa";
-// void import_settings(string nn) {
-//   cout << "Importing settings from file: " << nn << endl;
-// }
+
+
+const string kFileName = "settings";
+const string kDelimiter = "=";
+
+typedef MyToolbox::MyTime MyTime;
+
+void import_settings() {
+  cout << "Importing settings from file: " << kFileName << "...";
+  string line;
+  ifstream settings_file(kFileName);
+  if (settings_file.is_open()) {
+    while (getline(settings_file, line)) {
+      size_t first_space = line.find_first_of(" ");
+      if (first_space != string::npos) {
+        line = line.substr(0, first_space);   // trim the final blank spaces
+      }
+      string value_name;
+      string value;
+      size_t pos = line.find(kDelimiter);
+      if (pos != string::npos) {    // if there is a delimiter '='
+        value_name = line.substr(0, pos);
+        value = line.substr(pos + 1);
+        double num = stod(value);
+        if (value_name == "num_storage_nodes") {
+          MyToolbox::num_storage_nodes = (int)num;
+        } else if (value_name == "num_sensors") {
+          MyToolbox::num_sensors = (int)num;
+        } else if (value_name == "num_users") {
+          MyToolbox::num_users = (int)num;
+        } else if (value_name == "num_bits_for_id") {
+          MyToolbox::num_bits_for_id = (int)num;
+        } else if (value_name == "num_bits_for_measure") {
+          MyToolbox::num_bits_for_measure = (int)num;
+        } else if (value_name == "num_bits_phy_mac_overhead") {
+          MyToolbox::num_bits_phy_mac_overhead = (int)num;
+        } else if (value_name == "num_bits_for_measure_id") {
+          MyToolbox::num_bits_for_measure_id = (int)num;
+        } else if (value_name == "bitrate") {
+          MyToolbox::bitrate = (double)num;
+        } else if (value_name == "ray_length") {
+          MyToolbox::ray_length = (double)num;
+        } else if (value_name == "tx_range") {
+          MyToolbox::tx_range = (double)num;
+        } else if (value_name == "ping_frequency") {
+          MyToolbox::ping_frequency = (MyTime)num;
+        } else if (value_name == "check_sensors_frequency") {
+          MyToolbox::check_sensors_frequency = (MyTime)num;
+        } else if (value_name == "C1") {
+          MyToolbox::C1 = (double)num;
+        } else if (value_name == "square_size") {
+          MyToolbox::square_size = (int)num;
+        } else if (value_name == "space_precision") {
+          MyToolbox::space_precision = (int)num;
+        } else if (value_name == "user_velocity") {
+          MyToolbox::user_velocity = (double)num;
+        } else if (value_name == "user_update_time") {
+          MyToolbox::user_update_time = (MyTime)num;
+        } else if (value_name == "mean_processing_time") {
+          MyToolbox::mean_processing_time = (MyTime)num;
+        } else if (value_name == "std_dev_processing_time") {
+          MyToolbox::std_dev_processing_time = (MyTime)num;
+        } else if (value_name == "max_tx_offset") {
+          MyToolbox::max_tx_offset = (MyTime)num;
+        } else if (value_name == "max_tx_offset_ping") {
+          MyToolbox::max_tx_offset_ping = (MyTime)num;
+        }
+      }
+    }
+    settings_file.close();
+    cout << "succeded!" << endl;
+  } else {
+    cout << "...failed.\nNot able to open " << kFileName << "!" << endl; 
+  }
+}
   
 int main() {
 
-  // import_settings(file_name);
-
-  // ofstream myfile ("example.txt");
-  // if (myfile.is_open())
-  // {
-  //   myfile << "This is a line.\n";
-  //   myfile << "This is another line.\n";
-  //   myfile.close();
-  // }
-  // else cout << "Unable to open file";
-
-  // string line;
-  // ifstream myfile2 ("example.txt");
-  // if (myfile2.is_open())
-  // {
-  //   while ( getline (myfile2,line) )
-  //   {
-  //     cout << line << '\n';
-  //   }
-  //   myfile2.close();
-  // }
-
-  // else cout << "Unable to open file"; 
-  // std::string s = "scott>=tiger>=mushroom";
-  // std::string delimiter = ">=";
-
-  // size_t pos = 0;
-  // std::string token;
-  // while ((pos = s.find(delimiter)) != std::string::npos) {
-  //     token = s.substr(0, pos);
-  //     std::cout << token << std::endl;
-  //     s.erase(0, pos + delimiter.length());
-  // }
-  // std::cout << s << std::endl;
+  import_settings();
 
   srand(time(NULL));  // generate a random seed to generate random numbers later on
 
@@ -108,16 +146,15 @@ int main() {
   MyToolbox::set_user_update_time();
   MyToolbox::set_tx_range(TX_RANGE);
 
-  // cout << "max forward number = " << MyToolbox::get_max_msg_hops() << endl;
-
 // Set up the network
+  // I use these vectors to set up the network
   vector<SensorNode*> sensors;
   vector<StorageNode*> storage_nodes;
   vector<User*> users;
 
   map<int, Node*> sensors_map;
   map<int, Node*> storage_nodes_map;
-  // vector<Node*> all_nodes; // useful for the generation of the nodes and to fulfill the neighborhood tables
+  map<int, Node*> users_map;
   
   map<int, MyToolbox::MyTime> timetable;
 
@@ -127,27 +164,40 @@ int main() {
 
   double y_coord;
   double x_coord;
-  for (int i = 1; i <= NUM_SENSORS; i++) {
-    y_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-    x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
+  // Create the sensors
+  for (int i = 1; i <= MyToolbox::num_sensors; i++) {
+    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
     SensorNode *node = new SensorNode(sensor_id++, y_coord, x_coord);
+    node->near_sensors_ = &sensors_map;
+    node->near_storage_nodes_ = &storage_nodes_map;
     sensors.push_back(node);
     sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
-    // all_nodes.push_back(node);
   }
-
-  for (int i = 1; i <= NUM_STORAGE_NODES; i++) {
-    y_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-    x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
+  // Create the storage nodes
+  for (int i = 1; i <= MyToolbox::num_storage_nodes; i++) {
+    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
     StorageNode *node = new StorageNode(storage_node_id++, y_coord, x_coord);
+    node->near_sensors_ = &sensors_map;
+    node->near_storage_nodes_ = &storage_nodes_map;
     storage_nodes.push_back(node);
     storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<int, int>(node->get_node_id(), 0));
-    // all_nodes.push_back(node);
+  }
+  // Create the users
+  for (int i = 1; i <= MyToolbox::num_users; i++) {
+    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    User *user = new User(user_id++, y_coord, x_coord);
+    users.push_back(user);
+    users_map.insert(pair<int, Node*>(user->get_node_id(), user));
   }
 
-  NodeDispatcher::sensors_map_ptr = &sensors_map;
-  NodeDispatcher::storage_nodes_map_ptr = &storage_nodes_map;
+  MyToolbox::sensors_map_ptr = &sensors_map;
+  MyToolbox::storage_nodes_map_ptr = &storage_nodes_map; 
+  MyToolbox::users_map_ptr = &users_map;
+  
   MyToolbox::set_timetable(timetable);
 
   SensorNode *sensor1;
@@ -159,22 +209,17 @@ int main() {
   double y2;
   double x2;
   double distance;
-  // for (SensorNode *sensor1 : sensors) {  // only allowed in c++11
   for (int i = 0; i < sensors.size(); i++) {
     sensor1 = sensors.at(i);
-    // cout << "Id sensore 1: " << sensor1->get_node_id() << endl;
     y1 = sensor1->get_y_coord();
     x1 = sensor1->get_x_coord();
-    // cout << "Coordinate 1: " << sensor1->get_y_coord() << ", " << sensor1->get_x_coord() << endl;
     for (int j = 0; j < sensors.size(); j++) {
       sensor2 = sensors.at(j);
-      // cout << "Id sensore 2: " << sensor1->get_node_id() << endl;
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
-      // cout << "Coordinate 2: " << sensor2->get_y_coord() << ", " << sensor2->get_x_coord() << endl;
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= RAY_LENGTH * SPACE_PRECISION) {
-        sensor1->add_near_sensor_node(sensor2);
+      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
+        sensor1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
     for (int j = 0; j < storage_nodes.size(); j++) {
@@ -182,8 +227,8 @@ int main() {
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= RAY_LENGTH * SPACE_PRECISION) {
-        sensor1->add_near_storage_node(storage_node2);
+      if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
+        sensor1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
   }
@@ -196,8 +241,8 @@ int main() {
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= RAY_LENGTH * SPACE_PRECISION) {
-        storage_node1->add_near_sensor_node(sensor2);
+      if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
+        storage_node1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
     for (int j = 0; j < storage_nodes.size(); j++) {
@@ -205,54 +250,15 @@ int main() {
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= RAY_LENGTH * SPACE_PRECISION) {
-        storage_node1->add_near_storage_node(storage_node2);
+      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
+        storage_node1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
   }
 
-  // // Create the users
-   for (int i = 1; i <= NUM_USERS; i++) {
-     y_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-     x_coord = rand() % (SQUARE_SIZE * SPACE_PRECISION);
-     User *user = new User(user_id++, y_coord, x_coord);
-     users.push_back(user);
-   }
- 
   MyToolbox::set_sensor_nodes(sensors);
   MyToolbox::set_storage_nodes(storage_nodes);
   MyToolbox::set_users(users);
-  
-  
-  // for (User *user : users) {
-  //   y1 = user->get_y_coord();
-  //   x1 = user->get_x_coord();
-  //   for (int j = 0; j < sensors.size(); j++) {
-  //     node2 = sensors.at(j);
-
-  //     y2 = node2->get_y_coord();
-  //     x2 = node2->get_x_coord();
-
-  //     distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-
-  //     if (distance <= RAY_LENGTH * SPACE_PRECISION) {
-  //       user->add_near_sensor_node((SensorNode*)node2);
-  //     }
-  //   }
-
-  //   for (int j = 0; j < storage_nodes.size(); j++) {
-  //     node2 = storage_nodes.at(j);
-
-  //     y2 = node2->get_y_coord();
-  //     x2 = node2->get_x_coord();
-
-  //     distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-
-  //     if (distance <= RAY_LENGTH * SPACE_PRECISION) {
-  //       user->add_near_storage_node((StorageNode*)node2);
-  //     }
-  //   }
-  // }
 
   // Event manager
   vector<Event> event_list;

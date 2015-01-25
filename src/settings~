@@ -1,0 +1,70 @@
+num_storage_nodes=3
+num_sensors=2
+num_users=1
+
+num_bits_for_measure=80000
+num_bits_phy_mac_overhead=160
+
+ray_length=20
+bitrate=1
+
+ping_frequency=10
+check_sensors_frequency=50    
+
+C1=1
+
+square_size=5
+space_precision=1000
+
+user_velocity=0.8
+tx_range=10
+
+MEAN_PROCESSING_TIME = 100000
+STD_DEV_PROCESSING_TIME = 1000000
+
+  
+MAX_OFFSET = 1000000
+
+
+  static int n_;  // number of storage nodes in the network
+  static int k_;  // number of sensors in the network
+  static int C1_; // parameter to set the max number of hops of a source block
+  static int bits_for_measure_; // number of bits to represent a measure
+  static int bits_for_id_; // number of bits to represent a node identifier
+  static int bits_for_phy_mac_overhead_; // number of bits for PHY and MAC overhead
+  static int bits_for_measure_id_;  // number of bits to represent a measure id
+  static int bits_for_hop_counter_; // number of bits to represent the hop_counter
+  static int max_msg_hops_; // maximum number of steps a message can do from the source, in the RW
+  static double channel_bit_rate_;  // bit rate of the wireless channel, in bit/seconds
+  static int ping_frequency_; // frequency at which sensors do "ping"
+  static int check_sensors_frequency_; // frequency at which node chek if its supervisioned sensors are alive
+  static double user_velocity_;    //velocity of the user in the network [m/s]
+  static long user_update_time_; //frequency at which we move the users
+  static int tx_range_;
+  static int space_precision_;
+  static int square_size_; 
+  
+  
+  int MyToolbox::num_storage_nodes = 0;
+int MyToolbox::num_sensors = 0;
+int MyToolbox::num_users = 0;
+
+MyToolbox::MyTime MyToolbox::current_time_ = 0;
+int MyToolbox::n_ = 0;
+int MyToolbox::k_ = 0;
+int MyToolbox::C1_ = 0;
+int MyToolbox::max_msg_hops_ = 0;
+int MyToolbox::bits_for_measure_ = 0;
+int MyToolbox::bits_for_id_ = 0;
+int MyToolbox::bits_for_phy_mac_overhead_ = 0;
+int MyToolbox::bits_for_measure_id_ = 0;
+int MyToolbox::bits_for_hop_counter_ = 0;
+double MyToolbox::channel_bit_rate_ = 0;
+map<int, MyToolbox::MyTime> MyToolbox::timetable_;
+int MyToolbox::ping_frequency_ = 0;
+int MyToolbox::check_sensors_frequency_=0;
+double MyToolbox::user_velocity_=0;
+long MyToolbox::user_update_time_=0;
+int MyToolbox::tx_range_=0;
+int MyToolbox::space_precision_=0;
+int MyToolbox::square_size_=0;

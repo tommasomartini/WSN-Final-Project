@@ -22,6 +22,37 @@ class MyToolbox {
   typedef unsigned long MyTime;
 
   static constexpr double LIGHT_SPEED = 299792458; // meter / seconds
+
+  //  Global values
+  static int num_storage_nodes;
+  static int num_sensors;
+  static int num_users;
+
+  static int num_bits_for_id;
+  static int num_bits_for_measure;
+  static int num_bits_phy_mac_overhead;
+  static int num_bits_for_measure_id;
+
+  static double bitrate;
+  static double ray_length;
+  static double tx_range;
+
+  static int ping_frequency;
+  static int check_sensors_frequency; 
+
+  static double C1;
+
+  static int square_size;
+  static int space_precision;
+
+  static double user_velocity;
+  static MyTime user_update_time;
+
+  static MyTime mean_processing_time;
+  static MyTime std_dev_processing_time;
+
+  static MyTime max_tx_offset;
+  static MyTime max_tx_offset_ping;
   
   // Vectors of the nodes
   static vector<SensorNode*> sensor_nodes_;
@@ -31,7 +62,7 @@ class MyToolbox {
   // Maps <node_id, node_reference>
   static map<int, Node*>* sensors_map_ptr;
   static map<int, Node*>* storage_nodes_map_ptr; 
-  static map<int, User*>* users_map_ptr; 
+  static map<int, Node*>* users_map_ptr; 
 
   // getters
   static MyTime get_current_time() {return current_time_;}
