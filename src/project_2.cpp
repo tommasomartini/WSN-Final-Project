@@ -335,16 +335,15 @@ int main() {
   // for (User *user : users) {
   //   cout<<"y "<<user->get_y_coord()<<"x "<<user->get_x_coord();}
 
-   // Event test_event2(30, Event::move_user);
+    //Event test_event2(30, Event::move_user);
    //test_event2.set_agent(users.at(0));
    //vector<Event> aaa = test_event2.execute_action();
    
-   
-   // users.at(1)->set_output_symbol();
-   // Event test_event2(33, Event::user_send_to_user);
-   // test_event2.set_agent(users.at(1));
-   // test_event2.set_agent_to_reply(users.at(0));
-   // vector<Event> aaa = test_event2.execute_action();
+//   users.at(1)->set_output_symbol();
+ //  Event test_event3(33, Event::user_send_to_user);
+  // test_event3.set_agent(users.at(1));
+  // test_event3.set_agent_to_reply(users.at(0));
+  // vector<Event> aaaa = test_event3.execute_action();
 
   return 0;
 }

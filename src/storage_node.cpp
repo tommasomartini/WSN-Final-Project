@@ -98,12 +98,12 @@ vector<Event> StorageNode::check_sensors(int event_time){       //assumption: se
    
     if (new_blacklist_element == true){     //make event for spread blacklist
         int* ex_sensors=expired_sensors;
-        BlacklistMessage list(ex_sensors,i);
+        BlacklistMessage* list = new BlacklistMessage(ex_sensors,i);
         int next_node_index = rand() % near_storage_nodes.size();
         StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
         Event new_event(event_time, Event::blacklist_sensor); //to add propagation time?
         new_event.set_agent(next_node);   
-        new_event.set_blacklist(list);
+        new_event.set_message(list);
         new_events.push_back(new_event);
     }
     if(supervisioned_map_.size()!=0){
@@ -115,32 +115,34 @@ vector<Event> StorageNode::check_sensors(int event_time){       //assumption: se
     return new_events;
 }
 
-vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage list){
+vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* list){
     vector<Event> new_events;
-    for(int i=0; i<list.get_length(); i++){
-        if ( last_measures_.find(list.get_id_list()[i]) != last_measures_.end() )
-            my_blacklist_.push_back(list.get_id_list()[i]);
+    for(int i=0; i<list->get_length(); i++){
+        if ( last_measures_.find(list->get_id_list()[i]) != last_measures_.end() )
+            my_blacklist_.push_back(list->get_id_list()[i]);
     }  
     int hop_limit = MyToolbox::get_max_msg_hops();
-    if (list.get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-        list.increase_hop_counter();
+    if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+        list->increase_hop_counter();
         int next_node_index = rand() % near_storage_nodes.size();
         StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
         Event new_event(event_time, Event::blacklist_sensor); // event_time has to consider timetable + backoff time (+ propagation time??)
         new_event.set_agent(next_node);   
-        new_event.set_blacklist(list);
+        new_event.set_message(list);
         new_events.push_back(new_event);
     }
     
     return new_events;
 }
 
-vector<Event> StorageNode::remove_mesure(Measure* message_to_remove){
+vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
     vector<Event> new_events;
-    last_measures_.insert(pair<int, int> (1,1));
-    if (last_measures_.find(message_to_remove->get_source_sensor_id()) != last_measures_.end()){
-        xored_measure_ = xored_measure_ ^ message_to_remove->get_measure();
-        last_measures_.erase(last_measures_.find(message_to_remove->get_source_sensor_id())); 
+    map<int,unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
+    for (map<int, unsigned char>::iterator it=outdated_measure.begin(); it!=outdated_measure.end(); ++it){
+        if (last_measures_.find(it->first) != last_measures_.end()){
+            xored_measure_ = xored_measure_ ^ it->second;
+            last_measures_.erase(last_measures_.find(it->first)); 
+           }
     }
     int hop_limit = MyToolbox::get_max_msg_hops();
     if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again

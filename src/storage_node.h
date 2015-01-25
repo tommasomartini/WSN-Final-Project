@@ -8,6 +8,7 @@
 #include "measure.h"
 #include "event.h"
 #include "my_toolbox.h"
+#include "outdated_measure.h"
 
 using namespace std;
 
@@ -30,8 +31,8 @@ class StorageNode : public Node {
   vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
   vector<Event> try_retx(Message*, int /*next_node_id*/); // Tom
   vector<Event> check_sensors(int); // Arianna
-  vector<Event> spread_blacklist(int,BlacklistMessage); // Arianna
-  vector<Event> remove_mesure(Measure*); // Arianna
+  vector<Event> spread_blacklist(int,BlacklistMessage*); // Arianna
+  vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
 
   // Debugging
   int do_action() {return 5;}
