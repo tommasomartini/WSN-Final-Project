@@ -1,3 +1,0 @@
-Questo file serve per provare git
-
-animale: balena
