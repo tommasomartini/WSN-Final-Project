@@ -26,6 +26,7 @@ int MyToolbox::num_bits_phy_mac_overhead = 0;
 int MyToolbox::num_bits_for_measure_id = 0;
 
 double MyToolbox::bitrate = 0;
+double MyToolbox::bit_error_prob = 0;
 double MyToolbox::ray_length = 0;
 double MyToolbox::tx_range = 0;
 
@@ -33,6 +34,7 @@ int MyToolbox::ping_frequency = 0;
 int MyToolbox::check_sensors_frequency = 0; 
 
 double MyToolbox::C1 = 0;
+int MyToolbox::max_num_hops = 0;
 
 int MyToolbox::square_size = 0;
 int MyToolbox::space_precision = 0;
@@ -47,6 +49,7 @@ MyToolbox::MyTime MyToolbox::max_tx_offset = 0;
 MyToolbox::MyTime MyToolbox::max_tx_offset_ping = 0;
 
 MyToolbox::MyTime MyToolbox::max_measure_generation_delay = 0;
+double MyToolbox::sensor_failure_prob = 0;
 
 map<unsigned int, Node*>* MyToolbox::sensors_map_ptr;
 map<unsigned int, Node*>* MyToolbox::storage_nodes_map_ptr; 
@@ -205,6 +208,29 @@ void MyToolbox::remove_near_user(Node* node, User *user) {
 **************************************/
 void MyToolbox::initialize_toolbox() {
   cout << "Devo ancora fare l'inizializzazione!!" << endl;
+  max_num_hops = ceil(C1 * num_storage_nodes * log(num_storage_nodes));
+}
+
+bool MyToolbox::is_node_active(unsigned int node_id) {
+
+  if (sensors_map_ptr->find(node_id) != sensors_map_ptr->end()) {
+    return true;
+  }
+
+  if (storage_nodes_map_ptr->find(node_id) != storage_nodes_map_ptr->end()) {
+    return true;
+  }
+
+  if (users_map_ptr->find(node_id) != users_map_ptr->end()) {
+    return true;
+  }
+
+  return false;
+}
+
+void MyToolbox::remove_sensor(unsigned int sensor_id) {
+  timetable_.erase(sensor_id);
+  sensors_map_ptr->erase(sensor_id);
 }
 
 unsigned int MyToolbox::get_node_id() {
@@ -278,14 +304,14 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   return rnd_proc_time;
 }
 
-MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
-  int rand1 = rand();
-  int rand2 = rand();
-  unsigned long long_rand = rand1 * rand2;
-  MyTime offset = long_rand % (max_tx_offset - 1) + 1;
-  // cout << "offset: " << offset << endl;
-  return offset;
-}
+// MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
+//   int rand1 = rand();
+//   int rand2 = rand();
+//   unsigned long long_rand = rand1 * rand2;
+//   MyTime offset = long_rand % (max_tx_offset - 1) + 1;
+//   // cout << "offset: " << offset << endl;
+//   return offset;
+// }
 
 MyToolbox::MyTime MyToolbox::get_tx_offset() {
   int rand1 = rand();

@@ -20,8 +20,9 @@ class Event {
     sensor_generate_measure,
     sensor_try_to_send,
     storage_node_try_to_send,
-    storage_node_try_to_send_measure, // TO DEPRECATE
     storage_node_receive_measure,
+    node_send_to_user,
+    broken_sensor,
 
     // Arianna
     blacklist_sensor,
@@ -33,9 +34,7 @@ class Event {
     user_receive_data,
 
     // To do
-    node_send_to_user,
     new_storage_node,
-    remove_sensor,
     add_sensor,
     remove_node,
     add_node,

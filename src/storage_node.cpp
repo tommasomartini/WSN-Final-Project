@@ -52,7 +52,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
   }
 
   measure->increase_hop_counter();
-  int hop_limit = MyToolbox::get_max_msg_hops();
+  int hop_limit = MyToolbox::max_num_hops;
   if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     unsigned int next_node_index = rand() % near_storage_nodes.size();
     StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
@@ -75,6 +75,10 @@ void StorageNode::set_supervision_map_(int sensor_id, int new_time){
     }
     else
       supervisioned_map_.find(sensor_id)->second = new_time;
+}
+
+vector<Event> StorageNode::receive_user_request() {
+
 }
 
 vector<Event> StorageNode::check_sensors(int event_time){       //assumption: sensors always wake up
@@ -216,7 +220,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send_measure);
+      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <random>
 #include <map>
 
 #include "sensor_node.h"
@@ -47,23 +48,35 @@ vector<Event> SensorNode::generate_measure() {
   // Create a measure object
   measure_ = Measure(xored_measure_value, measure_id_++, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   measure_.set_receiver_node_id(next_node->get_node_id());
-/*
+  /*
     2 events:
-    - generate new measure -> no problem: it can happen in any time
-    - other node receives my measure / try to send again -> it depends by the channel!
-      I must go through the timetable...
-*/
+    - send the generated measure to another node. This may be successful or not, that is I can generate either a 
+        storage_receive_measure event or a sensor_try_to_send_again_later event
+    - with probability p I generate another measure (another sensor_generate_measure event), with probability 1-p the sensor
+        breaks up and I genenerate a broken_sensor event.
+  */
   new_events = send(next_node, &measure_);
+  bool generate_another_measure = true;
+  default_random_engine generator;
+  bernoulli_distribution distribution(MyToolbox::sensor_failure_prob);
+  if (distribution(generator))
+    generate_another_measure = false;
   unsigned long rand1 = rand();
   unsigned long rand2 = rand();
   unsigned long rand3 = rand();
-  MyTime time_next_measure = rand1 * rand2 * rand3 % MyToolbox::max_measure_generation_delay;
+  MyTime time_next_measure_or_failure = rand1 * rand2 * rand3 % MyToolbox::max_measure_generation_delay;
   // MyTime minutes = time_next_measure / ((MyTime)1000000000 * 60);
   // cout << "Next measure in " << minutes << " minutes" << endl;
-  Event next_measure_event(time_next_measure, Event::sensor_generate_measure);
-  next_measure_event.set_agent(this);
-  new_events.push_back(next_measure_event);
-
+  if (generate_another_measure) {
+    Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
+    next_measure_event.set_agent(this);
+    new_events.push_back(next_measure_event);
+  } else {
+    Event failure_event(time_next_measure_or_failure, Event::broken_sensor);
+    failure_event.set_agent(this);
+    new_events.push_back(failure_event);
+  }
+  
   return new_events;
 }
 

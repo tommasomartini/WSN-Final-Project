@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "event.h"
+#include "my_toolbox.h"
 #include "sensor_node.h"
 #include "measure.h"
 #include "storage_node.h"
@@ -44,6 +45,13 @@ vector<Event> Event::execute_action() {
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
 
+  // check whether the agent supposed to execute this action is still existing
+  Node* current_agent = (Node*)agent_;
+  unsigned int current_node_id = current_agent->get_node_id();
+  if (!MyToolbox::is_node_active(current_node_id)) {
+    return new_events;
+  }
+
   switch (event_type_) {
     case sensor_generate_measure: {
       /*  generate_measure() should return 2 events:
@@ -61,7 +69,7 @@ vector<Event> Event::execute_action() {
       new_events = ((StorageNode*)agent_)->receive_measure((Measure*)message_);
       break;
     }
-    case storage_node_try_to_send_measure: {
+    case storage_node_try_to_send: {
       int next_node_id = message_->get_receiver_node_id();
       new_events = ((StorageNode*)agent_)->try_retx(message_, next_node_id);
       break;
@@ -78,11 +86,12 @@ vector<Event> Event::execute_action() {
         // cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
       break;
     case node_send_to_user:
+      new_events = ((StorageNode*)agent_)->receive_user_request();
       break;
     case user_send_to_user:
          new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);
       break;
-      case user_receive_data:
+    case user_receive_data:
          new_events = ((User*)agent_)->user_receive_data(time_,(UserMessage*)message_);
       break;
     case sensor_ping: {
@@ -93,6 +102,10 @@ vector<Event> Event::execute_action() {
     case check_sensors: {
       new_events = ((StorageNode*)agent_)->check_sensors(time_);
       //cout <<"Il nuovo evento creato da check è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
+      break;
+    }
+    case broken_sensor: {
+      MyToolbox::remove_sensor(((Node*)agent_)->get_node_id());
       break;
     }
     default:

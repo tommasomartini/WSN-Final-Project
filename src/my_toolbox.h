@@ -35,6 +35,7 @@ class MyToolbox {
   static int num_bits_for_measure_id;
 
   static double bitrate;
+  static double bit_error_prob;
   static double ray_length;
   static double tx_range;
 
@@ -42,6 +43,7 @@ class MyToolbox {
   static int check_sensors_frequency; 
 
   static double C1;
+  static int max_num_hops;
 
   static int square_size;
   static int space_precision;
@@ -56,6 +58,7 @@ class MyToolbox {
   static MyTime max_tx_offset_ping;
 
   static MyTime max_measure_generation_delay;
+  static double sensor_failure_prob;
 
   // Maps <node_id, node_reference>
   static map<unsigned int, Node*>* sensors_map_ptr;
@@ -122,15 +125,17 @@ class MyToolbox {
   
   // functions
   static void initialize_toolbox(); // TODO
+  static bool is_node_active(unsigned int /*node_id*/);
   static unsigned int get_node_id();
   static int get_ideal_soliton_distribution_degree();
   static int get_robust_soliton_distribution_degree();  // still to implement!
   static MyTime get_random_processing_time();
   // Return a uniform random offset a node must wait when it finds the channel busy.
   // The value is uniformly distributed between 1ns and MAX_OFFSET ns
-  static MyTime get_retransmission_offset();  // TODO remove
+  // static MyTime get_retransmission_offset();  // TODO remove
   static MyTime get_tx_offset();
   static MyTime get_tx_offset_ping();
+  static void remove_sensor(unsigned int /*sensor_id*/);
 
  private:
   /*  This timetable contains pairs of the type:

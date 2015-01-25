@@ -1,6 +1,6 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp user_message.cpp outdated_measure.cpp user.cpp -o wir -std=c++11 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp user_message.cpp outdated_measure.cpp user.cpp storage_node_message.cpp -o wir -std=c++11 
 
 -pthread -std=c++11
 
@@ -89,6 +89,8 @@ void import_settings() {
           MyToolbox::num_bits_for_measure_id = (int)num;
         } else if (value_name == "bitrate") {
           MyToolbox::bitrate = (double)num;
+        } else if (value_name == "bit_error_prob") {
+          MyToolbox::bit_error_prob = (double)num;
         } else if (value_name == "ray_length") {
           MyToolbox::ray_length = (double)num;
         } else if (value_name == "tx_range") {
@@ -117,6 +119,8 @@ void import_settings() {
           MyToolbox::max_tx_offset_ping = (MyTime)num;
         } else if (value_name == "max_measure_generation_delay") {
           MyToolbox::max_measure_generation_delay = (MyTime)num;
+        } else if (value_name == "sensor_failure_prob") {
+          MyToolbox::sensor_failure_prob = (double)num;
         }
       }
     }
@@ -266,6 +270,25 @@ int main() {
 
   // Event manager
   vector<Event> event_list;
+  while (!event_list.empty()) {
+  // for (int i = 0; i < 5; i++) {
+
+    // TODO: verify next event has a different schedule time than this
+
+    Event next_event = *(event_list.begin());
+    event_list.erase(event_list.begin());
+    vector<Event> new_events = next_event.execute_action();
+
+    vector<Event>::iterator new_event_iterator = new_events.begin();
+    vector<Event>::iterator old_event_iterator = event_list.begin();
+    for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+        if (*old_event_iterator > *new_event_iterator)
+          break;
+      }
+      event_list.insert(old_event_iterator, *new_event_iterator);
+    }
+  }
 
   // Event test_event(10, Event::sensor_generate_measure);
   // test_event.set_agent(sensors.at(0));
@@ -280,25 +303,6 @@ int main() {
   // event_list.push_back(Event(8));
   // event_list.push_back(Event(78));
 
-  // while (!event_list.empty()) {
-  // for (int i = 0; i < 5; i++) {
-
-  //   // TODO: verify next event has a different schedule time than this
-
-  //   Event next_event = *(event_list.begin());
-  //   event_list.erase(event_list.begin());
-  //   vector<Event> new_events = next_event.execute_action();
-
-  //   vector<Event>::iterator new_event_iterator = new_events.begin();
-  //   vector<Event>::iterator old_event_iterator = event_list.begin();
-  //   for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-  //     for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-  //       if (*old_event_iterator > *new_event_iterator)
-  //         break;
-  //     }
-  //   }
-  //   event_list.insert(old_event_iterator, *new_event_iterator);
-  // }
   
   
   // check correctness Arianna's part 
