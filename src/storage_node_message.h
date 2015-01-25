@@ -2,10 +2,11 @@
 #define __STORAGE_NODE_MESSAGE_H__   
 
 #include <vector>
+#include "message.h"
 
 using namespace std;
   
-class StorageNodeMessage {
+class StorageNodeMessage : public Message {
   // unsigned char xored_message_;
   // vector<int> sensor_ids_;
  public:

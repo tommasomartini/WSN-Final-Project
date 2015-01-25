@@ -193,14 +193,14 @@ int main() {
     storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<int, int>(node->get_node_id(), 0));
   }
-  // // Create the users
-  // for (int i = 1; i <= MyToolbox::num_users; i++) {
-  //   y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-  //   x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-  //   User *user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
-  //   users.push_back(user);
-  //   users_map.insert(pair<int, Node*>(user->get_node_id(), user));
-  // }
+  // Create the users
+  for (int i = 1; i <= MyToolbox::num_users; i++) {
+    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
+    User *user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
+    users.push_back(user);
+    users_map.insert(pair<int, Node*>(user->get_node_id(), user));
+  }
 
   MyToolbox::sensors_map_ptr = &sensors_map;
   MyToolbox::storage_nodes_map_ptr = &storage_nodes_map; 
@@ -289,6 +289,10 @@ int main() {
       event_list.insert(old_event_iterator, *new_event_iterator);
     }
   }
+
+
+
+  
 
   // Event test_event(10, Event::sensor_generate_measure);
   // test_event.set_agent(sensors.at(0));

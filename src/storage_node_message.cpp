@@ -3,6 +3,7 @@
 #include "storage_node_message.h"
 
 StorageNodeMessage::StorageNodeMessage(unsigned char xored_message, vector<unsigned int> sensor_ids) {
+  message_type_ = message_type_measures_for_user;
   xored_message_ = xored_message;
   sensor_ids_ = sensor_ids;
 }

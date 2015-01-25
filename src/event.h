@@ -37,7 +37,6 @@ class Event {
     new_storage_node,
     add_sensor,
     remove_node,
-    add_node,
 
     // Not to do
     network_reset
@@ -46,7 +45,7 @@ class Event {
  private:
   typedef MyToolbox::MyTime MyTime;
 
-  int time_;
+  MyTime time_;
   Agent *agent_;
   Message *message_;
   Event::EventTypes event_type_;

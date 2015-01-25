@@ -149,9 +149,11 @@ vector<Event> User::move_user(int event_time) {
           
   // creates event user_node_query with all near nodes
   for(int i=0; i<near_storage_nodes.size(); i++){
-      Event new_event(event_time, Event::node_send_to_user); //event time distanziarli
+      Event new_event(event_time + MyToolbox::get_tx_offset(), Event::node_send_to_user); //event time distanziarli
       new_event.set_agent(near_storage_nodes.at(i));
-      // new_event.set_agent_to_reply(this);
+      Message* new_msg_ptr = new Message();
+      new_msg_ptr->set_sender_node_id(node_id_);
+      new_event.set_message(new_msg_ptr);
       new_events.push_back(new_event);
   }
   // creates event user_user_query with all near users

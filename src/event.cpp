@@ -86,7 +86,7 @@ vector<Event> Event::execute_action() {
         // cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
       break;
     case node_send_to_user:
-      new_events = ((StorageNode*)agent_)->receive_user_request();
+      new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
       break;
     case user_send_to_user:
          new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);

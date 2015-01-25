@@ -33,7 +33,7 @@ class StorageNode : public Node {
   vector<Event> receive_measure(Measure*); // Tom
   vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
   vector<Event> try_retx(Message*, int /*next_node_id*/); // Tom
-  vector<Event> receive_user_request(); // Tom
+  vector<Event> receive_user_request(unsigned int /*sender user id*/); // Tom
   vector<Event> check_sensors(int); // Arianna
   vector<Event> spread_blacklist(int, BlacklistMessage*); // Arianna
   vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
@@ -48,7 +48,7 @@ class StorageNode : public Node {
   map<int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 
-  vector<Event> send(Node* next_node, Message* message);
+  vector<Event> send(Node* /*next_node*/, Message*);
  
 };
 

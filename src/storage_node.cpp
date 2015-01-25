@@ -9,6 +9,7 @@
 #include "measure.h"
 #include "blacklist_message.h"
 #include "outdated_measure.h"
+#include "storage_node_message.h"
   
 using namespace std;
 
@@ -77,8 +78,17 @@ void StorageNode::set_supervision_map_(int sensor_id, int new_time){
       supervisioned_map_.find(sensor_id)->second = new_time;
 }
 
-vector<Event> StorageNode::receive_user_request() {
-
+vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
+  vector<Event> new_events;
+  vector<unsigned int> my_sensor_ids;
+  for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
+    my_sensor_ids.push_back(it->first);
+  }
+  StorageNodeMessage msg(xored_measure_, my_sensor_ids);
+  Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
+  msg.set_receiver_node_id(next_node->get_node_id());
+  new_events = send(next_node, &msg);
+  return new_events;
 }
 
 vector<Event> StorageNode::check_sensors(int event_time){       //assumption: sensors always wake up
@@ -240,6 +250,10 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
         }
         case Message::message_type_remove_measure: {
           this_event_type = Event::remove_measure;
+          break;
+        }
+        case Message::message_type_measures_for_user: {
+          this_event_type = Event::user_receive_data;
           break;
         }
         default:

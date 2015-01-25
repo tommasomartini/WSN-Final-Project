@@ -30,7 +30,7 @@ class User: public Node {
   
   unsigned int user_id_;
  
-  map <unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of correspondent sensor
+  map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of correspondent sensor
   // vector<Message> output_symbols_; // list of the xored messages retrieved from the storage nodes
   vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes
   
@@ -41,7 +41,7 @@ class User: public Node {
   vector<Event> user_send_to_user(UserMessage*, int);
   vector<Event> user_receive_data(int, UserMessage*);  
   
-   protected:
+ protected:
   typedef map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
   
 };
