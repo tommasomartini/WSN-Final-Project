@@ -6,7 +6,7 @@
 
 #include "my_toolbox.h"
 
-// using namespace std;
+using namespace std;
 
 class DataCollector {
  private:

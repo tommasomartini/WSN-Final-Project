@@ -298,7 +298,7 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
-  default_random_engine generator;
+  default_random_engine generator(time(NULL));
   normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
   MyTime rnd_proc_time = (MyTime)(distribution(generator));
   return rnd_proc_time;

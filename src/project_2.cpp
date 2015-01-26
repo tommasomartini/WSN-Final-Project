@@ -10,6 +10,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include <fstream>    /* read, write from or to files */
 #include <vector>
 #include <map>
+#include <random> 
 #include <stdlib.h>     /* srand, rand */
 #include <math.h>   // pow, sqrt
 
@@ -127,17 +128,17 @@ void import_settings() {
     settings_file.close();
     cout << "succeded!" << endl;
   } else {
-    cout << "...failed.\nNot able to open " << kFileName << "!" << endl; 
+    cout << "failed.\nNot able to open " << kFileName << "!" << endl; 
   }
 }
   
 int main() {
 
+  srand(time(NULL));  // generate a random seed to generate random numbers later on
+
   import_settings();
 
   MyToolbox::initialize_toolbox();
-
-  srand(time(NULL));  // generate a random seed to generate random numbers later on
 
   MyToolbox::set_k(NUM_SENSORS);
   MyToolbox::set_n(NUM_STORAGE_NODES);
@@ -181,6 +182,7 @@ int main() {
     node->near_storage_nodes_ = &storage_nodes_map;
     sensors.push_back(node);
     sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
+    timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the storage nodes
   for (int i = 1; i <= MyToolbox::num_storage_nodes; i++) {
@@ -191,7 +193,7 @@ int main() {
     node->near_storage_nodes_ = &storage_nodes_map;
     storage_nodes.push_back(node);
     storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
-    timetable.insert(pair<int, int>(node->get_node_id(), 0));
+    timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the users
   for (int i = 1; i <= MyToolbox::num_users; i++) {
@@ -200,6 +202,7 @@ int main() {
     User *user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
     users.push_back(user);
     users_map.insert(pair<int, Node*>(user->get_node_id(), user));
+    timetable.insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
 
   MyToolbox::sensors_map_ptr = &sensors_map;
@@ -228,6 +231,7 @@ int main() {
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
         sensor1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        sensor1->near_sensor_nodes.push_back(sensor2);
       }
     }
     for (int j = 0; j < storage_nodes.size(); j++) {
@@ -237,6 +241,7 @@ int main() {
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
         sensor1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        sensor1->near_storage_nodes.push_back(storage_node2);
       }
     }
   }
@@ -251,6 +256,7 @@ int main() {
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
         storage_node1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        storage_node1->near_sensor_nodes.push_back(sensor2);
       }
     }
     for (int j = 0; j < storage_nodes.size(); j++) {
@@ -260,6 +266,7 @@ int main() {
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
         storage_node1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        storage_node1->near_storage_nodes.push_back(storage_node2);
       }
     }
   }
@@ -268,8 +275,19 @@ int main() {
   MyToolbox::set_storage_nodes(storage_nodes);
   MyToolbox::set_users(users);
 
+
   // Event manager
   vector<Event> event_list;
+
+  // Initial events
+  Event event1(10, Event::sensor_generate_measure);
+  event1.set_agent(sensors.at(0));
+  event_list.push_back(event1);
+
+  Event event2(10 + 1000000000, Event::sensor_generate_measure);
+  event2.set_agent(sensors.at(1));
+  event_list.push_back(event2);
+
   while (!event_list.empty()) {
   // for (int i = 0; i < 5; i++) {
 

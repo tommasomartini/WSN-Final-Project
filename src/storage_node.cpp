@@ -17,36 +17,43 @@ using namespace std;
     Event execution methods
 **************************************/
 vector<Event> StorageNode::receive_measure(Measure* measure) {
+  cout << "Misura ricevuta da me, che sono " << node_id_ << endl;
   vector<Event> new_events;
   unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
-    /*
-      Sampling interval must be larger smaller than the smallest interval probability.
-      I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
-      Divide the interval [0, 1] in M intervals with length 1/M.
+    cout << "Misura nuova " << endl;
+    if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+      /*
+        Sampling interval must be larger smaller than the smallest interval probability.
+        I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
+        Divide the interval [0, 1] in M intervals with length 1/M.
 
-      1/M < min_int => M > 1 / min_int = 1 / min(d/k, (1 - d/k)) = max(1 / (d/k), 1 / (1 - d/k)) = 
-      = max(k/d, k/(k - d)).
+        1/M < min_int => M > 1 / min_int = 1 / min(d/k, (1 - d/k)) = max(1 / (d/k), 1 / (1 - d/k)) = 
+        = max(k/d, k/(k - d)).
 
-      Then we can take M = 10 * max(k/d, k/(k - d))
+        Then we can take M = 10 * max(k/d, k/(k - d))
 
-      Choose randomly one element between 0 and M - 1 with "rand() % M".
-      Divide it by (M - 1) to normaliz between 0 and 1
-    */
-    int k = MyToolbox::get_k();
-    int d = LT_degree_;
-    double prob = 1;
-    if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
-      int M = 10 * max(k/d, k/(k - d)); // if d == k this gives a zero denominator
-      prob = (rand() % M) / (double)(M - 1);
-    }
-    // accept the new msg with probability d/k
-    if (prob <= LT_degree_ / k) { // accept it!
-      xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-      last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+        Choose randomly one element between 0 and M - 1 with "rand() % M".
+        Divide it by (M - 1) to normaliz between 0 and 1
+      */
+      int k = MyToolbox::get_k();
+      int d = LT_degree_;
+      double prob = 1;
+      if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
+        int M = 10 * max(k/d, k/(k - d)); // if d == k this gives a zero denominator
+        prob = (rand() % M) / (double)(M - 1);
+      }
+      // accept the new msg with probability d/k
+      if (prob <= LT_degree_ / k) { // accept it!
+        cout << "Mi prendo la misura!" << endl;
+        xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+        last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+      }
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
+    cout << "Misura update" << endl;
     if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
+      cout << "Gia ricevuta misura da questo nodo" << endl;
       xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
       last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
     }
@@ -54,9 +61,12 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 
   measure->increase_hop_counter();
   int hop_limit = MyToolbox::max_num_hops;
+  cout << "Hop hop_limit " << hop_limit << endl;
+  cout << "Hop counter " << measure->get_hop_counter() << endl;
   if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     unsigned int next_node_index = rand() % near_storage_nodes.size();
     StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    cout << "Propago a " << next_node->get_node_id() << endl;
     measure->set_receiver_node_id(next_node->get_node_id());
     new_events = send(next_node, measure);
   }
@@ -203,7 +213,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
   MyTime processing_time = MyToolbox::get_random_processing_time();
   unsigned int num_total_bits = message->get_message_size();
-  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 9) / MyToolbox::bitrate); // in nano-seconds
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
 
   // Update the timetable
@@ -259,6 +269,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
         default:
           break;
       }
+      cout << "Genero un evento di tipo " << this_event_type << endl;
       Event receive_message_event(new_schedule_time, this_event_type);
       receive_message_event.set_agent(next_node);
       receive_message_event.set_message(message);
@@ -273,6 +284,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 
       // Update the event_queue_
       if (!event_queue_.empty()) {  // if there are other events in the queue
+        cout << "Coda eventi NON vuota" << endl;
         Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
         event_queue_.pop(); // remove the oldest event frrm the queue
         Event popped_event(current_time + message_time + MyToolbox::get_tx_offset(), top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time

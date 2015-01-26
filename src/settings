@@ -1,22 +1,22 @@
 num_storage_nodes=3
 num_sensors=2
-max_num_users=1
-num_users=1
+max_num_users=0
+num_users=0
 
 num_bits_for_id=16;
 num_bits_for_measure=80000
 num_bits_phy_mac_overhead=160
 num_bits_for_measure_id=3
 
-bitrate=1 in MBit/s
+bitrate=70 in MBit/s
 bit_error_prob=0.01
-ray_length=20 in m
+ray_length=10 in m
 tx_range=10
 
-ping_frequency=10
-check_sensors_frequency=50    
+ping_frequency=1000000000
+check_sensors_frequency=5000000000  
 
-C1=1
+C1=3
 
 square_size=5 in m 
 space_precision=1000 how many units in a meter
@@ -25,10 +25,10 @@ user_velocity=0.8 m/s
 user_update_time=2;
 
 mean_processing_time=100000 ns
-std_dev_processing_time=1000000 ns
+std_dev_processing_time=100000 ns
 
-max_tx_offset=1000000 ns
-max_tx_offset_ping=1000000 ns
+max_tx_offset=10000000 ns
+max_tx_offset_ping=5000000 ns
 
-max_measure_generation_delay=3600000000000 ns
-sensor_failure_prob=0.5
+max_measure_generation_delay=5000000000 ns
+sensor_failure_prob=1.0

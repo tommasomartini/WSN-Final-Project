@@ -42,6 +42,10 @@ void Event::set_message(Message *message) {
 
 vector<Event> Event::execute_action() {
 
+  cout << "=== Sto per eseguire: " << ((Node*)agent_)->get_node_id();
+  cout << " Event type: " << event_type_;
+  cout << " Current time: " << time_ << endl;
+
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
 
@@ -110,6 +114,16 @@ vector<Event> Event::execute_action() {
     }
     default:
       break;  // remove this break! No break in the default option!
+  }
+
+
+  // DEBUGGING
+  cout << "=== Nuovi eventi da inserire in lista:" << endl;
+  for (int i = 0; i < new_events.size(); i++) {
+    Event event = new_events.at(i);
+    cout << "Agent: " << ((Node*)(event.get_agent()))->get_node_id();
+    cout << " Event type: " << event.get_event_type();
+    cout << " Time: " << event.get_time() << endl;
   }
 
   return new_events; 
