@@ -11,6 +11,7 @@ class Message {
     message_type_remove_measure,
     message_type_ping,
     message_type_measures_for_user,
+    message_type_user_to_user,
     message_type_new_node
   } message_type_;
 

@@ -258,3 +258,87 @@ vector<Event> User::user_receive_data(int event_time, UserMessage* message){
     }   
     return new_events;
 }
+
+
+vector<Event> User::send(Node* next_node, Message* message) {
+  vector<Event> new_events;
+
+  // Compute the message time
+  double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
+  MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
+  MyTime processing_time = MyToolbox::get_random_processing_time();
+  unsigned int num_total_bits = message->get_message_size();
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 9) / MyToolbox::bitrate); // in nano-seconds
+  MyTime message_time = propagation_time + processing_time + transfer_time;
+
+  // Update the timetable
+  if (!event_queue_.empty()) {  // already some pending event
+    // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
+    // I will unfold it and I will build up a brand new event with its pieces and then I will set
+    // a significant schedule time!
+    Event event_to_enqueue(0, Event::storage_node_try_to_send);
+    event_to_enqueue.set_agent(this);
+    event_to_enqueue.set_message(message);
+    event_queue_.push(event_to_enqueue);
+
+    // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
+  } else {  // no pending events
+    map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+    MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+    MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
+    MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
+    if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
+      MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(message);
+      new_events.push_back(try_again_event);
+    } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+      MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+      try_again_event.set_agent(this);
+      try_again_event.set_message(message);
+      new_events.push_back(try_again_event);
+    } else {  // sender and receiver both idle, can send the message
+      // Schedule the new receive event
+      MyTime new_schedule_time = current_time + message_time;
+      // Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+      Event::EventTypes this_event_type;
+      switch (message->message_type_) {
+        case Message::message_type_user_to_user: {
+          this_event_type = Event::user_receive_data;
+          break;
+        }
+        case Message::message_type_remove_measure: {
+          this_event_type = Event::remove_measure;
+          break;
+        }
+        default:
+          break;
+      }
+      Event receive_message_event(new_schedule_time, this_event_type);
+      receive_message_event.set_agent(next_node);
+      receive_message_event.set_message(message);
+      new_events.push_back(receive_message_event);
+
+      // Update the timetable
+      timetable.find(node_id_)->second = current_time + message_time; // update my available time
+      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+      }
+      MyToolbox::set_timetable(timetable);  // upload the updated timetable
+
+      // Update the event_queue_
+      if (!event_queue_.empty()) {  // if there are other events in the queue
+        Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
+        event_queue_.pop(); // remove the oldest event frrm the queue
+        Event popped_event(current_time + message_time + MyToolbox::get_tx_offset(), top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time
+        popped_event.set_agent(this);
+        popped_event.set_message(top_queue_event.get_message());
+        new_events.push_back(popped_event); // schedule the next event
+      }
+    }
+  }
+  
+  return new_events;
+}

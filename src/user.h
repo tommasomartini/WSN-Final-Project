@@ -2,8 +2,8 @@
     Model for a user
 */
 
-#ifndef __USER_H__   // if x.h hasn't been included yet...
-#define __USER_H__   //   #define this so the compiler knows it has been included
+#ifndef __USER_H__   
+#define __USER_H__   
 
 #include <vector>
 #include <map>
@@ -44,6 +44,10 @@ class User: public Node {
  protected:
   typedef map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
   
+ private:
+  typedef MyToolbox::MyTime MyTime;
+
+  vector<Event> send(Node*, Message*);
 };
 
 #endif

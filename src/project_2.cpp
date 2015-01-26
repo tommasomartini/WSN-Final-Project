@@ -1,6 +1,6 @@
 /*
 
-g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp user_message.cpp outdated_measure.cpp user.cpp storage_node_message.cpp -o wir -std=c++11 
+g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp storage_node.cpp blacklist_message.cpp message.cpp user_message.cpp outdated_measure.cpp user.cpp storage_node_message.cpp data_collector.cpp -o wir -std=c++11 
 
 -pthread -std=c++11
 
