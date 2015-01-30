@@ -282,14 +282,15 @@ int main() {
 
   sensors.at(0)->set_my_supervisor(2);
   // Initial events
-  vector <unsigned int> index = {1};
-  unsigned char cc = 0;
-  vector<StorageNodeMessage> output_symb = {StorageNodeMessage(cc, index)};
-  users.at(1)->output_symbols_ = output_symb;
+  //vector <unsigned int> index = {1};
+  //unsigned char cc = 0;
+  //vector<StorageNodeMessage> output_symb = {StorageNodeMessage(cc, index)};
+  //users.at(1)->output_symbols_ = output_symb;
   
-   Event event2(0, Event::move_user);
- event2.set_agent(users.at(0));
-  event_list.push_back(event2);
+  // Event event2(0, Event::move_user);
+ //event2.set_agent(users.at(0));
+ // event_list.push_back(event2);
+  
   /*
   Event event2(0, Event::check_sensors);
   event2.set_agent(storage_nodes.at(0));
