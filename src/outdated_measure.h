@@ -21,6 +21,7 @@ class OutdatedMeasure : public Message {
   int get_size(){return symbols_to_remove_.size(); }
   int get_hop_counter() {return hop_counter_;}
   int increase_hop_counter();
+  unsigned int get_message_size();
 
 };
 

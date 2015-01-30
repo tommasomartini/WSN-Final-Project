@@ -3,6 +3,7 @@
 #include "node.h"
 #include "my_toolbox.h"
 
+
 /**************************************
     Constructors
 **************************************/
@@ -44,8 +45,9 @@ void Node::add_near_user(Node *user) {
 }
 
 bool Node::are_nodes_near(Node* n1, Node* n2) {
-    if (sqrt( pow((n1->x_coord_-n2->x_coord_),2)+ pow((n1->y_coord_-n2->y_coord_),2)) < MyToolbox::get_tx_range())
+    if (sqrt( pow((n1->x_coord_-n2->x_coord_),2)+ pow((n1->y_coord_-n2->y_coord_),2)) < MyToolbox::tx_range * MyToolbox::get_space_precision()){
         return true;
+    }
     else
         return false;
 }

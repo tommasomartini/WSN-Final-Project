@@ -20,6 +20,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "my_toolbox.h"
 #include "event.h"
 #include "user.h"
+#include "storage_node_message.h"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ const int SPACE_PRECISION = 1000; // how many fundamental space units in one met
 
 const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
 
-const int TX_RANGE = 1; // tx_range in meters
+const int TX_RANGE = 10; // tx_range in meters
 ///////////////////////////////////////////////////////////////////////////////////
 
 
@@ -274,25 +275,48 @@ int main() {
   MyToolbox::set_sensor_nodes(sensors);
   MyToolbox::set_storage_nodes(storage_nodes);
   MyToolbox::set_users(users);
-
-
+  
+  MyToolbox::set_user_update_time();
   // Event manager
   vector<Event> event_list;
 
+  sensors.at(0)->set_my_supervisor(2);
   // Initial events
-  Event event1(10, Event::sensor_generate_measure);
+  vector <unsigned int> index = {1};
+  unsigned char cc = 0;
+  vector<StorageNodeMessage> output_symb = {StorageNodeMessage(cc, index)};
+  users.at(1)->output_symbols_ = output_symb;
+  
+   Event event2(0, Event::move_user);
+ event2.set_agent(users.at(0));
+  event_list.push_back(event2);
+  /*
+  Event event2(0, Event::check_sensors);
+  event2.set_agent(storage_nodes.at(0));
+  event_list.push_back(event2);
+  
+    Event event1(10, Event::sensor_ping);
   event1.set_agent(sensors.at(0));
   event_list.push_back(event1);
+ 
+  
+  Event event3(10+50,Event::broken_sensor);
+  event3.set_agent(sensors.at(0));
+  event_list.push_back(event3);
+  */
+  //Event event1(10, Event::sensor_generate_measure);
+  //event1.set_agent(sensors.at(0));
+  //event_list.push_back(event1);
 
-  Event event2(10 + 1000000000, Event::sensor_generate_measure);
-  event2.set_agent(sensors.at(1));
-  event_list.push_back(event2);
+  //Event event2(10 + 1000000000, Event::sensor_generate_measure);
+  //event2.set_agent(sensors.at(1));
+  //event_list.push_back(event2);
 
   while (!event_list.empty()) {
   // for (int i = 0; i < 5; i++) {
 
     // TODO: verify next event has a different schedule time than this
-
+      
     Event next_event = *(event_list.begin());
     event_list.erase(event_list.begin());
     vector<Event> new_events = next_event.execute_action();

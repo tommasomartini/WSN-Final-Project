@@ -9,6 +9,7 @@
 #include "storage_node.h"
 #include "measure.h"
 
+
 /**************************************
     Constructors
 **************************************/
@@ -90,8 +91,10 @@ vector<Event> SensorNode::try_retx(Message* message, unsigned int next_node_id) 
 vector<Event> SensorNode::sensor_ping(int event_time){
     map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
      //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
+    cout<<"il mio supervisior è "<<my_supervisor_id_;
     vector<Event> new_events;
     if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
+        cout<<"nodo impegnato!"<<endl;
         Event new_event(timetable_.find(my_supervisor_id_)->second, Event::sensor_ping);
         new_event.set_agent(this);  
         new_events.push_back(new_event);
@@ -103,7 +106,9 @@ vector<Event> SensorNode::sensor_ping(int event_time){
                 supervisior_node->set_supervision_map_(node_id_,event_time);     
             }
         }
-        Event new_event(event_time+MyToolbox::get_ping_frequency(), Event::sensor_ping);   
+       cout<<"nodo libero! prossimo ping tra "<<MyToolbox::ping_frequency;
+
+        Event new_event(event_time+MyToolbox::ping_frequency, Event::sensor_ping);   
         new_event.set_agent(this);
         new_events.push_back(new_event);
     }
@@ -255,4 +260,8 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
     }
   }
   return new_events;
+}
+
+void SensorNode::set_my_supervisor(unsigned int supervisior){
+    my_supervisor_id_=supervisior;
 }

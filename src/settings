@@ -1,7 +1,7 @@
-num_storage_nodes=3
+num_storage_nodes=1
 num_sensors=2
-max_num_users=0
-num_users=0
+max_num_users=10
+num_users=3
 
 num_bits_for_id=16;
 num_bits_for_measure=80000

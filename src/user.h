@@ -39,7 +39,8 @@ class User: public Node {
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
   vector<Event> move_user(int);  // the user "walks" randomly among the area
   vector<Event> user_send_to_user(UserMessage*, int);
-  vector<Event> user_receive_data(int, UserMessage*);  
+  vector<Event> user_receive_data(int, UserMessage*);
+  void add_symbols(vector<StorageNodeMessage>, User*);
   
  protected:
   typedef map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator

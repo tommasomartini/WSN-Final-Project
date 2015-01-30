@@ -92,6 +92,9 @@ void MyToolbox::set_timetable(map<unsigned int, MyTime> timetable) {
   timetable_ = timetable;
 }
 
+void MyToolbox::set_user_update_time() {
+    user_update_time = (tx_range /user_velocity)*pow(10,9);  
+}
 
 ///////////////////////////////////////////////////// TODO remove
 
@@ -143,10 +146,6 @@ void MyToolbox::set_user_velocity(double velocity){
     user_velocity_ = velocity;
 }
 
-void MyToolbox::set_user_update_time() {
-    user_update_time_ = (tx_range_/user_velocity_)*pow(10,9);    // time for do tx_range
-}
-
 void MyToolbox::set_tx_range(int range) {
     tx_range_=range;
 }
@@ -172,33 +171,29 @@ void MyToolbox::set_users(vector<User*> user){
 }
 
 void MyToolbox::set_near_storage_node(Node* node){
-    for(int i = 0; i< node->near_storage_nodes.size(); i++)
-          MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(i));
-      
+    while(node->near_storage_nodes.size()>0)
+          MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(0));
     for(int i = 0; i< storage_nodes_.size(); i++){
-          if (Node::are_nodes_near(storage_nodes_.at(i),node) == true)
+          if (node!= storage_nodes_.at(i) && Node::are_nodes_near(storage_nodes_.at(i),node) == true)
               node->add_near_sensor_node(storage_nodes_.at(i));
       }
 }
 
 void MyToolbox::set_near_user(Node* node){
-    for(int i = 0; i< node->near_users.size(); i++)
-          MyToolbox::remove_near_user(node, (User*)node->near_users.at(i));
-      
-    cout<<"numero user"<<users_.size()<<endl;
-    for(int i = 0; i< users_.size(); i++){
-          if (Node::are_nodes_near(users_.at(i),node) == true)
-          {  node->add_near_user(users_.at(i));
-          cout<<"sono dentro"<<endl;}
-      }  
+     while(node->near_users.size()>0)
+          MyToolbox::remove_near_user(node, (User*)node->near_users.at(0));
+     for(int i = 0; i< users_.size(); i++){
+          if (node!=users_.at(i) && Node::are_nodes_near(users_.at(i),node) == true)
+            node->add_near_user(users_.at(i));
+      }   
 }
 
 void MyToolbox::remove_near_storage_node(Node* node, StorageNode *storage_node) {
-  // node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
+   node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
 }
 
 void MyToolbox::remove_near_user(Node* node, User *user) {
-  // node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
+   node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////7

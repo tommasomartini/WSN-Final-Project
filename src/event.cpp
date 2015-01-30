@@ -53,6 +53,7 @@ vector<Event> Event::execute_action() {
   Node* current_agent = (Node*)agent_;
   unsigned int current_node_id = current_agent->get_node_id();
   if (!MyToolbox::is_node_active(current_node_id)) {
+      cout<<"esecuzione bloccata:il nodo è morto!"<<endl;
     return new_events;
   }
 
@@ -86,15 +87,15 @@ vector<Event> Event::execute_action() {
         new_events = ((StorageNode*)agent_)->remove_mesure((OutdatedMeasure*)message_);
       break;
     case move_user:
-        // new_events = ((User*)agent_)->move_user(time_);
-        // cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
+         new_events = ((User*)agent_)->move_user(time_);
+         cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
       break;
     case node_send_to_user:
       new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
       break;
-    case user_send_to_user:
-         new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);
-      break;
+   // case user_send_to_user:
+     //    new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);
+    //  break;
     case user_receive_data:
          new_events = ((User*)agent_)->user_receive_data(time_,(UserMessage*)message_);
       break;

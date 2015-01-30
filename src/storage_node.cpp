@@ -108,12 +108,16 @@ vector<Event> StorageNode::check_sensors(int event_time){       //assumption: se
     bool new_blacklist_element = false;
 
     for (auto& x: supervisioned_map_){
-        if(x.second +(3*MyToolbox::get_ping_frequency())< event_time){  // don't ping in last 3*ping_frequency
+       
+        if(x.second +(3*MyToolbox::ping_frequency)< event_time){  // don't ping in last 3*ping_frequency
             my_blacklist_.push_back( x.first);
             new_blacklist_element = true;
             expired_sensors[i] =  x.first;
             i++;    
+            //cout<<"sensore morto!"<<endl;
         }
+       // else
+           // cout<<"i sensori ci sono!"<<endl;
     }
     for(int j=0; j<i; j++)
         supervisioned_map_.erase(supervisioned_map_.find(expired_sensors[j])); 
@@ -121,18 +125,16 @@ vector<Event> StorageNode::check_sensors(int event_time){       //assumption: se
     if (new_blacklist_element == true){     //make event for spread blacklist
         int* ex_sensors=expired_sensors;
         BlacklistMessage* list = new BlacklistMessage(ex_sensors,i);
-        int next_node_index = rand() % near_storage_nodes.size();
+        unsigned int next_node_index = rand() % near_storage_nodes.size();
         StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-        Event new_event(event_time, Event::blacklist_sensor); //to add propagation time?
-        new_event.set_agent(next_node);   
-        new_event.set_message(list);
-        new_events.push_back(new_event);
+        list->set_receiver_node_id(next_node->get_node_id());
+        list->message_type_=Message::message_type_blacklist;
+        new_events = send(next_node, list);
     }
-    if(supervisioned_map_.size()!=0){
-        Event new_event(event_time + MyToolbox::get_check_sensors_frequency_(), Event::check_sensors); 
+        Event new_event(event_time + MyToolbox::check_sensors_frequency, Event::check_sensors); 
         new_event.set_agent(this);   
         new_events.push_back(new_event);
-    }
+    
     
     return new_events;
 }
@@ -143,15 +145,15 @@ vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* li
         if ( last_measures_.find(list->get_id_list()[i]) != last_measures_.end() )
             my_blacklist_.push_back(list->get_id_list()[i]);
     }  
-    int hop_limit = MyToolbox::get_max_msg_hops();
+    int hop_limit = MyToolbox::max_num_hops;
     if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
         list->increase_hop_counter();
         int next_node_index = rand() % near_storage_nodes.size();
         StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-        Event new_event(event_time, Event::blacklist_sensor); // event_time has to consider timetable + backoff time (+ propagation time??)
-        new_event.set_agent(next_node);   
-        new_event.set_message(list);
-        new_events.push_back(new_event);
+        list->set_receiver_node_id(next_node->get_node_id());
+        list->message_type_=Message::message_type_blacklist;
+        new_events = send(next_node, list);
+       
     }
     
     return new_events;
@@ -165,8 +167,10 @@ vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
             xored_measure_ = xored_measure_ ^ it->second;
             last_measures_.erase(last_measures_.find(it->first)); 
            }
+        if(find(my_blacklist_.begin(), my_blacklist_.end(), it->first)!=my_blacklist_.end())
+            my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
     }
-    int hop_limit = MyToolbox::get_max_msg_hops();
+    int hop_limit = MyToolbox::max_num_hops;
     if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
       message_to_remove->increase_hop_counter();
       int next_node_index = rand() % near_storage_nodes.size();
@@ -215,6 +219,8 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
+  
+  cout<<"bit = "<<message->get_message_size()<<endl;
 
   // Update the timetable
   if (!event_queue_.empty()) {  // already some pending event
@@ -270,6 +276,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
           break;
       }
       cout << "Genero un evento di tipo " << this_event_type << endl;
+      cout<<"current time = "<<current_time<<"message time = "<<message_time<<endl;
       Event receive_message_event(new_schedule_time, this_event_type);
       receive_message_event.set_agent(next_node);
       receive_message_event.set_message(message);

@@ -28,7 +28,9 @@ class SensorNode: public Node {
   vector<Event> generate_measure(); // Tom
   vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
   vector<Event> sensor_ping(int); // Arianna
-
+  
+  void set_my_supervisor(unsigned int);
+  
  private:
   typedef MyToolbox::MyTime MyTime;
 

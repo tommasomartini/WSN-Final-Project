@@ -26,7 +26,10 @@ private:
      int get_length() {return length_;}
      int get_hop_counter() {return hop_counter_;}
 
+
      int increase_hop_counter();
+     unsigned int get_message_size();
+
 };
 
 #endif

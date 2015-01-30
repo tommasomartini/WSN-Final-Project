@@ -25,6 +25,12 @@ class StorageNode : public Node {
 
   // getters
   unsigned char get_xored_measure() {return xored_measure_;}
+  vector <unsigned int> get_ids () {
+      vector <unsigned int> ids;
+      for (auto& i :last_measures_) 
+            ids.push_back(i.first );
+    return ids;
+  }
 
   // setters
   void set_supervision_map_(int, int);
@@ -44,7 +50,7 @@ class StorageNode : public Node {
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
   map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>
-  vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the superisor of
+  vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the supervisior of
   map<int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 

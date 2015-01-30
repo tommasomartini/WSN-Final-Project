@@ -51,6 +51,7 @@
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile</itemPath>
+      <itemPath>../src/settings</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
@@ -72,6 +73,10 @@
       </item>
       <item path="../src/blacklist_message.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="../src/data_collector.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/data_collector.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="../src/event.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/event.h" ex="false" tool="3" flavor2="0">
@@ -91,10 +96,6 @@
       <item path="../src/node.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/node.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="../src/node_dispatcher.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="../src/node_dispatcher.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../src/outdated_measure.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -149,6 +150,10 @@
       </item>
       <item path="../src/blacklist_message.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="../src/data_collector.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../src/data_collector.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="../src/event.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/event.h" ex="false" tool="3" flavor2="0">
@@ -168,10 +173,6 @@
       <item path="../src/node.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../src/node.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="../src/node_dispatcher.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="../src/node_dispatcher.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../src/outdated_measure.cpp" ex="false" tool="1" flavor2="0">
       </item>
