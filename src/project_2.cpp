@@ -136,10 +136,20 @@ void import_settings() {
 int main() {
 
   srand(time(NULL));  // generate a random seed to generate random numbers later on
+  default_random_engine generator(time(NULL));
 
   import_settings();
 
   MyToolbox::initialize_toolbox();
+
+  for (int i = 0; i < 10; ++i) {
+    MyTime time = MyToolbox::get_random_processing_time();
+    cout << time; 
+    printf ("  /  %lu  /  %ld\n", time, time);
+  }
+
+  return 0;
+  cout << "Non dovrei arrivare qui" << endl;
 
   MyToolbox::set_k(NUM_SENSORS);
   MyToolbox::set_n(NUM_STORAGE_NODES);

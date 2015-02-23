@@ -7,6 +7,7 @@
 
 #include <vector> 
 #include <map> 
+#include <random> // generation of random variables -> require -std=c++11
 
 #include "agent.h"
 
@@ -170,6 +171,8 @@ class MyToolbox {
   static int tx_range_;
   static int space_precision_;
   static int square_size_;  
+
+  static default_random_engine generator;
 };
 
 #endif

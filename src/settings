@@ -25,7 +25,7 @@ user_velocity=0.8 m/s
 user_update_time=2;
 
 mean_processing_time=100000 ns
-std_dev_processing_time=100000 ns
+std_dev_processing_time=10000 ns
 
 max_tx_offset=10000000 ns
 max_tx_offset_ping=5000000 ns

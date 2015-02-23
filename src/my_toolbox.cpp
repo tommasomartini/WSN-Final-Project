@@ -1,7 +1,8 @@
 #include <math.h>
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
-#include <random>   // genertion of random variables -> require -std=c++11
+#include <algorithm>
+// #include <random>   // generation of random variables -> require -std=c++11
 
 #include "my_toolbox.h"
 #include "node.h"
@@ -54,6 +55,8 @@ double MyToolbox::sensor_failure_prob = 0;
 map<unsigned int, Node*>* MyToolbox::sensors_map_ptr;
 map<unsigned int, Node*>* MyToolbox::storage_nodes_map_ptr; 
 map<unsigned int, Node*>* MyToolbox::users_map_ptr; 
+
+default_random_engine MyToolbox::generator;
 
 
 // TODO remove everything hereafter
@@ -188,15 +191,15 @@ void MyToolbox::set_near_user(Node* node){
       }   
 }
 
-void MyToolbox::remove_near_storage_node(Node* node, StorageNode *storage_node) {
+void MyToolbox::remove_near_storage_node(Node* node, StorageNode* storage_node) {
    node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
 }
 
-void MyToolbox::remove_near_user(Node* node, User *user) {
-   node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
+void MyToolbox::remove_near_user(Node* node, User* user) {
+   // node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////7
+////////////////////////////////////////////////////////////////////////////////////////////
 
 /**************************************
     Functions
@@ -204,6 +207,7 @@ void MyToolbox::remove_near_user(Node* node, User *user) {
 void MyToolbox::initialize_toolbox() {
   cout << "Devo ancora fare l'inizializzazione!!" << endl;
   max_num_hops = ceil(C1 * num_storage_nodes * log(num_storage_nodes));
+  generator = default_random_engine(time(NULL));
 }
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
@@ -293,8 +297,8 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
-  default_random_engine generator(time(NULL));
-  normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
+  // normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
+  normal_distribution<long double> distribution(mean_processing_time, std_dev_processing_time);
   MyTime rnd_proc_time = (MyTime)(distribution(generator));
   return rnd_proc_time;
 }
