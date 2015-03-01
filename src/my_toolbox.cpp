@@ -64,7 +64,7 @@ vector<SensorNode*> MyToolbox::sensor_nodes_;
 vector<StorageNode*> MyToolbox::storage_nodes_;
 vector<User*> MyToolbox::users_;
   
-
+/*
 int MyToolbox::n_ = 0;
 int MyToolbox::k_ = 0;
 int MyToolbox::C1_ = 0;
@@ -82,6 +82,7 @@ long MyToolbox::user_update_time_=0;
 int MyToolbox::tx_range_=0;
 int MyToolbox::space_precision_=0;
 int MyToolbox::square_size_=0;
+/**/
 
 
 /**************************************
@@ -100,7 +101,7 @@ void MyToolbox::set_user_update_time() {
 }
 
 ///////////////////////////////////////////////////// TODO remove
-
+/*
 void MyToolbox::set_n(int n) {
   n_ = n;
 }
@@ -160,6 +161,7 @@ void MyToolbox::set_space_precision(int space_precision){
 void MyToolbox::set_square_size(int square_size){
     square_size_=square_size;
 }
+/**/
 
 void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor){
     sensor_nodes_=sensor;
@@ -270,17 +272,17 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
     [       ]      ]    ]  ] ]
   */
 
-  int M = k_ * (k_ - 1);
+  int M = num_storage_nodes * (num_storage_nodes - 1);
   double prob = (rand() % M) / (double)(M - 1);
 
   // cout << "Prob: " << prob << endl;
 
-  double up_bound = 1. / k_;
+  double up_bound = 1. / num_storage_nodes;
   double interval_length = up_bound;
   if (prob <= up_bound) { // between 0 and 1/k -> degree = 1;
     return 1;
   }
-  for (int i = 2; i <= k_; ++i) {
+  for (int i = 2; i <= num_storage_nodes; ++i) {
     interval_length = 1. / (i * i - i);
     up_bound += interval_length;
     // cout << "Step: " << i << ". Interval length: " << interval_length << ", up_bound: " << up_bound << endl;
@@ -289,7 +291,7 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
     }
   }
 
-  return k_;
+  return num_storage_nodes;
 }
 
 int MyToolbox::get_robust_soliton_distribution_degree() {

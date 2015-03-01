@@ -49,6 +49,7 @@ class User: public Node {
   typedef MyToolbox::MyTime MyTime;
 
   vector<Event> send(Node*, Message*);
+  vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 };
 
 #endif

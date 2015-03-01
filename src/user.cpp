@@ -295,7 +295,6 @@ vector<Event> User::send(Node* next_node, Message* message) {
   double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
   MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
   MyTime processing_time =  MyToolbox::get_random_processing_time();  
-  processing_time = 0; //DA TOGLIRE MA NON VA;
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
@@ -325,7 +324,7 @@ vector<Event> User::send(Node* next_node, Message* message) {
     if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
       Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
-      try_again_event.set_agent(this);
+      try_again_event.set_agent(this); 
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication

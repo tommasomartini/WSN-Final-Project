@@ -24,7 +24,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 
 using namespace std;
 
-// Parameters
+/*
 const int NUM_STORAGE_NODES = 3;
 const int NUM_SENSORS = 2;
 const int NUM_USERS = 3;
@@ -47,7 +47,7 @@ const int SPACE_PRECISION = 1000; // how many fundamental space units in one met
 const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
 
 const int TX_RANGE = 10; // tx_range in meters
-///////////////////////////////////////////////////////////////////////////////////
+/**/
 
 
 
@@ -142,15 +142,7 @@ int main() {
 
   MyToolbox::initialize_toolbox();
 
-  for (int i = 0; i < 10; ++i) {
-    MyTime time = MyToolbox::get_random_processing_time();
-    cout << time; 
-    printf ("  /  %lu  /  %ld\n", time, time);
-  }
-
-  return 0;
-  cout << "Non dovrei arrivare qui" << endl;
-
+/*
   MyToolbox::set_k(NUM_SENSORS);
   MyToolbox::set_n(NUM_STORAGE_NODES);
   MyToolbox::set_C1(C1);
@@ -165,6 +157,7 @@ int main() {
   MyToolbox::set_user_velocity(USER_VELOCITY);
   MyToolbox::set_user_update_time();
   MyToolbox::set_tx_range(TX_RANGE);
+  /**/
 
 // Set up the network
   // I use these vectors to set up the network

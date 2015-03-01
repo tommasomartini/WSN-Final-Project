@@ -153,7 +153,6 @@ vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* li
         list->set_receiver_node_id(next_node->get_node_id());
         list->message_type_=Message::message_type_blacklist;
         new_events = send(next_node, list);
-       
     }
     
     return new_events;

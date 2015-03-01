@@ -75,14 +75,8 @@ class MyToolbox {
   // getters
   static MyTime get_current_time() {return current_time_;}
   static map<unsigned int, MyTime> get_timetable() {return timetable_;}
-
+/*
   static int get_n() {return n_;}
-  static int get_k() {return k_;}
-  static int get_bits_for_measure() {return bits_for_measure_;}
-  static int get_bits_for_id() {return bits_for_id_;}
-  static int get_bits_for_phy_mac_overhead() {return bits_for_phy_mac_overhead_;}
-  static int get_bits_for_measure_id() {return bits_for_measure_id_;}
-  static int get_bits_for_hop_counter() {return bits_for_hop_counter_;}
   static int get_max_msg_hops() {return max_msg_hops_;}
   static double get_channel_bit_rate_() {return channel_bit_rate_;}
   static int get_ping_frequency() {return ping_frequency_;}
@@ -90,13 +84,21 @@ class MyToolbox {
   static int get_tx_range() {return tx_range_;}
   static long get_user_update_time(){return user_update_time_;} 
   static int get_user_size() {return users_.size();}
-  static int get_space_precision(){return space_precision_;}
   static int get_square_size(){return square_size_;} 
+  /**/
+  static int get_k() {return num_storage_nodes;}
+  static int get_bits_for_id() {return num_bits_for_id;}
+  static int get_bits_for_measure() {return num_bits_for_measure;}
+  static int get_bits_for_measure_id() {return num_bits_for_measure_id;}
+  static int get_bits_for_phy_mac_overhead() {return num_bits_phy_mac_overhead;}
+  static int get_bits_for_hop_counter() {return 3;} // TODO fare qualcosa di questo!!
+  static int get_space_precision(){return space_precision;}
 
   // setters
   static void set_current_time(MyTime);
   static void set_timetable(map<unsigned int, MyTime>);
 
+/*
   static void set_n(int);
   static void set_k(int);
   static void set_C1(int);
@@ -109,11 +111,12 @@ class MyToolbox {
   static void set_ping_frequency(int);
   static void set_check_sensors_frequency(int);
   static void set_user_velocity(double);
-  static void set_user_update_time();
   static void set_tx_range(int);
   static void set_space_precision(int);
   static void set_square_size(int);
-  
+  /**/
+
+  static void set_user_update_time();
   static void set_sensor_nodes(vector<SensorNode*>);
   static void set_storage_nodes(vector<StorageNode*>);
   static void set_users(vector<User*>);
@@ -154,6 +157,7 @@ class MyToolbox {
   // TODO: remove this from here! Should be more accessible from a user
   static const MyTime MAX_OFFSET = 1000000; // 1ms, in nano-seconds
 
+/*
   static int n_;  // number of storage nodes in the network
   static int k_;  // number of sensors in the network
   static int C1_; // parameter to set the max number of hops of a source block
@@ -170,7 +174,8 @@ class MyToolbox {
   static long user_update_time_; //frequency at which we move the users
   static int tx_range_;
   static int space_precision_;
-  static int square_size_;  
+  static int square_size_; 
+  /**/ 
 
   static default_random_engine generator;
 };
