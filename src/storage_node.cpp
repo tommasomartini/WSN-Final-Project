@@ -190,25 +190,25 @@ vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* li
 /*  A user informs me about what measures are obsolete
 */
 vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
-    vector<Event> new_events;
-    map<int,unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
-    for (map<int, unsigned char>::iterator it=outdated_measure.begin(); it!=outdated_measure.end(); ++it){
-        if (last_measures_.find(it->first) != last_measures_.end()){
-            xored_measure_ = xored_measure_ ^ it->second;
-            last_measures_.erase(last_measures_.find(it->first)); 
-           }
-        if(find(my_blacklist_.begin(), my_blacklist_.end(), it->first)!=my_blacklist_.end())
-            my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
+  vector<Event> new_events;
+  map<int,unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
+  for (map<int, unsigned char>::iterator it=outdated_measure.begin(); it!=outdated_measure.end(); ++it){
+    if (last_measures_.find(it->first) != last_measures_.end()){
+      xored_measure_ = xored_measure_ ^ it->second;
+      last_measures_.erase(last_measures_.find(it->first)); 
     }
-    int hop_limit = MyToolbox::max_num_hops;
-    if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-      message_to_remove->increase_hop_counter();
-      int next_node_index = rand() % near_storage_nodes.size();
-      StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-      Event new_event(10, Event::remove_measure); // to set event time!!!!!!!
-      new_event.set_agent(next_node);   
-      new_event.set_message(message_to_remove);
-      new_events.push_back(new_event);
+    if(find(my_blacklist_.begin(), my_blacklist_.end(), it->first)!=my_blacklist_.end())
+      my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
+  }
+  int hop_limit = MyToolbox::max_num_hops;
+  if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+    message_to_remove->increase_hop_counter();
+    int next_node_index = rand() % near_storage_nodes.size();
+    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    Event new_event(10, Event::remove_measure); // to set event time!!!!!!!
+    new_event.set_agent(next_node);   
+    new_event.set_message(message_to_remove);
+    new_events.push_back(new_event);
   }
   return new_events;
 }

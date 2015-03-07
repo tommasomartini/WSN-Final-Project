@@ -35,12 +35,11 @@ class User: public Node {
   vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes
   
   void collect_data(Message /*xored_message*/); // for debugging only
-  bool message_passing(); // implements the message passing procedure
-  bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
+
   vector<Event> move_user(int);  // the user "walks" randomly among the area
-  vector<Event> user_send_to_user(UserMessage*, int);
+  vector<Event> move(); // different implementation of the random walk
+  vector<Event> user_send_to_user();  // Tom
   vector<Event> user_receive_data(int, UserMessage*);
-  void add_symbols(vector<StorageNodeMessage>, User*);
   
  protected:
   typedef map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
@@ -50,6 +49,9 @@ class User: public Node {
 
   vector<Event> send(Node*, Message*);
   vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
+  bool message_passing(); // implements the message passing procedure
+  bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
+  void add_symbols(vector<StorageNodeMessage>, User*);
 };
 
 #endif

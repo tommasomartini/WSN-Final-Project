@@ -26,6 +26,119 @@ void User::collect_data(Message xored_message) {
 }
 */
 
+/**************************************
+    Public methods
+**************************************/
+
+vector<Event> User::move_user(int event_time) {
+  vector<Event> new_events; 
+  // simulate the user moving
+  y_coord_=y_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision + rand() % 2*MyToolbox::tx_range *MyToolbox::space_precision); 
+  x_coord_=x_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision+ rand() % 2*MyToolbox::tx_range*MyToolbox::space_precision);
+  y_coord_ = max(0.0, min(y_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision)));  //to avoid that coords are outside area
+  x_coord_ = max(0.0, min(x_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision))); 
+  // find new near_storage and near_user
+  MyToolbox::set_near_storage_node(this);
+  MyToolbox::set_near_user(this);
+  
+  // creates event user_node_query with all near nodes
+  for(int i=0; i<near_storage_nodes.size(); i++){
+      //Event new_event(event_time + MyToolbox::get_tx_offset(), Event::node_send_to_user); //event time distanziarli
+      //new_event.set_agent(near_storage_nodes.at(i));
+      //Message* new_msg_ptr = new Message();
+      //new_msg_ptr->set_sender_node_id(node_id_);
+      //new_event.set_message(new_msg_ptr);
+      //new_events.push_back(new_event);
+      UserMessage* message = new UserMessage();
+      unsigned char xor_message = ((StorageNode*)near_storage_nodes.at(i))->get_xored_measure();
+      vector <unsigned int> id_list = ((StorageNode*) near_storage_nodes.at(i))->get_ids();
+     if(id_list.size()>0){
+        vector <StorageNodeMessage> symbol = {StorageNodeMessage(xor_message,id_list)};
+        message->set_symbols(symbol);
+        message->set_user_to_reply(this);
+        message->message_type_=Message::message_type_user_to_user;    //->>sarebbe node_to_user ma in send non c'è
+        new_events = send(near_storage_nodes.at(i),message);
+     }
+  }
+  // creates event user_user_query with all near users
+  for(int i=0; i<near_users.size(); i++){
+      if((((User*)near_users.at(i))->output_symbols_).size()>0){
+        UserMessage* message = new UserMessage();
+        message->set_symbols(((User*)near_users.at(i))->output_symbols_);
+        message->set_user_to_reply(this);
+        // message->set_receiver_node_id(this->node_id_);
+        message->message_type_=Message::message_type_user_to_user;
+        new_events = send(near_users.at(i),message);
+        //Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
+        //new_event.set_agent(near_users.at(i));
+        // new_event.set_agent_to_reply(this);
+        //new_events.push_back(new_event);
+      }
+  }
+  // create next move_user
+  Event new_event(event_time+(MyToolbox::user_update_time * pow (10,9)),Event::move_user);
+  new_event.set_agent(this);
+  new_events.push_back(new_event);
+        
+  return new_events;
+}
+
+vector<Event> User::move() {
+  return vector<Event>();
+}
+
+/*  Receive data from a storage node or from another user
+*/
+vector<Event> User::user_receive_data(int event_time, UserMessage* message){
+  vector<Event> new_events;
+  User* user_to_update = message->get_user_to_reply();
+  User::add_symbols(message->get_symbols(),message->get_user_to_reply());
+  //try message passing
+  if (user_to_update->message_passing()){ 
+    //cout<<"message passing ok"<<"black list = "<<message->get_blacklist().get_length()<<endl;
+    // the user succeeds message passing, now delete this user and create a new user
+    User *new_user = MyToolbox::new_user();
+    Event new_event(event_time+10, Event::move_user); //event time da cambiare
+    new_event.set_agent(new_user);
+    new_events.push_back(new_event);
+    
+    //if there are elements in black_list spread mesaures
+    //creare messagio id misura e evento spread
+    map<int, unsigned char> outdated_symbols;
+    for (int i=0; i<message->get_blacklist().get_length(); i++){
+      if ( user_to_update->input_symbols_.find(message->get_blacklist().get_id_list()[i])!= user_to_update->input_symbols_.end()){
+        int id = message->get_blacklist().get_id_list()[i];
+        unsigned char symbol = user_to_update->input_symbols_.find(id)->second; 
+        outdated_symbols.insert(pair<int,unsigned char>(id,symbol));
+      }
+    }
+    if(outdated_symbols.size()>0){ 
+      OutdatedMeasure* symbols_to_remove = new OutdatedMeasure(outdated_symbols);
+      int next_node_index = rand() % near_storage_nodes.size();
+      StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+      //Event event(event_time, Event::remove_measure); //event time da cambiare
+      //event.set_agent(next_node);
+      //event.set_message(symbols_to_remove);
+      //new_events.push_back(event);
+      symbols_to_remove->set_receiver_node_id(next_node->get_node_id());
+      symbols_to_remove->message_type_=Message::message_type_remove_measure;
+      new_events = send(next_node, symbols_to_remove);
+    }
+  }   
+  return new_events;
+}
+
+/*  This user receives a "beep" from another user, asking him to send him his measures
+*/
+vector<Event> User::user_send_to_user() {
+  vector<Event> new_events;
+  return new_events;
+}
+
+/**************************************
+    Private methods
+**************************************/
+
 bool User::message_passing() {
     cout<<"sono denstro al message_passing "<<endl;
 
@@ -135,59 +248,6 @@ bool User::CRC_check(Message message) {
   return true;
 }
 
-vector<Event> User::move_user(int event_time) {
-  vector<Event> new_events; 
-  // simulate the user moving
-  y_coord_=y_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision + rand() % 2*MyToolbox::tx_range *MyToolbox::space_precision); 
-  x_coord_=x_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision+ rand() % 2*MyToolbox::tx_range*MyToolbox::space_precision);
-  y_coord_ = max(0.0, min(y_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision)));  //to avoid that coords are outside area
-  x_coord_ = max(0.0, min(x_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision))); 
-  // find new near_storage and near_user
-  MyToolbox::set_near_storage_node(this);
-  MyToolbox::set_near_user(this);
-  
-  // creates event user_node_query with all near nodes
-  for(int i=0; i<near_storage_nodes.size(); i++){
-      //Event new_event(event_time + MyToolbox::get_tx_offset(), Event::node_send_to_user); //event time distanziarli
-      //new_event.set_agent(near_storage_nodes.at(i));
-      //Message* new_msg_ptr = new Message();
-      //new_msg_ptr->set_sender_node_id(node_id_);
-      //new_event.set_message(new_msg_ptr);
-      //new_events.push_back(new_event);
-      UserMessage* message = new UserMessage();
-      unsigned char xor_message = ((StorageNode*)near_storage_nodes.at(i))->get_xored_measure();
-      vector <unsigned int> id_list = ((StorageNode*) near_storage_nodes.at(i))->get_ids();
-     if(id_list.size()>0){
-        vector <StorageNodeMessage> symbol = {StorageNodeMessage(xor_message,id_list)};
-        message->set_symbols(symbol);
-        message->set_user_to_reply(this);
-        message->message_type_=Message::message_type_user_to_user;    //->>sarebbe node_to_user ma in send non c'è
-        new_events = send(near_storage_nodes.at(i),message);
-     }
-  }
-  // creates event user_user_query with all near users
-  for(int i=0; i<near_users.size(); i++){
-      if((((User*)near_users.at(i))->output_symbols_).size()>0){
-        UserMessage* message = new UserMessage();
-        message->set_symbols(((User*)near_users.at(i))->output_symbols_);
-        message->set_user_to_reply(this);
-        // message->set_receiver_node_id(this->node_id_);
-        message->message_type_=Message::message_type_user_to_user;
-        new_events = send(near_users.at(i),message);
-        //Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
-        //new_event.set_agent(near_users.at(i));
-        // new_event.set_agent_to_reply(this);
-        //new_events.push_back(new_event);
-      }
-  }
-  // create next move_user
-  Event new_event(event_time+(MyToolbox::user_update_time * pow (10,9)),Event::move_user);
-  new_event.set_agent(this);
-  new_events.push_back(new_event);
-        
-  return new_events;
-}
-
 // vector<Event> User::user_send_to_user(User* user, int event_time){
 //     vector<Event> new_events; 
 //     cout<<"size old "<<user->output_symbols_.size()<<endl;
@@ -243,49 +303,9 @@ vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
 */      //metodo user_send_to_user diventato obsoleto!
 
 void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){
-  user->output_symbols_.reserve(user->output_symbols_.size() + symbols.size());
-  (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());
+  user->output_symbols_.reserve(user->output_symbols_.size() + symbols.size()); // reallocate the memory of the vector in order to contain all the new symbols
+  (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());  // append the new symbols
 }
-
-vector<Event> User::user_receive_data(int event_time, UserMessage* message){
-    vector<Event> new_events;
-    User* user_to_update = message->get_user_to_reply();
-    User::add_symbols(message->get_symbols(),message->get_user_to_reply());
-    //try message passing
-        if (user_to_update->message_passing()){ 
-            //cout<<"message passing ok"<<"black list = "<<message->get_blacklist().get_length()<<endl;
-            // the user succeed message passing, now delete this user and create a new user
-            User *new_user = MyToolbox::new_user();
-            Event new_event(event_time+10, Event::move_user); //event time da cambiare
-            new_event.set_agent(new_user);
-            new_events.push_back(new_event);
-            
-            //if there are elements in black_list spread mesaures
-            //creare messagio id misura e evento spread
-            map<int, unsigned char> outdated_symbols;
-            for (int i=0; i<message->get_blacklist().get_length(); i++){
-                if ( user_to_update->input_symbols_.find(message->get_blacklist().get_id_list()[i])!= user_to_update->input_symbols_.end()){
-                    int id = message->get_blacklist().get_id_list()[i];
-                    unsigned char symbol = user_to_update->input_symbols_.find(id)->second; 
-                    outdated_symbols.insert(pair<int,unsigned char>(id,symbol));
-                    }
-            }
-            if(outdated_symbols.size()>0){ 
-                OutdatedMeasure* symbols_to_remove = new OutdatedMeasure(outdated_symbols);
-                int next_node_index = rand() % near_storage_nodes.size();
-                StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-                //Event event(event_time, Event::remove_measure); //event time da cambiare
-                //event.set_agent(next_node);
-                //event.set_message(symbols_to_remove);
-                //new_events.push_back(event);
-                symbols_to_remove->set_receiver_node_id(next_node->get_node_id());
-                symbols_to_remove->message_type_=Message::message_type_remove_measure;
-                new_events = send(next_node, symbols_to_remove);
-            }
-    }   
-    return new_events;
-}
-
 
 vector<Event> User::send(Node* next_node, Message* message) {
   vector<Event> new_events;

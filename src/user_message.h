@@ -19,7 +19,7 @@ class UserMessage : public Message {
     User* user_to_reply_;
 
   public:
-  // Constructrs
+  // Constructors
   UserMessage();
   //UserMessage(unsigned char, vector<unsigned int> ,BlacklistMessage);
   UserMessage(vector<StorageNodeMessage>, BlacklistMessage);
