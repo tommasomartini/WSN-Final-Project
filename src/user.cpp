@@ -132,6 +132,9 @@ vector<Event> User::user_receive_data(int event_time, UserMessage* message){
 */
 vector<Event> User::user_send_to_user() {
   vector<Event> new_events;
+
+  
+
   return new_events;
 }
 
