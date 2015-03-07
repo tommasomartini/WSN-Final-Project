@@ -25,10 +25,10 @@ class StorageNode : public Node {
 
   // getters
   unsigned char get_xored_measure() {return xored_measure_;}
-  vector <unsigned int> get_ids () {
-      vector <unsigned int> ids;
-      for (auto& i :last_measures_) 
-            ids.push_back(i.first );
+  vector<unsigned int> get_ids () {
+      vector<unsigned int> ids;
+      for (auto& i : last_measures_) 
+            ids.push_back(i.first);
     return ids;
   }
 

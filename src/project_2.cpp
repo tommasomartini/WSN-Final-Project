@@ -136,7 +136,7 @@ void import_settings() {
 int main() {
 
   srand(time(NULL));  // generate a random seed to generate random numbers later on
-  default_random_engine generator(time(NULL));
+  //default_random_engine generator(time(NULL));
 
   import_settings();
 

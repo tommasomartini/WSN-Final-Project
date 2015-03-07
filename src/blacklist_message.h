@@ -11,7 +11,7 @@ using namespace std;
 
 class BlacklistMessage : public Message {
 private:
-     int* sensor_id_; //contains id of sensors which is expired
+     int* sensor_id_; //contains id of sensors which are expired
      int length_;  // number of expired sensors
      int hop_counter_;
   

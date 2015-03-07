@@ -1,8 +1,9 @@
 #include <iostream>
-#include <map>
+//#include <map>
 #include <algorithm>    // std::max
 #include <iostream>
 #include <math.h>
+#include <random>
 
 #include "storage_node.h"
 #include "my_toolbox.h"
@@ -16,6 +17,8 @@ using namespace std;
 /**************************************
     Event execution methods
 **************************************/
+/*  Receive a measure either from a sensor or from another cache node
+*/
 vector<Event> StorageNode::receive_measure(Measure* measure) {
   cout << "Misura ricevuta da me, che sono " << node_id_ << endl;
   vector<Event> new_events;
@@ -23,6 +26,18 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
     cout << "Misura nuova " << endl;
     if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+      int k = MyToolbox::num_sensors;
+      int d = LT_degree_;
+      default_random_engine gen = MyToolbox::get_random_generator();
+      bernoulli_distribution bernoulli_distrib(d / k);
+      // accept the new msg with probability d/k
+      if (bernoulli_distrib(gen)) { // accept it!
+     // if (true) {
+        cout << "Mi prendo la misura!" << endl;
+        xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+        last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+      }
+
       /*
         Sampling interval must be larger smaller than the smallest interval probability.
         I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
@@ -35,8 +50,8 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 
         Choose randomly one element between 0 and M - 1 with "rand() % M".
         Divide it by (M - 1) to normaliz between 0 and 1
-      */
-      int k = MyToolbox::get_k();
+      
+      int k = MyToolbox::num_sensors;
       int d = LT_degree_;
       double prob = 1;
       if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
@@ -49,6 +64,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
         xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
         last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
       }
+      */
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
     cout << "Misura update" << endl;
@@ -74,20 +90,28 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
   return new_events;
 } 
 
+/*  I have already tried to send a message to someone, but I failed. Now I try again!
+*/
 vector<Event> StorageNode::try_retx(Message* message, int next_node_id) {
   map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
   StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
   return send(next_node, message);
 }
 
+/*  A sensor is telling me it is alive
+*/
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
-    if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end() ){
-        supervisioned_map_.insert(std::pair<int, int>(sensor_id,new_time));
+  // If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
+    if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
+        supervisioned_map_.insert(std::pair<int, int>(sensor_id, new_time));
     }
-    else
+    else {
       supervisioned_map_.find(sensor_id)->second = new_time;
+    }
 }
 
+/*  A user asks me to send him my data
+*/
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
   vector<Event> new_events;
   vector<unsigned int> my_sensor_ids;
@@ -96,68 +120,75 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
   }
   StorageNodeMessage msg(xored_measure_, my_sensor_ids);
   Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
-  msg.set_receiver_node_id(next_node->get_node_id());
+  msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
   new_events = send(next_node, &msg);
   return new_events;
 }
 
-vector<Event> StorageNode::check_sensors(int event_time){       //assumption: sensors always wake up
-    vector<Event> new_events;
-    int expired_sensors[supervisioned_map_.size()];
-    int i = 0;
-    bool new_blacklist_element = false;
+/*  Occasionally I check if the sensors I am supervising are OK
+*/
+vector<Event> StorageNode::check_sensors(int event_time){       // assumption: sensors always wake up TODO ???????
+  vector<Event> new_events;
+  int expired_sensors[supervisioned_map_.size()];
+  int i = 0;
+  bool new_blacklist_element = false;
 
-    for (auto& x: supervisioned_map_){
-       
-        if(x.second +(3*MyToolbox::ping_frequency)< event_time){  // don't ping in last 3*ping_frequency
-            my_blacklist_.push_back( x.first);
-            new_blacklist_element = true;
-            expired_sensors[i] =  x.first;
-            i++;    
-            //cout<<"sensore morto!"<<endl;
-        }
-       // else
-           // cout<<"i sensori ci sono!"<<endl;
+  for (auto& x: supervisioned_map_){
+    if(x.second +(3*MyToolbox::ping_frequency) < event_time){  // don't ping in last 3*ping_frequency
+      my_blacklist_.push_back( x.first);
+      new_blacklist_element = true;
+      expired_sensors[i] = x.first;
+      i++;    
+      //cout<<"sensore morto!"<<endl;
     }
-    for(int j=0; j<i; j++)
-        supervisioned_map_.erase(supervisioned_map_.find(expired_sensors[j])); 
-   
-    if (new_blacklist_element == true){     //make event for spread blacklist
-        int* ex_sensors=expired_sensors;
-        BlacklistMessage* list = new BlacklistMessage(ex_sensors,i);
-        unsigned int next_node_index = rand() % near_storage_nodes.size();
-        StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-        list->set_receiver_node_id(next_node->get_node_id());
-        list->message_type_=Message::message_type_blacklist;
-        new_events = send(next_node, list);
-    }
-        Event new_event(event_time + MyToolbox::check_sensors_frequency, Event::check_sensors); 
-        new_event.set_agent(this);   
-        new_events.push_back(new_event);
-    
-    
-    return new_events;
+     // else
+         // cout<<"i sensori ci sono!"<<endl;
+  }
+  // remove from the supervisioned_map the dead sensors
+  for(int j=0; j<i; j++) {
+    supervisioned_map_.erase(supervisioned_map_.find(expired_sensors[j]));
+  } 
+
+  if (new_blacklist_element == true) {     //make event for spread blacklist
+    int* ex_sensors = expired_sensors;  // TODOTOM perche faccio questo??
+    BlacklistMessage* list = new BlacklistMessage(ex_sensors,i);
+    unsigned int next_node_index = rand() % near_storage_nodes.size();
+    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    list->set_receiver_node_id(next_node->get_node_id());
+    list->message_type_= Message::message_type_blacklist;
+    new_events = send(next_node, list);
+  }
+
+  Event new_event(event_time + MyToolbox::check_sensors_frequency, Event::check_sensors); 
+  new_event.set_agent(this);   
+  new_events.push_back(new_event);
+
+  return new_events;
 }
 
-vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* list){
-    vector<Event> new_events;
-    for(int i=0; i<list->get_length(); i++){
-        if ( last_measures_.find(list->get_id_list()[i]) != last_measures_.end() )
-            my_blacklist_.push_back(list->get_id_list()[i]);
-    }  
-    int hop_limit = MyToolbox::max_num_hops;
-    if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-        list->increase_hop_counter();
-        int next_node_index = rand() % near_storage_nodes.size();
-        StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-        list->set_receiver_node_id(next_node->get_node_id());
-        list->message_type_=Message::message_type_blacklist;
-        new_events = send(next_node, list);
-    }
-    
-    return new_events;
+/*  I received a blacklist message: this message contains the measure I have to remove
+*/
+vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* list) {
+  vector<Event> new_events;
+  for (int i=0; i < list->get_length(); i++) {
+    if ( last_measures_.find(list->get_id_list()[i]) != last_measures_.end() )
+      my_blacklist_.push_back(list->get_id_list()[i]);
+  }  
+  int hop_limit = MyToolbox::max_num_hops;
+  if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+    list->increase_hop_counter();
+    int next_node_index = rand() % near_storage_nodes.size();
+    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    list->set_receiver_node_id(next_node->get_node_id());
+    list->message_type_=Message::message_type_blacklist;
+    new_events = send(next_node, list);
+  }
+  
+  return new_events;
 }
 
+/*  A user informs me about what measures are obsolete
+*/
 vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
     vector<Event> new_events;
     map<int,unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
@@ -212,12 +243,19 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   vector<Event> new_events;
 
   // Compute the message time
+  MyTime processing_time = MyToolbox::get_random_processing_time();
+  unsigned int num_total_bits = message->get_message_size();
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+  MyTime message_time = processing_time + transfer_time;
+
+  /* Compute the message time (OLD VERSION)
   double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
   MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
   MyTime processing_time = MyToolbox::get_random_processing_time();
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
+  */
   
   cout<<"bit = "<<message->get_message_size()<<endl;
 
@@ -235,9 +273,9 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   } else {  // no pending events
     map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
     MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-    MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
+    MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
     MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
-    if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
+    if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
       Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
       try_again_event.set_agent(this);

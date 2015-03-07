@@ -1,0 +1,28 @@
+prima di usare la librearia random facevo così la bernoulliana
+
+/*
+        Sampling interval must be larger smaller than the smallest interval probability.
+        I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
+        Divide the interval [0, 1] in M intervals with length 1/M.
+
+        1/M < min_int => M > 1 / min_int = 1 / min(d/k, (1 - d/k)) = max(1 / (d/k), 1 / (1 - d/k)) = 
+        = max(k/d, k/(k - d)).
+
+        Then we can take M = 10 * max(k/d, k/(k - d))
+
+        Choose randomly one element between 0 and M - 1 with "rand() % M".
+        Divide it by (M - 1) to normaliz between 0 and 1
+      */
+      int k = MyToolbox::get_k();
+      int d = LT_degree_;
+      double prob = 1;
+      if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
+        int M = 10 * max(k/d, k/(k - d)); // if d == k this gives a zero denominator
+        prob = (rand() % M) / (double)(M - 1);
+      }
+      // accept the new msg with probability d/k
+      if (prob <= LT_degree_ / k) { // accept it!
+        cout << "Mi prendo la misura!" << endl;
+        xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+        last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+      }

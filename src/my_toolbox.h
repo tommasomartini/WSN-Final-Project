@@ -75,6 +75,7 @@ class MyToolbox {
   // getters
   static MyTime get_current_time() {return current_time_;}
   static map<unsigned int, MyTime> get_timetable() {return timetable_;}
+  static default_random_engine get_random_generator() {return generator;}
 /*
   static int get_n() {return n_;}
   static int get_max_msg_hops() {return max_msg_hops_;}
@@ -146,7 +147,7 @@ class MyToolbox {
         - key = node_id
         - value = time at which the node is going to be "left free"
   */
-  static map<unsigned int, MyTime> timetable_;
+  static map<unsigned int, MyTime> timetable_;  // says when a node gets free
   static MyTime current_time_; // to keep track of the time
   static unsigned int node_id_; 
 

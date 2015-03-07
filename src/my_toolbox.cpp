@@ -302,7 +302,9 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   // normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
   normal_distribution<long double> distribution(mean_processing_time, std_dev_processing_time);
   MyTime rnd_proc_time = (MyTime)(distribution(generator));
-  return rnd_proc_time;
+  //return rnd_proc_time;
+
+  return mean_processing_time;
 }
 
 // MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
