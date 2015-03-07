@@ -1,9 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <algorithm>    // std::find, to check whether an element is in a vector
-#include "user.h"
 #include <math.h>
+#include <algorithm>    // std::find, to check whether an element is in a vector
+
+#include "user.h"
 #include "storage_node_message.h"
 #include "my_toolbox.h"
 #include "stdlib.h"
@@ -242,8 +243,8 @@ vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
 */      //metodo user_send_to_user diventato obsoleto!
 
 void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){
-    user->output_symbols_.reserve(user->output_symbols_.size()+ symbols.size());
-    (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());
+  user->output_symbols_.reserve(user->output_symbols_.size() + symbols.size());
+  (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());
 }
 
 vector<Event> User::user_receive_data(int event_time, UserMessage* message){
@@ -289,7 +290,13 @@ vector<Event> User::user_receive_data(int event_time, UserMessage* message){
 vector<Event> User::send(Node* next_node, Message* message) {
   vector<Event> new_events;
 
-  //cout<<"coordinate mie: x= "<<x_coord_<<" y= "<<y_coord_;
+  MyTime processing_time = MyToolbox::mean_processing_time;  
+  unsigned int num_total_bits = message->get_message_size();
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+  MyTime message_time = processing_time + transfer_time;
+  
+
+  /*cout<<"coordinate mie: x= "<<x_coord_<<" y= "<<y_coord_;
   //cout<<"coordinate sue: x= "<<next_node->get_x_coord()<<" y = "<<next_node->get_y_coord();
   // Compute the message time
   double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
@@ -298,6 +305,7 @@ vector<Event> User::send(Node* next_node, Message* message) {
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = propagation_time + processing_time + transfer_time;
+  */
   
   //cout<<"num bit = "<<num_total_bits<<endl;
   //cout<<"propagation_time "<<propagation_time<<endl; 

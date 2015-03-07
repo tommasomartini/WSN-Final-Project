@@ -29,7 +29,8 @@ class SensorNode: public Node {
   vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
   vector<Event> sensor_ping(int); // Arianna
   
-  void set_my_supervisor(unsigned int);
+  void set_my_supervisor(unsigned int); // TODO: uno dei due metodi e' da rimuovere
+  void set_supervisor();
   
  private:
   typedef MyToolbox::MyTime MyTime;
@@ -41,6 +42,8 @@ class SensorNode: public Node {
 
   vector<Event> send_measure(StorageNode*); // DEPRECATED
   vector<Event> send(StorageNode*, Message*);
+
+  int new_measure_id();
 };
 
 #endif

@@ -44,10 +44,10 @@ vector<Event> SensorNode::generate_measure() {
   unsigned int next_node_index = rand() % near_storage_nodes.size();
   StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
   // cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(new_measure_value) << " to node " << next_node->get_node_id() << endl;
-  my_supervisor_id_ = next_node->get_node_id(); // remember my supervisor
+  //my_supervisor_id_ = next_node->get_node_id(); // remember my supervisor
 
   // Create a measure object
-  measure_ = Measure(xored_measure_value, measure_id_++, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
+  measure_ = Measure(xored_measure_value, new_measure_id(), node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   first_generated_measure_ = false;
   measure_.set_receiver_node_id(next_node->get_node_id());
   /*
@@ -59,7 +59,7 @@ vector<Event> SensorNode::generate_measure() {
   */
   new_events = send(next_node, &measure_);
   bool generate_another_measure = true;
-  default_random_engine generator;
+  default_random_engine generator = MyToolbox::get_random_generator();
   bernoulli_distribution distribution(MyToolbox::sensor_failure_prob);
   if (distribution(generator))
     generate_another_measure = false;
@@ -89,30 +89,36 @@ vector<Event> SensorNode::try_retx(Message* message, unsigned int next_node_id) 
 }
 
 vector<Event> SensorNode::sensor_ping(int event_time){
-    map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
-     //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
-    cout<<"il mio supervisior è "<<my_supervisor_id_;
-    vector<Event> new_events;
-    if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
-        cout<<"nodo impegnato!"<<endl;
-        Event new_event(timetable_.find(my_supervisor_id_)->second, Event::sensor_ping);
-        new_event.set_agent(this);  
-        new_events.push_back(new_event);
+  map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
+  //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
+  cout<<"il mio supervisior è "<<my_supervisor_id_;
+  vector<Event> new_events;
+  if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
+    cout<<"nodo impegnato!"<<endl;
+    Event new_event(timetable_.find(my_supervisor_id_)->second + MyToolbox::get_tx_offset_ping(), Event::sensor_ping);
+    new_event.set_agent(this);  
+    new_events.push_back(new_event);
+  }
+  else {
+    // TODOTOM: questo viene molto meglio con una mappa!
+    for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
+      if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
+        StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
+        supervisior_node->set_supervision_map_(node_id_,event_time);     
+      }
     }
-    else {
-        for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
-            if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
-                StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
-                supervisior_node->set_supervision_map_(node_id_,event_time);     
-            }
-        }
-       cout<<"nodo libero! prossimo ping tra "<<MyToolbox::ping_frequency;
+    cout<<"nodo libero! prossimo ping tra "<<MyToolbox::ping_frequency;
 
-        Event new_event(event_time+MyToolbox::ping_frequency, Event::sensor_ping);   
-        new_event.set_agent(this);
-        new_events.push_back(new_event);
-    }
-    return new_events;
+    Event new_event(event_time + MyToolbox::ping_frequency, Event::sensor_ping);   
+    new_event.set_agent(this);
+    new_events.push_back(new_event);
+  }
+  return new_events;
+}
+
+void SensorNode::set_supervisor() {
+  // choose my supervisor as the first node in my list (does not matter how I choose it)
+  my_supervisor_id_ = near_storage_nodes_->begin()->first;
 }
 
 
@@ -121,6 +127,10 @@ vector<Event> SensorNode::sensor_ping(int event_time){
 /**************************************
     Private methods
 **************************************/
+
+int SensorNode::new_measure_id() {
+  return measure_id_++ % MyToolbox::num_bits_for_measure_id;
+}
 
 /*  First of all: does this sensor have a pending event? A yet-to-deliver measure?
         I can see this through my Node::event_queue. If it is empty I have not, otherwise
@@ -148,6 +158,15 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   vector<Event> new_events;
 
   // Compute the message time
+  MyTime processing_time = MyToolbox::mean_processing_time;
+  int num_total_bits = message->get_message_size();
+  cout << "Num bits " << num_total_bits << endl;
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+  cout << "Transfer time " << transfer_time << endl;
+  MyTime message_time = processing_time + transfer_time;
+  cout << "Message time " << message_time << endl;
+
+  /* Compute the message time
   double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / MyToolbox::space_precision;  // in meters
   cout << "Distanza in metri " << distance << endl;
   MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
@@ -160,6 +179,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   cout << "Transfer time " << transfer_time << endl;
   MyTime message_time = propagation_time + processing_time + transfer_time;
   cout << "Message time " << message_time << endl;
+  */
 
   if (!event_queue_.empty()) {  // already some pending event
     cout << "Coda eventi NON vuota" << endl;
