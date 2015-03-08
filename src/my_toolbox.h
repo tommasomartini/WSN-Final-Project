@@ -58,6 +58,8 @@ class MyToolbox {
   static MyTime max_tx_offset;
   static MyTime max_tx_offset_ping;
 
+  static MyTime user_observation_time;
+
   static MyTime max_measure_generation_delay;
   static double sensor_failure_prob;
 
@@ -93,7 +95,7 @@ class MyToolbox {
   static int get_bits_for_measure_id() {return num_bits_for_measure_id;}
   static int get_bits_for_phy_mac_overhead() {return num_bits_phy_mac_overhead;}
   static int get_bits_for_hop_counter() {return 3;} // TODO fare qualcosa di questo!!
-  static int get_space_precision(){return space_precision;}
+  static int get_space_precision() {return space_precision;}
 
   // setters
   static void set_current_time(MyTime);
@@ -135,6 +137,7 @@ class MyToolbox {
   static int get_ideal_soliton_distribution_degree();
   static int get_robust_soliton_distribution_degree();  // still to implement!
   static MyTime get_random_processing_time();
+  static void set_close_nodes(User* user);
   // Return a uniform random offset a node must wait when it finds the channel busy.
   // The value is uniformly distributed between 1ns and MAX_OFFSET ns
   // static MyTime get_retransmission_offset();  // TODO remove

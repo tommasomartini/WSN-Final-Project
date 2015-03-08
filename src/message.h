@@ -11,8 +11,9 @@ class Message {
     message_type_remove_measure,
     message_type_ping,
     message_type_measures_for_user,
-    message_type_user_to_user,
-    message_type_new_node
+    message_type_intra_user,
+    message_type_new_node,
+    message_type_user_to_user,  // TODOTOM: per cosa lo uso?
   } message_type_;
 
   // Message() {message_type_ = message_type_ping;};

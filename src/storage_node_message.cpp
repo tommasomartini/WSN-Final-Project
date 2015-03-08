@@ -2,8 +2,8 @@
 
 #include "storage_node_message.h"
 
-StorageNodeMessage::StorageNodeMessage(){
-    message_type_=message_type_measures_for_user;
+StorageNodeMessage::StorageNodeMessage() {
+    message_type_= message_type_measures_for_user;
     xored_message_=0;
     sensor_ids_;
 }

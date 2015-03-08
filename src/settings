@@ -30,5 +30,7 @@ std_dev_processing_time=10000 ns
 max_tx_offset=10000000 ns
 max_tx_offset_ping=5000000 ns
 
+user_observation_time=1000000000 ns (= 1s)
+
 max_measure_generation_delay=5000000000 ns
 sensor_failure_prob=1.0

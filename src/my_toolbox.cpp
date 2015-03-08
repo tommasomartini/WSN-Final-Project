@@ -49,6 +49,8 @@ MyToolbox::MyTime MyToolbox::std_dev_processing_time = 0;
 MyToolbox::MyTime MyToolbox::max_tx_offset = 0;
 MyToolbox::MyTime MyToolbox::max_tx_offset_ping = 0;
 
+MyToolbox::MyTime MyToolbox::user_observation_time = 0;
+
 MyToolbox::MyTime MyToolbox::max_measure_generation_delay = 0;
 double MyToolbox::sensor_failure_prob = 0;
 
@@ -163,25 +165,58 @@ void MyToolbox::set_square_size(int square_size){
 }
 /**/
 
-void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor){
-    sensor_nodes_=sensor;
+void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor) {
+  sensor_nodes_ = sensor;
 }
 
-void MyToolbox::set_storage_nodes(vector<StorageNode*> storage){
-    storage_nodes_=storage;
+void MyToolbox::set_storage_nodes(vector<StorageNode*> storage) {
+  storage_nodes_ = storage;
 }
 
-void MyToolbox::set_users(vector<User*> user){
-    users_=user;
+void MyToolbox::set_users(vector<User*> user) {
+  users_ = user;
 }
 
-void MyToolbox::set_near_storage_node(Node* node){
-    while(node->near_storage_nodes.size()>0)
-          MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(0));
-    for(int i = 0; i< storage_nodes_.size(); i++){
-          if (node!= storage_nodes_.at(i) && Node::are_nodes_near(storage_nodes_.at(i),node) == true)
-              node->add_near_sensor_node(storage_nodes_.at(i));
-      }
+void MyToolbox::set_close_nodes(User* user) {
+  user->near_storage_nodes_->clear();
+  user->near_users_->clear();
+
+  for (auto& st_node_elem : *storage_nodes_map_ptr) {
+    StorageNode* st_node = (StorageNode*)st_node_elem.second;
+    double his_x = st_node->get_x_coord();
+    double his_y = st_node->get_y_coord();
+    double my_x = user->get_x_coord();
+    double my_y = user->get_y_coord();
+    double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+    if (dist < MyToolbox::tx_range) { // the users are able to communicate
+      pair<unsigned int, Node*> pp(st_node->get_node_id(), st_node);
+      user->near_storage_nodes_->insert(pp);
+    } 
+  }
+
+  for (auto& us_node_elem : *users_map_ptr) {
+  User* us_node = (User*)us_node_elem.second;
+    if (us_node != user) {  // does not make sense to include myself among my neighbours
+      double his_x = us_node->get_x_coord();
+      double his_y = us_node->get_y_coord();
+      double my_x = user->get_x_coord();
+      double my_y = user->get_y_coord();
+      double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+      if (dist < MyToolbox::tx_range) { // the users are able to communicate
+        pair<unsigned int, Node*> pp(us_node->get_node_id(), us_node);
+        user->near_users_->insert(pp);
+      } 
+    }
+  }
+}
+
+void MyToolbox::set_near_storage_node(Node* node) {
+  // while(node->near_storage_nodes.size()>0)
+  //   MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(0));
+  for(int i = 0; i< storage_nodes_.size(); i++){
+    if (node!= storage_nodes_.at(i) && Node::are_nodes_near(storage_nodes_.at(i),node) == true)
+      node->add_near_sensor_node(storage_nodes_.at(i));
+  }
 }
 
 void MyToolbox::set_near_user(Node* node){

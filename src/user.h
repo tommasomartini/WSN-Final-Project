@@ -38,14 +38,20 @@ class User: public Node {
 
   vector<Event> move_user(int);  // the user "walks" randomly among the area
   vector<Event> move(); // different implementation of the random walk
-  vector<Event> user_send_to_user();  // Tom
+  vector<Event> user_send_to_user(unsigned int /*sender user*/);  // Tom
   vector<Event> user_receive_data(int, UserMessage*);
+  vector<Event> user_receive_data_from_user(int, Message*);
+  vector<Event> try_retx(Message*, int /*next_node_id*/);
+  vector<Event> try_retx_to_user(Message*, int /*next_node_id*/);
   
  protected:
   typedef map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
   
  private:
   typedef MyToolbox::MyTime MyTime;
+
+  double speed_;  // user's speed in meters / seconds
+  int direction_; // number from 0 to 359, represents a degree
 
   vector<Event> send(Node*, Message*);
   vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending

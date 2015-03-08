@@ -23,6 +23,8 @@ class Event {
     storage_node_receive_measure,
     node_send_to_user,
     broken_sensor,
+    user_try_to_send,
+    user_try_to_send_to_user,
 
     // Arianna
     blacklist_sensor,

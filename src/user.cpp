@@ -2,12 +2,14 @@
 #include <vector>
 #include <map>
 #include <math.h>
+#include <random>
 #include <algorithm>    // std::find, to check whether an element is in a vector
 
 #include "user.h"
 #include "storage_node_message.h"
+#include "intra_user_message.h"
 #include "my_toolbox.h"
-#include "stdlib.h"
+//#include "stdlib.h"
 #include "event.h"
 #include "storage_node.h"
 #include "user_message.h"
@@ -84,7 +86,35 @@ vector<Event> User::move_user(int event_time) {
 }
 
 vector<Event> User::move() {
-  return vector<Event>();
+  default_random_engine generator = MyToolbox::get_random_generator();
+  uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
+  int deviation = distribution(generator);
+  direction_ += deviation;
+
+  double new_x = x_coord_ + speed_ * sin(direction_);
+  double new_y = y_coord_ + speed_ * cos(direction_);
+
+  // I could also let the user go out! Just comment the following block of code!
+  bool inside_area = false;
+  while (!inside_area) {
+    if (new_x < 0 || new_x > MyToolbox::square_size || new_y < 0 || new_y > MyToolbox::square_size) { // I am going out from the area
+      direction_ += 30; // rotate of 30 degree in clockwise sense
+      double new_x = x_coord_ + speed_ * sin(direction_);
+      double new_y = y_coord_ + speed_ * cos(direction_);
+    } else {
+      inside_area = true;
+    }
+  }
+
+  x_coord_ = new_x; // update the user's position
+  y_coord_ = new_y;
+  MyToolbox::set_close_nodes(this);   // set new storage nodes and users
+
+  vector<Event> new_events;
+  Event new_event(MyToolbox::get_current_time() + MyToolbox::user_observation_time, Event::move_user);
+  new_event.set_agent(this);
+  new_events.push_back(new_event);
+  return new_events;
 }
 
 /*  Receive data from a storage node or from another user
@@ -130,10 +160,14 @@ vector<Event> User::user_receive_data(int event_time, UserMessage* message){
 
 /*  This user receives a "beep" from another user, asking him to send him his measures
 */
-vector<Event> User::user_send_to_user() {
+vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
   vector<Event> new_events;
 
-  
+  IntraUserMessage intra_user_msg;  // msg to send to another user
+  intra_user_msg.messages_ = output_symbols_;
+  Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
+  intra_user_msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
+  new_events = send(next_node, &intra_user_msg);
 
   return new_events;
 }
@@ -310,6 +344,25 @@ void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){
   (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());  // append the new symbols
 }
 
+vector<Event> User::try_retx(Message* message, int next_node_id) {
+  map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
+  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
+  return send(next_node, message);
+}
+
+vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
+  map<unsigned int, Node*>* users_map = MyToolbox::users_map_ptr;
+  User* next_user = (User*)users_map->find(next_node_id)->second;
+  double rx_user_x = next_user->get_x_coord();
+  double rx_user_y = next_user->get_y_coord();
+  double dist = sqrt(pow(x_coord_ - rx_user_x, 2) + pow(y_coord_ - rx_user_y, 2));  // compute the distance between the two users
+  if (dist < MyToolbox::tx_range) { // the users are still able to communicate
+    return send(next_user, message);
+  } else {
+    return vector<Event>();
+  }
+}
+
 vector<Event> User::send(Node* next_node, Message* message) {
   vector<Event> new_events;
 
@@ -354,13 +407,23 @@ vector<Event> User::send(Node* next_node, Message* message) {
     MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
     if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+      Event try_again_event(0); // create an event with a fake schedule time
+      if (message->message_type_ == Message::message_type_intra_user) {
+        try_again_event = Event(new_schedule_time, Event::user_try_to_send);
+      } else {
+        try_again_event = Event(new_schedule_time, Event::user_try_to_send_to_user);
+      }
       try_again_event.set_agent(this); 
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-      Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+      Event try_again_event(0); // create an event with a fake schedule time
+      if (message->message_type_ == Message::message_type_intra_user) {
+        try_again_event = Event(new_schedule_time, Event::user_try_to_send);
+      } else {
+        try_again_event = Event(new_schedule_time, Event::user_try_to_send_to_user);
+      }
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
@@ -370,7 +433,7 @@ vector<Event> User::send(Node* next_node, Message* message) {
       // Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
       Event::EventTypes this_event_type;
       switch (message->message_type_) {
-        case Message::message_type_user_to_user: {
+        case Message::message_type_intra_user: {
           this_event_type = Event::user_receive_data;
           break;
         }

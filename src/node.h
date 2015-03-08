@@ -19,6 +19,7 @@ class Node : public Agent {
 
   map<unsigned int, Node*>* near_sensors_;
   map<unsigned int, Node*>* near_storage_nodes_;
+  map<unsigned int, Node*>* near_users_;  // creata domenica 8 marzo. Davvero necessario?
 
   Node();
   Node(unsigned int /*node_id*/);
@@ -36,7 +37,7 @@ class Node : public Agent {
   void add_near_storage_node(Node*);
   void add_near_sensor_node(Node*);
   void add_near_user(Node*);
-  static bool are_nodes_near(Node*, Node*);
+  static bool are_nodes_near(Node*, Node*); // TODOTOM: non ha senso mettere questa funzione in node!
 
  protected:
   unsigned int node_id_;

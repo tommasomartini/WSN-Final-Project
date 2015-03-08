@@ -78,26 +78,43 @@ vector<Event> Event::execute_action() {
       new_events = ((StorageNode*)agent_)->try_retx(message_, next_node_id);
       break;
     }
-    case blacklist_sensor:
-        new_events = ((StorageNode*)agent_)->spread_blacklist(time_, (BlacklistMessage*)message_);
-        // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
-        break;
-    case remove_measure:
-        new_events = ((StorageNode*)agent_)->remove_mesure((OutdatedMeasure*)message_);
+    case blacklist_sensor: {
+      new_events = ((StorageNode*)agent_)->spread_blacklist(time_, (BlacklistMessage*)message_);
+      // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
-    case move_user:
-         new_events = ((User*)agent_)->move_user(time_);
-         cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
+    }
+    case remove_measure: {
+      new_events = ((StorageNode*)agent_)->remove_mesure((OutdatedMeasure*)message_);
       break;
-    case node_send_to_user:
+    }
+    case move_user: {
+      new_events = ((User*)agent_)->move();
+      //new_events = ((User*)agent_)->move_user(time_);
+      cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
+      break;
+    }
+    case node_send_to_user: {
       new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
       break;
-   // case user_send_to_user:
-     //    new_events = ((User*)agent_)->user_send_to_user((UserMessage*)message_,time_);
-    //  break;
-    case user_receive_data:
+    }
+    case user_send_to_user: {
+      new_events = ((User*)agent_)->user_send_to_user(message_->get_sender_node_id());
+      break;
+    }
+    case user_try_to_send: {
+      int next_node_id = message_->get_receiver_node_id();
+      new_events = ((User*)agent_)->try_retx(message_, next_node_id);
+      break;
+    }
+    case user_try_to_send_to_user: {
+      int next_node_id = message_->get_receiver_node_id();
+      new_events = ((User*)agent_)->try_retx_to_user(message_, next_node_id);
+      break;
+    }
+    case user_receive_data: {
          new_events = ((User*)agent_)->user_receive_data(time_,(UserMessage*)message_);
       break;
+    }
     case sensor_ping: {
       new_events = ((SensorNode*)agent_)->sensor_ping(time_);
       //cout <<"Il nuovo evento creato è al tempo "<<new_events.at(0).get_time()<<endl;
