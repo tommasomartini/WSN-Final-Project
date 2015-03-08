@@ -59,7 +59,7 @@ vector<Event> Event::execute_action() {
   switch (event_type_) {
     case sensor_generate_measure: {
       /*  generate_measure() should return 2 events:
-          - a new measure generation of the same node
+          - a new measure generation of the same node OR the sensor's failure
           - the reception of the measure to a storage node
       */ 
       new_events = ((SensorNode*)agent_)->generate_measure(); 

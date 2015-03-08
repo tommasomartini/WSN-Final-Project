@@ -89,7 +89,7 @@ class MyToolbox {
   static int get_user_size() {return users_.size();}
   static int get_square_size(){return square_size_;} 
   /**/
-  static int get_k() {return num_storage_nodes;}
+  //static int get_k() {return num_storage_nodes;}
   static int get_bits_for_id() {return num_bits_for_id;}
   static int get_bits_for_measure() {return num_bits_for_measure;}
   static int get_bits_for_measure_id() {return num_bits_for_measure_id;}

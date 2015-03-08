@@ -99,7 +99,7 @@ void MyToolbox::set_timetable(map<unsigned int, MyTime> timetable) {
 }
 
 void MyToolbox::set_user_update_time() {
-    user_update_time = (tx_range /user_velocity)*pow(10,9);  
+    user_update_time = (tx_range / user_velocity)*pow(10,9);  
 }
 
 ///////////////////////////////////////////////////// TODO remove

@@ -179,34 +179,36 @@ int main() {
 
   double y_coord;
   double x_coord;
+  default_random_engine generator = MyToolbox::get_random_generator();
+  uniform_real_distribution<double> distribution(0.0, MyToolbox::square_size * 1.0);
   // Create the sensors
   for (int i = 1; i <= MyToolbox::num_sensors; i++) {
-    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    SensorNode *node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    node->near_sensors_ = &sensors_map;
-    node->near_storage_nodes_ = &storage_nodes_map;
-    sensors.push_back(node);
+    y_coord = distribution(generator);
+    x_coord = distribution(generator);
+    SensorNode* node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
+    //node->near_sensors_ = &sensors_map;
+    //node->near_storage_nodes_ = &storage_nodes_map;
+    //sensors.push_back(node);
     sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the storage nodes
   for (int i = 1; i <= MyToolbox::num_storage_nodes; i++) {
-    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    StorageNode *node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    node->near_sensors_ = &sensors_map;
-    node->near_storage_nodes_ = &storage_nodes_map;
-    storage_nodes.push_back(node);
+    y_coord = distribution(generator);
+    x_coord = distribution(generator);
+    StorageNode* node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
+    // node->near_sensors_ = &sensors_map;
+    // node->near_storage_nodes_ = &storage_nodes_map;
+    // storage_nodes.push_back(node);
     storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the users
   for (int i = 1; i <= MyToolbox::num_users; i++) {
-    y_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    x_coord = rand() % (MyToolbox::square_size * MyToolbox::space_precision);
-    User *user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
-    users.push_back(user);
+    y_coord = distribution(generator);
+    x_coord = distribution(generator);
+    User* user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
+    // users.push_back(user);
     users_map.insert(pair<int, Node*>(user->get_node_id(), user));
     timetable.insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
@@ -214,7 +216,6 @@ int main() {
   MyToolbox::sensors_map_ptr = &sensors_map;
   MyToolbox::storage_nodes_map_ptr = &storage_nodes_map; 
   MyToolbox::users_map_ptr = &users_map;
-  
   MyToolbox::set_timetable(timetable);
 
   SensorNode *sensor1;
@@ -226,6 +227,75 @@ int main() {
   double y2;
   double x2;
   double distance;
+  for (auto& sensor1_pair : sensors_map) {
+    SensorNode* sensor1 = (SensorNode*)sensor1_pair.second;
+    y1 = sensor1->get_y_coord();
+    x1 = sensor1->get_x_coord();
+    for (auto& sensor2_pair : sensors_map) {
+      SensorNode* sensor2 = (SensorNode*)sensor2_pair.second;
+      y2 = sensor2->get_y_coord();
+      x2 = sensor2->get_x_coord();
+      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length) {
+        sensor1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        //sensor1->near_sensor_nodes.push_back(sensor2);
+      }
+    }
+    for (auto& storage_node2_pair : storage_nodes_map) {
+      StorageNode* storage_node2 = (StorageNode*)storage_node2_pair.second;
+      y2 = storage_node2->get_y_coord();
+      x2 = storage_node2->get_x_coord();
+      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+      if (distance <= MyToolbox::ray_length) {
+        sensor1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        //sensor1->near_storage_nodes.push_back(storage_node2);
+      }
+    }
+  }
+  for (auto& storage_node1_pair : storage_nodes_map) {
+    StorageNode* storage_node1 = (StorageNode*)storage_node1_pair.second;
+    y1 = storage_node1->get_y_coord();
+    x1 = storage_node1->get_x_coord();
+    for (auto& sensor2_pair : sensors_map) {
+      SensorNode* sensor2 = (SensorNode*)sensor2_pair.second;
+      y2 = sensor2->get_y_coord();
+      x2 = sensor2->get_x_coord();
+      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+      if (distance <= MyToolbox::ray_length) {
+        storage_node1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        //storage_node1->near_sensor_nodes.push_back(sensor2);
+      }
+    }
+    for (auto& storage_node2_pair : storage_nodes_map) {
+      StorageNode* storage_node2 = (StorageNode*)storage_node2_pair.second;
+      y2 = storage_node2->get_y_coord();
+      x2 = storage_node2->get_x_coord();
+      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length) {
+        storage_node1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        //storage_node1->near_storage_nodes.push_back(storage_node2);
+      }
+    }
+  }
+
+  for (auto& sensor_pair : sensors_map) {
+    ((SensorNode*)sensor_pair.second)->set_supervisor();
+  }
+
+  vector<Event> event_list;
+  uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
+  for (auto& sensor_pair : sensors_map) {
+    Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
+    first_measure.set_agent(sensor_pair.second);
+    vector<Event>::iterator event_iterator = event_list.begin();
+    for (; event_iterator != event_list.end(); event_iterator++) {
+      if (first_measure > *event_iterator) {
+        break;
+      }
+    }
+    event_list.insert(event_iterator, first_measure);
+  }
+/*
   for (int i = 0; i < sensors.size(); i++) {
     sensor1 = sensors.at(i);
     y1 = sensor1->get_y_coord();
@@ -276,16 +346,16 @@ int main() {
       }
     }
   }
+  */
 
-  MyToolbox::set_sensor_nodes(sensors);
-  MyToolbox::set_storage_nodes(storage_nodes);
-  MyToolbox::set_users(users);
+  // MyToolbox::set_sensor_nodes(sensors);
+  // MyToolbox::set_storage_nodes(storage_nodes);
+  // MyToolbox::set_users(users);
   
-  MyToolbox::set_user_update_time();
+  // MyToolbox::set_user_update_time(); // Tom: per la mia implementazione questo diventa superfluo
   // Event manager
-  vector<Event> event_list;
+  
 
-  sensors.at(0)->set_my_supervisor(2);
   // Initial events
   //vector <unsigned int> index = {1};
   //unsigned char cc = 0;

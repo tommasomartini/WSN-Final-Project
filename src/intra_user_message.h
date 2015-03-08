@@ -13,6 +13,8 @@ class IntraUserMessage : public Message {
   vector<StorageNodeMessage> messages_;
   
   IntraUserMessage();
+
+  unsigned int get_message_size();
 };
 
 #endif
