@@ -307,7 +307,7 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
     [       ]      ]    ]  ] ]
   */
 
-  int M = num_storage_nodes * (num_storage_nodes - 1);
+  int M = 10 * num_storage_nodes * (num_storage_nodes - 1);
   double prob = (rand() % M) / (double)(M - 1);
 
   // cout << "Prob: " << prob << endl;
@@ -317,7 +317,7 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
   if (prob <= up_bound) { // between 0 and 1/k -> degree = 1;
     return 1;
   }
-  for (int i = 2; i <= num_storage_nodes; ++i) {
+  for (int i = 2; i <= num_storage_nodes; i++) {
     interval_length = 1. / (i * i - i);
     up_bound += interval_length;
     // cout << "Step: " << i << ". Interval length: " << interval_length << ", up_bound: " << up_bound << endl;
@@ -330,7 +330,44 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
 }
 
 int MyToolbox::get_robust_soliton_distribution_degree() {
-  return -1;
+    
+    int K = num_storage_nodes;
+    double c = 0.2;
+    double delta = 0.05;
+    double S = c * log(K / delta) * sqrt( K );
+    int tau_bound = ((int)((K / S) +.5)) - 1;
+    
+    int M = 10 * num_storage_nodes * (num_storage_nodes - 1); // as in ideal soliton over, the smallest interval is the last
+    double prob = (rand() % M) / (double)(M - 1);
+
+    double up_bound = (1. / K) + (S / K);
+    double interval_length = up_bound;
+    if (prob <= up_bound) { // between 0 and (1/k+s/k) -> degree = 1;
+        return 1;
+    }
+    int d = 2;
+    for (int i = d; i <= tau_bound; i++) { // case 2 <= d < K/S
+        interval_length = (1. / (i * i - i)) + (S / (K * i));
+        up_bound += interval_length;
+        if (prob <= up_bound) {
+            return i;
+        }
+        d = i;
+    }
+    interval_length = (1. / (d * d - d)) + (S / K * log(S / delta)); // case d = K/S
+    up_bound += interval_length;
+    if (prob <= up_bound) {
+        return d;    
+    } else {
+        d++;
+    }
+    for (int i = d; i <= K; i++) { // case K/S < d <= K
+       interval_length = 1. / (i * i - i);
+        up_bound += interval_length;
+        if (prob <= up_bound) {
+            return i;
+        } 
+    }      
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
