@@ -280,52 +280,23 @@ User* MyToolbox::new_user(){
     users_.push_back (new_user);
     return new_user;
 }
+
 int MyToolbox::get_ideal_soliton_distribution_degree() {
-
-  /*
-    What is the smallest interval of probability [1/(i^2 - i) - 1/(i^2 + i)] ?
-    I must have a granularity smallest than this interval, therwise I would be
-    sure I won't ever have some values!
-
-    The smallest interval is the last one, always.
-
-    Devo dividere l'intervallo in modo che l'unità (1/M) sia piu' corta dell'intervallo
-    piu' corto.
-
-    Divido l'intervallo [0, 1] in M intervalli.
-    La lunghezza di un intervallo (1/M) deve essere piu' grande dell'intervallo di prob minore,
-    che e' 1/(k^2 - k).
-
-    1/M < int_min = 1 / (k^2 - k) => M > k(k - 1)
-
-    Per andare sul sicuro: M = 10 * k(k - 1)
-
-    Ho M intervalli. Genero un numero random tra 0 e M - 1 con "rand() % M" e 
-    poi divido ancora per (M - 1) per normalizzare tra 0 e 1.
-
-    The intervl bounds are so divided:
-    [       ]      ]    ]  ] ]
-  */
-
-  int M = 10 * num_storage_nodes * (num_storage_nodes - 1);
-  double prob = (rand() % M) / (double)(M - 1);
-
-  // cout << "Prob: " << prob << endl;
+  uniform_real_distribution<double> distribution(0.0, 1.0);
+  double rnd_point = distribution(generator);
 
   double up_bound = 1. / num_storage_nodes;
   double interval_length = up_bound;
-  if (prob <= up_bound) { // between 0 and 1/k -> degree = 1;
-    return 1;
+  if (rnd_point <= up_bound) { // between 0 and 1/k -> degree = 1;
+	  return 1;
   }
   for (int i = 2; i <= num_storage_nodes; i++) {
-    interval_length = 1. / (i * i - i);
-    up_bound += interval_length;
-    // cout << "Step: " << i << ". Interval length: " << interval_length << ", up_bound: " << up_bound << endl;
-    if (prob <= up_bound) {
-      return i;
-    }
+	  interval_length = 1. / (i * (i - 1));
+	  up_bound += interval_length;
+	  if (rnd_point <= up_bound) {
+		  return i;
+	  }
   }
-
   return num_storage_nodes;
 }
 
@@ -382,7 +353,9 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
         if (prob <= up_bound) {
             return i;
         } 
-    }      
+    }
+
+    return -1;
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
