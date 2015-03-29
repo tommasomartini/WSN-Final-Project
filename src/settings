@@ -1,4 +1,4 @@
-num_storage_nodes=1
+num_storage_nodes=2
 num_sensors=2
 max_num_users=10
 num_users=3

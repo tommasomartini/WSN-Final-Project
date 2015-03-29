@@ -24,33 +24,6 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 
 using namespace std;
 
-/*
-const int NUM_STORAGE_NODES = 3;
-const int NUM_SENSORS = 2;
-const int NUM_USERS = 3;
-
-const int NUM_BITS_FOR_MEASURE = 8; // in bits
-const int NUM_BITS_FOR_ID = 32;   // in bits
-const int NUM_BITS_PHY_MAC_OVERHEAD =  34 * 8 + 20 * 8; // in bits
-// 1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54, 125, 144, 300 Mb/s (IEEE 802.11n)
-const double WIRELESS_CHANNEL_BITRATE = 1; // in Mb/s
-const int PING_FREQUENCY = 10; //numero a caso
-const int CHECK_SENSORS_FREQUENCY = 50; //numero a caso
-
-const int C1 = 1;
-
-const double RAY_LENGTH = 20.;  // in meters
-
-const int SQUARE_SIZE = 5;  // in meters
-const int SPACE_PRECISION = 1000; // how many fundamental space units in one meter
-
-const double USER_VELOCITY = 0.8;// m/s [=3Km/h]
-
-const int TX_RANGE = 10; // tx_range in meters
-/**/
-
-
-
 const string kFileName = "settings";
 const string kDelimiter = "=";
 
@@ -144,38 +117,17 @@ int main() {
 
   MyToolbox::initialize_toolbox();
 
-/*
-  MyToolbox::set_k(NUM_SENSORS);
-  MyToolbox::set_n(NUM_STORAGE_NODES);
-  MyToolbox::set_C1(C1);
-  MyToolbox::set_bits_for_measure(NUM_BITS_FOR_MEASURE);
-  MyToolbox::set_bits_for_id(NUM_BITS_FOR_ID);
-  MyToolbox::set_bits_for_phy_mac_overhead(NUM_BITS_PHY_MAC_OVERHEAD);
-  MyToolbox::set_channel_bit_rate(WIRELESS_CHANNEL_BITRATE * 1000000);
-  MyToolbox::set_ping_frequency(PING_FREQUENCY);
-  MyToolbox::set_ping_frequency(CHECK_SENSORS_FREQUENCY);
-  MyToolbox::set_space_precision(SPACE_PRECISION);
-  MyToolbox::set_square_size(SQUARE_SIZE);
-  MyToolbox::set_user_velocity(USER_VELOCITY);
-  MyToolbox::set_user_update_time();
-  MyToolbox::set_tx_range(TX_RANGE);
-  /**/
-
 // Set up the network
-  // I use these vectors to set up the network
-  vector<SensorNode*> sensors;
-  vector<StorageNode*> storage_nodes;
-  vector<User*> users;
+  // I use these vectors ONLY to set up the network
+//  vector<SensorNode*> sensors;
+//  vector<StorageNode*> storage_nodes;
+//  vector<User*> users;
 
   map<unsigned int, Node*> sensors_map;
   map<unsigned int, Node*> storage_nodes_map;
   map<unsigned int, Node*> users_map;
   
   map<unsigned int, MyToolbox::MyTime> timetable;
-
-  // int sensor_id = 0;
-  // int storage_node_id = 0;
-  // int user_id = 0;
 
   double y_coord;
   double x_coord;
@@ -186,10 +138,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     SensorNode* node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    //node->near_sensors_ = &sensors_map;
-    //node->near_storage_nodes_ = &storage_nodes_map;
-    //sensors.push_back(node);
-    sensors_map.insert(pair<int, Node*>(node->get_node_id(), node));
+    sensors_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the storage nodes
@@ -197,10 +146,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     StorageNode* node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    // node->near_sensors_ = &sensors_map;
-    // node->near_storage_nodes_ = &storage_nodes_map;
-    // storage_nodes.push_back(node);
-    storage_nodes_map.insert(pair<int, Node*>(node->get_node_id(), node));
+    storage_nodes_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
   // Create the users
@@ -208,20 +154,20 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     User* user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
-    // users.push_back(user);
-    users_map.insert(pair<int, Node*>(user->get_node_id(), user));
+    users_map.insert(pair<unsigned int, Node*>(user->get_node_id(), user));
     timetable.insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
 
+  // I want Toolbox to store all the maps of all the nodes
   MyToolbox::sensors_map_ptr = &sensors_map;
   MyToolbox::storage_nodes_map_ptr = &storage_nodes_map; 
   MyToolbox::users_map_ptr = &users_map;
   MyToolbox::set_timetable(timetable);
 
-  SensorNode *sensor1;
-  SensorNode *sensor2;
-  StorageNode *storage_node1;
-  StorageNode *storage_node2;
+//  SensorNode *sensor1;
+//  SensorNode *sensor2;
+//  StorageNode *storage_node1;
+//  StorageNode *storage_node2;
   double y1;
   double x1;
   double y2;
@@ -237,7 +183,8 @@ int main() {
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length) {
-        sensor1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
+        cout << "arrivato" << endl;
         //sensor1->near_sensor_nodes.push_back(sensor2);
       }
     }
@@ -288,124 +235,33 @@ int main() {
     Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
     first_measure.set_agent(sensor_pair.second);
     vector<Event>::iterator event_iterator = event_list.begin();
-    for (; event_iterator != event_list.end(); event_iterator++) {
+    for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
       if (first_measure > *event_iterator) {
         break;
       }
     }
     event_list.insert(event_iterator, first_measure);
   }
-/*
-  for (int i = 0; i < sensors.size(); i++) {
-    sensor1 = sensors.at(i);
-    y1 = sensor1->get_y_coord();
-    x1 = sensor1->get_x_coord();
-    for (int j = 0; j < sensors.size(); j++) {
-      sensor2 = sensors.at(j);
-      y2 = sensor2->get_y_coord();
-      x2 = sensor2->get_x_coord();
-      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
-        sensor1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
-        sensor1->near_sensor_nodes.push_back(sensor2);
-      }
-    }
-    for (int j = 0; j < storage_nodes.size(); j++) {
-      storage_node2 = storage_nodes.at(j);
-      y2 = storage_node2->get_y_coord();
-      x2 = storage_node2->get_x_coord();
-      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
-        sensor1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
-        sensor1->near_storage_nodes.push_back(storage_node2);
-      }
-    }
-  }
-  for (int i = 0; i < storage_nodes.size(); i++) {
-    storage_node1 = storage_nodes.at(i);
-    y1 = storage_node1->get_y_coord();
-    x1 = storage_node1->get_x_coord();
-    for (int j = 0; j < sensors.size(); j++) {
-      sensor2 = sensors.at(j);
-      y2 = sensor2->get_y_coord();
-      x2 = sensor2->get_x_coord();
-      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
-        storage_node1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
-        storage_node1->near_sensor_nodes.push_back(sensor2);
-      }
-    }
-    for (int j = 0; j < storage_nodes.size(); j++) {
-      storage_node2 = storage_nodes.at(j);
-      y2 = storage_node2->get_y_coord();
-      x2 = storage_node2->get_x_coord();
-      distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length * MyToolbox::space_precision) {
-        storage_node1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
-        storage_node1->near_storage_nodes.push_back(storage_node2);
-      }
-    }
-  }
-  */
-
-  // MyToolbox::set_sensor_nodes(sensors);
-  // MyToolbox::set_storage_nodes(storage_nodes);
-  // MyToolbox::set_users(users);
-  
-  // MyToolbox::set_user_update_time(); // Tom: per la mia implementazione questo diventa superfluo
-  // Event manager
-  
-
-  // Initial events
-  //vector <unsigned int> index = {1};
-  //unsigned char cc = 0;
-  //vector<StorageNodeMessage> output_symb = {StorageNodeMessage(cc, index)};
-  //users.at(1)->output_symbols_ = output_symb;
-  
-  // Event event2(0, Event::move_user);
- //event2.set_agent(users.at(0));
- // event_list.push_back(event2);
-  
-  /*
-  Event event2(0, Event::check_sensors);
-  event2.set_agent(storage_nodes.at(0));
-  event_list.push_back(event2);
-  
-    Event event1(10, Event::sensor_ping);
-  event1.set_agent(sensors.at(0));
-  event_list.push_back(event1);
- 
-  
-  Event event3(10+50,Event::broken_sensor);
-  event3.set_agent(sensors.at(0));
-  event_list.push_back(event3);
-  */
-  //Event event1(10, Event::sensor_generate_measure);
-  //event1.set_agent(sensors.at(0));
-  //event_list.push_back(event1);
-
-  //Event event2(10 + 1000000000, Event::sensor_generate_measure);
-  //event2.set_agent(sensors.at(1));
-  //event_list.push_back(event2);
 
   while (!event_list.empty()) {
+	  cout << "." << endl;
   // for (int i = 0; i < 5; i++) {
 
     // TODO: verify next event has a different schedule time than this
       
-    Event next_event = *(event_list.begin());
-    event_list.erase(event_list.begin());
-    vector<Event> new_events = next_event.execute_action();
-
-    vector<Event>::iterator new_event_iterator = new_events.begin();
-    vector<Event>::iterator old_event_iterator = event_list.begin();
-    for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-        if (*old_event_iterator > *new_event_iterator)
-          break;
-      }
-      event_list.insert(old_event_iterator, *new_event_iterator);
-    }
+//    Event next_event = *(event_list.begin());
+//    event_list.erase(event_list.begin());
+//    vector<Event> new_events = next_event.execute_action();
+//
+//    vector<Event>::iterator new_event_iterator = new_events.begin();
+//    vector<Event>::iterator old_event_iterator = event_list.begin();
+//    for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+//      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+//        if (*old_event_iterator > *new_event_iterator)
+//          break;
+//      }
+//      event_list.insert(old_event_iterator, *new_event_iterator);
+//    }
   }
 
 

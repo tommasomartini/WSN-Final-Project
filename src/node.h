@@ -37,7 +37,7 @@ class Node : public Agent {
   void add_near_storage_node(Node*);
   void add_near_sensor_node(Node*);
   void add_near_user(Node*);
-  static bool are_nodes_near(Node*, Node*); // TODOTOM: non ha senso mettere questa funzione in node!
+  static bool are_nodes_near(Node*, Node*); // TODO: non ha senso mettere questa funzione in node!
 
  protected:
   unsigned int node_id_;
