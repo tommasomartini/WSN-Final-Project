@@ -24,6 +24,8 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 
 using namespace std;
 
+// prova per commit
+
 /*
 const int NUM_STORAGE_NODES = 3;
 const int NUM_SENSORS = 2;
