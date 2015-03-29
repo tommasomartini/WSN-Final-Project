@@ -19,6 +19,9 @@ Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   node_id_ = node_id;
   y_coord_ = y_coord;
   x_coord_ = x_coord;
+  near_sensors_ = new map<unsigned int, Node*>();
+  near_storage_nodes_ = new map<unsigned int, Node*>();
+  near_users_ = new map<unsigned int, Node*>();
 }
 
 /**************************************
