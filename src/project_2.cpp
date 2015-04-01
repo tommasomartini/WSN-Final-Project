@@ -253,14 +253,22 @@ int main() {
     vector<Event> new_events = next_event.execute_action();
 
     vector<Event>::iterator new_event_iterator = new_events.begin();
-    vector<Event>::iterator old_event_iterator = event_list.begin();
     for (; new_event_iterator != new_events.end(); new_event_iterator++) {
+      vector<Event>::iterator old_event_iterator = event_list.begin();
       for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-        if (*old_event_iterator > *new_event_iterator)
+        if (*old_event_iterator > *new_event_iterator) {
           break;
+        }
       }
       event_list.insert(old_event_iterator, *new_event_iterator);
     }
+
+    cout << "**event list: " << endl;
+    for (vector<Event>::iterator ii = event_list.begin(); ii != event_list.end(); ii++) {
+    	unsigned int tt_id = ((Node*)ii->get_agent())->get_node_id();
+    	cout << ii->get_time() << ", event type: " << Event::int2type(ii->get_event_type()) << ", del " << MyToolbox::int2nodetype(tt_id) << ": " << tt_id << endl;
+    }
+    cout << "**" << endl;
   }
 
 

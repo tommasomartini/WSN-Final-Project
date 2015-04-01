@@ -18,10 +18,10 @@ using namespace std;
 class StorageNode : public Node {
 
  public:
-  // Constructrs
-  StorageNode() : Node () {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
-  StorageNode(unsigned int node_id) : Node (node_id) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
-  StorageNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();}
+  // Constructors
+  StorageNode() : Node () {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
+  StorageNode(unsigned int node_id) : Node (node_id) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
+  StorageNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
 
   // getters
   unsigned char get_xored_measure() {return xored_measure_;}

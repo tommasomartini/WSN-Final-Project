@@ -145,6 +145,8 @@ class MyToolbox {
   static MyTime get_tx_offset_ping();
   static void remove_sensor(unsigned int /*sensor_id*/);
 
+  static string int2nodetype(unsigned int);	// TODO just for debug
+
  private:
   /*  This timetable contains pairs of the type:
         - key = node_id

@@ -267,6 +267,7 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
   timetable_.erase(sensor_id);
   sensors_map_ptr->erase(sensor_id);
+  cout << "TB: eliminato sensore " << sensor_id << endl;
 }
 
 unsigned int MyToolbox::get_node_id() {
@@ -386,6 +387,20 @@ MyToolbox::MyTime MyToolbox::get_tx_offset_ping() {
   uniform_int_distribution<int> distribution(1, (max_tx_offset_ping / 1000) - 1);	// between 1 and 4999us
   int offset = distribution(generator);
   return (MyTime)(offset * 1000);
+}
+
+string MyToolbox::int2nodetype(unsigned int num) {
+	string res = "unknown";
+	if (sensors_map_ptr->find(num) != sensors_map_ptr->end()) {
+		res = "sensor";
+	} else if (storage_nodes_map_ptr->find(num) != storage_nodes_map_ptr->end()) {
+		res = "cache";
+	} else if (users_map_ptr->find(num) != users_map_ptr->end()) {
+		res = "user";
+	} else {
+		res = "unknown";
+	}
+	return res;
 }
 
 

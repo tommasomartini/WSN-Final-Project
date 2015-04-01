@@ -10,7 +10,7 @@ Measure::Measure() {
 
   measure_ = 0;
   measure_id_ = 0;
-  source_sensor_id_ = 0;
+  source_sensor_id_ = -1;
   measure_type_ = Measure::measure_type_new;
 }
 
@@ -20,7 +20,7 @@ Measure::Measure(unsigned char measure) {
 
   measure_ = measure;
   measure_id_ = 0;
-  source_sensor_id_ = 0;
+  source_sensor_id_ = -1;
   measure_type_ = Measure::measure_type_new;
 }
 

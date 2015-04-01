@@ -38,12 +38,75 @@ void Event::set_message(Message *message) {
   message_ = message;
 }
 
+string Event::int2type(int num) {
+	string res = "unknonw";
+	switch (num) {
+	case 0:
+		res = "sensor_generate_measure";
+		break;
+	case 1:
+		res = "sensor_try_to_send";
+		break;
+	case 2:
+		res = "storage_node_try_to_send";
+		break;
+	case 3:
+		res = "storage_node_receive_measure";
+		break;
+	case 4:
+		res = "node_send_to_user";
+		break;
+	case 5:
+		res = "broken_sensor";
+		break;
+	case 6:
+		res = "user_try_to_send";
+		break;
+	case 7:
+		res = "user_try_to_send_to_user";
+		break;
+	case 8:
+		res = "blacklist_sensor";
+		break;
+	case 9:
+		res = "sensor_ping";
+		break;
+	case 10:
+		res = "check_sensors";
+		break;
+	case 11:
+		res = "remove_measure";
+		break;
+	case 12:
+		res = "move_user";
+		break;
+	case 13:
+		res = "user_send_to_user";
+		break;
+	case 14:
+		res = "user_receive_data";
+		break;
+	case 15:
+		res = "new_storage_node";
+		break;
+	case 16:
+		res = "add_sensor";
+		break;
+	case 17:
+		res = "remove_node";
+		break;
+	default:
+		res = "unknown";
+		break;
+	}
+	return res;
+}
+
 
 vector<Event> Event::execute_action() {
 
-  cout << "Execution: sensor " << ((Node*)agent_)->get_node_id();
-  cout << ", event type: " << event_type_;
-  cout << ", current time: " << time_ << endl;
+  unsigned int gh_id = ((Node*)agent_)->get_node_id();
+  cout << "Execution: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
 
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
@@ -137,11 +200,10 @@ vector<Event> Event::execute_action() {
 
   // DEBUGGING
   cout << "=== Nuovi eventi da inserire in lista:" << endl;
-  for (int i = 0; i < new_events.size(); i++) {
+  for (unsigned int i = 0; i < new_events.size(); i++) {
     Event event = new_events.at(i);
-    cout << "Agent: " << ((Node*)(event.get_agent()))->get_node_id();
-    cout << " Event type: " << event.get_event_type();
-    cout << " Time: " << event.get_time() << endl;
+    unsigned int df_id = ((Node*)(event.get_agent()))->get_node_id();
+    cout << MyToolbox::int2nodetype(df_id) << " " << df_id << ", event type: " << int2type(event.get_event_type()) << ", time: " << event.get_time() << endl;
   }
 
   return new_events; 

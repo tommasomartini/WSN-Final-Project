@@ -44,6 +44,8 @@ class Event {
     network_reset
   };
 
+  static string int2type(int);
+
  private:
   typedef MyToolbox::MyTime MyTime;
 

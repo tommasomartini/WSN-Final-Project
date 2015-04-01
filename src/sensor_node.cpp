@@ -64,19 +64,18 @@ vector<Event> SensorNode::generate_measure() {
   bool generate_another_measure = true;
   default_random_engine generator = MyToolbox::get_random_generator();
   bernoulli_distribution distribution(MyToolbox::sensor_failure_prob);
-  if (distribution(generator))
+  if (distribution(generator)) {
     generate_another_measure = false;
-  unsigned long rand1 = rand();
-  unsigned long rand2 = rand();
-  unsigned long rand3 = rand();
-  MyTime time_next_measure_or_failure = rand1 * rand2 * rand3 % MyToolbox::max_measure_generation_delay + MyToolbox::get_current_time();
-  // MyTime minutes = time_next_measure / ((MyTime)1000000000 * 60);
-  // cout << "Next measure in " << minutes << " minutes" << endl;
+  }
+  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay / 2000, MyToolbox::max_measure_generation_delay / 1000);	// between 5ms and 10ms
+  MyTime time_next_measure_or_failure = unif_distrib(generator) * 1000;
   if (generate_another_measure) {
+	cout << "time next measure: " << time_next_measure_or_failure << endl;
     Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
     next_measure_event.set_agent(this);
     new_events.push_back(next_measure_event);
   } else {
+	cout << "time next break: " << time_next_measure_or_failure << endl;
     Event failure_event(time_next_measure_or_failure, Event::broken_sensor);
     failure_event.set_agent(this);
     new_events.push_back(failure_event);
@@ -189,11 +188,8 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   // Compute the message time
   MyTime processing_time = MyToolbox::mean_processing_time;
   int num_total_bits = message->get_message_size();
-  cout << "Num bits " << num_total_bits << endl;
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
-  cout << "Transfer time " << transfer_time << endl;
   MyTime message_time = processing_time + transfer_time;
-  cout << "Message time " << message_time << endl;
 
   if (!event_queue_.empty()) {  // already some pending event
     cout << "Coda eventi NON vuota" << endl;
@@ -234,6 +230,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
       }
       MyTime new_schedule_time = my_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+      cout << "prova a inviare al tempo " << new_schedule_time << endl;
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
@@ -255,6 +252,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
       }
       MyTime new_schedule_time = next_node_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+      cout << "prova a inviare al tempo " << new_schedule_time << endl;
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
@@ -278,6 +276,7 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
           break;
       }
       Event receive_message_event(new_schedule_time, this_event_type);
+      cout << "riceve a " << new_schedule_time << endl;
       receive_message_event.set_agent(next_node);
       receive_message_event.set_message(message);
       new_events.push_back(receive_message_event);
