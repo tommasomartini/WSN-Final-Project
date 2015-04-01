@@ -27,6 +27,7 @@ class SensorNode: public Node {
   // Event execution methods
   vector<Event> generate_measure(); // Tom
   vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
+  vector<Event> sensor_ping(); // Tom
   vector<Event> sensor_ping(int); // Arianna
   
   void set_my_supervisor(unsigned int); // TODO: uno dei due metodi e' da rimuovere
