@@ -41,9 +41,9 @@ void Event::set_message(Message *message) {
 
 vector<Event> Event::execute_action() {
 
-  cout << "=== Sto per eseguire: " << ((Node*)agent_)->get_node_id();
-  cout << " Event type: " << event_type_;
-  cout << " Current time: " << time_ << endl;
+  cout << "Execution: sensor " << ((Node*)agent_)->get_node_id();
+  cout << ", event type: " << event_type_;
+  cout << ", current time: " << time_ << endl;
 
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
@@ -52,7 +52,7 @@ vector<Event> Event::execute_action() {
   Node* current_agent = (Node*)agent_;
   unsigned int current_node_id = current_agent->get_node_id();
   if (!MyToolbox::is_node_active(current_node_id)) {
-      cout<<"esecuzione bloccata:il nodo è morto!"<<endl;
+      cout << "esecuzione bloccata:il nodo è morto!" << endl;
     return new_events;
   }
 
@@ -62,6 +62,7 @@ vector<Event> Event::execute_action() {
           - a new measure generation of the same node OR the sensor's failure
           - the reception of the measure to a storage node
       */ 
+    	cout << "  sensor generate msr" << endl;
       new_events = ((SensorNode*)agent_)->generate_measure(); 
       break;
     }

@@ -183,7 +183,8 @@ int main() {
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length) {
-        (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
+    	pair<map<unsigned int, Node*>::iterator, bool> res;
+        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
     for (auto& storage_node2_pair : storage_nodes_map) {
@@ -192,7 +193,7 @@ int main() {
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (distance <= MyToolbox::ray_length) {
-        sensor1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        sensor1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
   }
@@ -206,7 +207,7 @@ int main() {
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (distance <= MyToolbox::ray_length) {
-        storage_node1->near_sensors_->insert(pair<int, Node*>(sensor2->get_node_id(), sensor2));
+        storage_node1->near_sensors_->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
     for (auto& storage_node2_pair : storage_nodes_map) {
@@ -215,7 +216,7 @@ int main() {
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
       if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length) {
-        storage_node1->near_storage_nodes_->insert(pair<int, Node*>(storage_node2->get_node_id(), storage_node2));
+        storage_node1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
   }
@@ -227,15 +228,19 @@ int main() {
   vector<Event> event_list;
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
   for (auto& sensor_pair : sensors_map) {
-    Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
-    first_measure.set_agent(sensor_pair.second);
-    vector<Event>::iterator event_iterator = event_list.begin();
-    for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
-      if (first_measure > *event_iterator) {
-        break;
-      }
-    }
-    event_list.insert(event_iterator, first_measure);
+	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
+	  first_measure.set_agent(sensor_pair.second);
+	  vector<Event>::iterator event_iterator = event_list.begin();
+	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
+		  if (first_measure < *event_iterator) {
+			  break;
+		  }
+	  }
+	  event_list.insert(event_iterator, first_measure);
+  }
+
+  for (auto& ee : event_list) {
+	  cout << "sensor: " << ((SensorNode*)ee.get_agent())->get_node_id() << ", event time: " << ee.get_time() << endl;
   }
 
   while (!event_list.empty()) {

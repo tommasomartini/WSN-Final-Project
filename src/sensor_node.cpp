@@ -13,10 +13,11 @@
 /**************************************
     Constructors
 **************************************/
-SensorNode::SensorNode (unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
+SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
   first_generated_measure_ = true;
   measure_ = Measure();
+  my_supervisor_id_ = -1;
 }
 
 /**************************************
@@ -41,10 +42,12 @@ vector<Event> SensorNode::generate_measure() {
   // in the storage nodes cnontaining a measure from me
   unsigned char xored_measure_value = new_measure_value ^ measure_.get_measure(); 
   // choose the first storage_node randomly
-  unsigned int next_node_index = rand() % near_storage_nodes.size();
-  StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-  // cout << "Storage " << node_id_ << "-> forward message: " << static_cast<unsigned>(new_measure_value) << " to node " << next_node->get_node_id() << endl;
-  //my_supervisor_id_ = next_node->get_node_id(); // remember my supervisor
+  unsigned int next_node_index = rand() % near_storage_nodes_->size();
+  map<unsigned int, Node*>::iterator near_nodes_iter = near_storage_nodes_->begin();
+  for (int i = 0; i < next_node_index; i++) {
+	  near_nodes_iter++;
+  }
+  StorageNode *next_node = (StorageNode*)near_nodes_iter->second;
 
   // Create a measure object
   measure_ = Measure(xored_measure_value, new_measure_id(), node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
@@ -100,7 +103,7 @@ vector<Event> SensorNode::sensor_ping(int event_time){
     new_events.push_back(new_event);
   }
   else {
-    // TODOTOM: questo viene molto meglio con una mappa!
+    // TODO: questo viene molto meglio con una mappa!
     for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
       if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
         StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
@@ -263,9 +266,12 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
 
       // Update the timetable
       timetable.find(node_id_)->second = current_time + message_time; // update my available time
-      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
-        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+      for (map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin(); node_iter != near_storage_nodes_->end(); node_iter++) {
+    	  timetable.find(node_iter->first)->second = current_time + message_time;
       }
+//      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+//        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+//      }
       MyToolbox::set_timetable(timetable);  // upload the updated timetable
 
       // Update the event_queue_
