@@ -222,11 +222,14 @@ int main() {
   }
 
   for (auto& sensor_pair : sensors_map) {
-    ((SensorNode*)sensor_pair.second)->set_supervisor();
+	SensorNode* sns = (SensorNode*)sensor_pair.second;
+    sns->set_supervisor();
+    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
   }
 
   vector<Event> event_list;
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
+  uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency / 2, MyToolbox::ping_frequency);
   for (auto& sensor_pair : sensors_map) {
 	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
 	  first_measure.set_agent(sensor_pair.second);
@@ -237,7 +240,19 @@ int main() {
 		  }
 	  }
 	  event_list.insert(event_iterator, first_measure);
+
+	  Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
+	  first_ping.set_agent(sensor_pair.second);
+	  event_iterator = event_list.begin();
+	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
+		  if (first_ping < *event_iterator) {
+			  break;
+		  }
+	  }
+	  event_list.insert(event_iterator, first_ping);
   }
+
+  // TODO attivare il check dei ping dei cache
 
   for (auto& ee : event_list) {
 	  cout << "sensor: " << ((SensorNode*)ee.get_agent())->get_node_id() << ", event time: " << ee.get_time() << endl;

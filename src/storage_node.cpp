@@ -19,7 +19,7 @@ using namespace std;
 /*  Receive a measure either from a sensor or from another cache node
 */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
-  cout << "Misura ricevuta da me, che sono " << node_id_ << ", dal nodo " << measure->get_source_sensor_id() << endl;
+  cout << "Misura ricevuta da me, che sono " << node_id_ << ", del sensore " << measure->get_source_sensor_id() << endl;
   vector<Event> new_events;
   unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
@@ -32,9 +32,10 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
       // accept the new msg with probability d/k
 //      if (bernoulli_distrib(gen)) { // accept it!	//TODO pee debug accetto sempre!
       if (true) {
-        cout << "Mi prendo la misura!" << endl;
         xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
         last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+        cout << "Mi prendo la misura. Ora salvo: " << int(xored_measure_) << endl;
+        cout << "last measures contiene " << last_measures_.size() << " misure" << endl;
       }
 
       /*

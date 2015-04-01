@@ -33,6 +33,8 @@ class SensorNode: public Node {
   void set_my_supervisor(unsigned int); // TODO: uno dei due metodi e' da rimuovere
   void set_supervisor();
   
+  unsigned int get_my_supervisor_id() {return my_supervisor_id_;}	// TODO just for debug
+
  private:
   typedef MyToolbox::MyTime MyTime;
 

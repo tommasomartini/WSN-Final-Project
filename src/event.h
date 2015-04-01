@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "agent.h"
-// #include "message.h"
 #include "my_toolbox.h"
 #include "blacklist_message.h"
 
