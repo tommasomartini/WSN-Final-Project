@@ -178,7 +178,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case user_receive_data: {
-         new_events = ((User*)agent_)->user_receive_data(time_,(UserMessage*)message_);
+         new_events = ((User*)agent_)->user_receive_data((UserMessage*)message_);
       break;
     }
     case sensor_ping: {

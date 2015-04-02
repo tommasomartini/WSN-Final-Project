@@ -1,4 +1,3 @@
-
 #ifndef USER_MESSAGE_H
 #define	USER_MESSAGE_H
 
@@ -11,14 +10,14 @@ class User;
 using namespace std;
   
 class UserMessage : public Message {
-  private:
-    vector<StorageNodeMessage> symbols_;
-    //vector<unsigned char> xored_message_;
-    //vector <unsigned int> sensor_ids_;
-    BlacklistMessage blacklist_;
-    User* user_to_reply_;
+ private:
+  vector<StorageNodeMessage> symbols_;
+  //vector<unsigned char> xored_message_;
+  //vector <unsigned int> sensor_ids_;
+  BlacklistMessage blacklist_;
+  User* user_to_reply_;	// TODO why this?
 
-  public:
+ public:
   // Constructors
   UserMessage();
   //UserMessage(unsigned char, vector<unsigned int> ,BlacklistMessage);

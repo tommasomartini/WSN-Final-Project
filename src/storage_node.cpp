@@ -133,30 +133,22 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 */
 vector<Event> StorageNode::check_sensors() {       // assumption: sensors always wake up TODO ???????
   vector<Event> new_events;
-  int expired_sensors[supervisioned_map_.size()];
-  int i = 0;
-  bool new_blacklist_element = false;
+  vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
 
-  for (auto& x : supervisioned_map_){
-    if(x.second +(3*MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // don't ping in last 3*ping_frequency
-      my_blacklist_.push_back(x.first);
-      new_blacklist_element = true;
-      expired_sensors[i] = x.first;
-      i++;    
-      //cout<<"sensore morto!"<<endl;
+  for (auto& x : supervisioned_map_){	// for each sensor in my supervised list...
+    if(x.second + (3 * MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // ...if it didn't answer for  times...
+      my_blacklist_.push_back(x.first);	// ...put it in my blacklist...
+      expired_sensors.push_back(x.first);	// ...and in a list I use to update the structures
     }
-     // else
-         // cout<<"i sensori ci sono!"<<endl;
   }
   // remove from the supervisioned_map the dead sensors
-  for(int j=0; j<i; j++) {
-    supervisioned_map_.erase(supervisioned_map_.find(expired_sensors[j]));
-  } 
+  for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
+    supervisioned_map_.erase(supervisioned_map_.find(*it));
+  }
 
-  if (new_blacklist_element == true) {     //make event for spread blacklist
-    unsigned int* ex_sensors = expired_sensors;  // I am passing an array of unsigned_int
-    BlacklistMessage* list = new BlacklistMessage(ex_sensors, i);
-    unsigned int next_node_index = rand() % near_storage_nodes_->size();
+  if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
+    BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
+    int next_node_index = rand() % near_storage_nodes_->size();
     map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
     for (int i = 0; i < next_node_index; i++) {
       node_iter++;
@@ -178,15 +170,23 @@ vector<Event> StorageNode::check_sensors() {       // assumption: sensors always
 */
 vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
   vector<Event> new_events;
-  for (int i=0; i < list->get_length(); i++) { 	// for each id in the blacklist...
-    if (last_measures_.find(list->get_id_list()[i]) != last_measures_.end()) {	// ...if I have a measure from that sensor...
-      my_blacklist_.push_back(list->get_id_list()[i]);	// ...put its id in my backlist too
+  vector<unsigned int>* expired_sensors = list->get_id_list();
+//  for (int i=0; i < list->get_length(); i++) { 	// for each id in the blacklist...
+//    if (last_measures_.find(list->get_id_list()[i]) != last_measures_.end()) {	// ...if I have a measure from that sensor...
+//      my_blacklist_.push_back(list->get_id_list()[i]);	// ...put its id in my backlist too
+//    }
+//  }
+  for (vector<unsigned int>::iterator it = expired_sensors->begin(); it != expired_sensors->end(); it++) { 	// for each id in the blacklist...
+    bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// ...if I have a measure from that sensor...
+    bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// ...and this sensor is not yet in my blacklist...
+	if (msr_from_this_sns && not_yet_in_my_blacklist) {
+      my_blacklist_.push_back(*it);	// ...put its id in my backlist too
     }
-  }  
+  }
   int hop_limit = MyToolbox::max_num_hops;
   if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     list->increase_hop_counter();
-    unsigned int next_node_index = rand() % near_storage_nodes_->size();
+    int next_node_index = rand() % near_storage_nodes_->size();
     map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
     for (int i = 0; i < next_node_index; i++) {
       node_iter++;
@@ -204,24 +204,26 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 */
 vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
   vector<Event> new_events;
-  map<int,unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
-  for (map<int, unsigned char>::iterator it=outdated_measure.begin(); it!=outdated_measure.end(); ++it){
-    if (last_measures_.find(it->first) != last_measures_.end()){
-      xored_measure_ = xored_measure_ ^ it->second;
-      last_measures_.erase(last_measures_.find(it->first)); 
+  map<unsigned int, unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
+  for (map<unsigned int, unsigned char>::iterator it = outdated_measure.begin(); it != outdated_measure.end(); ++it) {	// for each measure in the list...
+    if (last_measures_.find(it->first) != last_measures_.end()){	// ...if I have used that measure...
+      xored_measure_ = xored_measure_ ^ it->second;		// ...remove it...
+      last_measures_.erase(last_measures_.find(it->first)); 	// ...and erase the sensor id from my list as well
     }
-    if(find(my_blacklist_.begin(), my_blacklist_.end(), it->first)!=my_blacklist_.end())
+    if (find(my_blacklist_.begin(), my_blacklist_.end(), it->first) != my_blacklist_.end()) {	// if I have the sensor in my blacklist erase it
       my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
+    }
   }
   int hop_limit = MyToolbox::max_num_hops;
   if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     message_to_remove->increase_hop_counter();
-    int next_node_index = rand() % near_storage_nodes.size();
-    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-    Event new_event(10, Event::remove_measure); // to set event time!!!!!!!
-    new_event.set_agent(next_node);   
-    new_event.set_message(message_to_remove);
-    new_events.push_back(new_event);
+    unsigned int next_node_index = rand() % near_storage_nodes_->size();
+    map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+    for (int i = 0; i < next_node_index; i++) {
+      node_iter++;
+    }
+    StorageNode *next_node = (StorageNode*)node_iter->second;
+//    new_events = send(next_node, message_to_remove);	// my choice is not to flood the network with heavy messages
   }
   return new_events;
 }
@@ -325,8 +327,6 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
         default:
           break;
       }
-      cout << "Genero un evento di tipo " << this_event_type << endl;
-      cout<<"current time = "<<current_time<<"message time = "<<message_time<<endl;
       Event receive_message_event(new_schedule_time, this_event_type);
       receive_message_event.set_agent(next_node);
       receive_message_event.set_message(message);

@@ -1,16 +1,11 @@
 #include <iostream>
-#include <vector>
-#include <map>
 #include <math.h>
 #include <random>
 #include <algorithm>    // std::find, to check whether an element is in a vector
 
 #include "user.h"
-#include "storage_node_message.h"
 #include "intra_user_message.h"
 #include "my_toolbox.h"
-//#include "stdlib.h"
-#include "event.h"
 #include "storage_node.h"
 #include "user_message.h"
 #include "outdated_measure.h"
@@ -99,8 +94,8 @@ vector<Event> User::move() {
   while (!inside_area) {
     if (new_x < 0 || new_x > MyToolbox::square_size || new_y < 0 || new_y > MyToolbox::square_size) { // I am going out from the area
       direction_ += 30; // rotate of 30 degree in clockwise sense
-      double new_x = x_coord_ + speed_ * sin(direction_);
-      double new_y = y_coord_ + speed_ * cos(direction_);
+      new_x = x_coord_ + speed_ * sin(direction_);
+      new_y = y_coord_ + speed_ * cos(direction_);
     } else {
       inside_area = true;
     }
@@ -119,37 +114,39 @@ vector<Event> User::move() {
 
 /*  Receive data from a storage node or from another user
 */
-vector<Event> User::user_receive_data(int event_time, UserMessage* message){
+vector<Event> User::user_receive_data(UserMessage* message){
   vector<Event> new_events;
-  User* user_to_update = message->get_user_to_reply();
-  User::add_symbols(message->get_symbols(),message->get_user_to_reply());
-  //try message passing
-  if (user_to_update->message_passing()){ 
-    //cout<<"message passing ok"<<"black list = "<<message->get_blacklist().get_length()<<endl;
+  vector<StorageNodeMessage> symbols_from_msg = message->get_symbols();
+  for (vector<StorageNodeMessage>::iterator sym_it = symbols_from_msg.begin(); sym_it != symbols_from_msg.end(); sym_it++) {	// for each new symbol...
+    output_symbols_.push_back(*sym_it);	// ...add it to the list of the encoded symbols
+  }
+//  User* user_to_update = message->get_user_to_reply();	// TODO why??
+//  User::add_symbols(message->get_symbols(), message->get_user_to_reply());	// FIXME why???????
+
+  if (message_passing()){	// if message passing works
     // the user succeeds message passing, now delete this user and create a new user
     User *new_user = MyToolbox::new_user();
-    Event new_event(event_time+10, Event::move_user); //event time da cambiare
+    Event new_event(MyToolbox::get_current_time() + MyToolbox::user_update_time, Event::move_user);
     new_event.set_agent(new_user);
     new_events.push_back(new_event);
     
-    //if there are elements in black_list spread mesaures
-    //creare messagio id misura e evento spread
-    map<int, unsigned char> outdated_symbols;
-    for (int i=0; i<message->get_blacklist().get_length(); i++){
-      if ( user_to_update->input_symbols_.find(message->get_blacklist().get_id_list()[i])!= user_to_update->input_symbols_.end()){
-        int id = message->get_blacklist().get_id_list()[i];
-        unsigned char symbol = user_to_update->input_symbols_.find(id)->second; 
-        outdated_symbols.insert(pair<int,unsigned char>(id,symbol));
+    vector<unsigned int>* bl = message->get_blacklist().get_id_list();
+    map<unsigned int, unsigned char> outdated_symbols;
+    for (vector<unsigned int>::iterator id_iter = bl->begin(); id_iter != bl->end(); id_iter++) {	// for each id in the blacklist...
+      if (input_symbols_.find(*id_iter) != input_symbols_.end()) {	// ...if the corresponding sensor has a decoded measure in my input symbol list...
+        unsigned int sns_id = *id_iter;	// ...save the id...
+        unsigned char sns_msg = input_symbols_.find(*id_iter)->second;	// ...and save the measure...
+        outdated_symbols.insert(pair<unsigned int, unsigned char>(sns_id, sns_msg));	// ...and insert the new pair id-msr in the list of the outdated symbols
       }
     }
-    if(outdated_symbols.size()>0){ 
+    if(outdated_symbols.size() > 0){	// if there is some outdated measure...
       OutdatedMeasure* symbols_to_remove = new OutdatedMeasure(outdated_symbols);
-      int next_node_index = rand() % near_storage_nodes.size();
-      StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
-      //Event event(event_time, Event::remove_measure); //event time da cambiare
-      //event.set_agent(next_node);
-      //event.set_message(symbols_to_remove);
-      //new_events.push_back(event);
+      int next_node_index = rand() % near_storage_nodes_->size();
+      map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+      for (int i = 0; i < next_node_index; i++) {
+        node_iter++;
+      }
+      StorageNode *next_node = (StorageNode*)node_iter->second;
       symbols_to_remove->set_receiver_node_id(next_node->get_node_id());
       symbols_to_remove->message_type_=Message::message_type_remove_measure;
       new_events = send(next_node, symbols_to_remove);
@@ -339,7 +336,7 @@ vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
 }       
 */      //metodo user_send_to_user diventato obsoleto!
 
-void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){
+void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){	// FIXME che cacchio e' questo metodo??
   user->output_symbols_.reserve(user->output_symbols_.size() + symbols.size()); // reallocate the memory of the vector in order to contain all the new symbols
   (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());  // append the new symbols
 }
@@ -370,24 +367,6 @@ vector<Event> User::send(Node* next_node, Message* message) {
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = processing_time + transfer_time;
-  
-
-  /*cout<<"coordinate mie: x= "<<x_coord_<<" y= "<<y_coord_;
-  //cout<<"coordinate sue: x= "<<next_node->get_x_coord()<<" y = "<<next_node->get_y_coord();
-  // Compute the message time
-  double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
-  MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
-  MyTime processing_time =  MyToolbox::get_random_processing_time();  
-  unsigned int num_total_bits = message->get_message_size();
-  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
-  MyTime message_time = propagation_time + processing_time + transfer_time;
-  */
-  
-  //cout<<"num bit = "<<num_total_bits<<endl;
-  //cout<<"propagation_time "<<propagation_time<<endl; 
-  //cout<<"transfer_time "<<transfer_time<<endl;
-  //cout<<"processing_time "<<processing_time<<endl;
-  //cout<<"message time "<<message_time<<endl;
   
   // Update the timetable
   if (!event_queue_.empty()) {  // already some pending event
@@ -451,6 +430,7 @@ vector<Event> User::send(Node* next_node, Message* message) {
 
       // Update the timetable
       timetable.find(node_id_)->second = current_time + message_time; // update my available time
+      // TODO devo aggiornre la mappa, non il vettore!!!
       for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
         timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
       }

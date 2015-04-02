@@ -21,7 +21,7 @@ class StorageNodeMessage : public Message {
   // unsigned char get_message() {return xored_message_;}
   // vector<int> get_sensor_ids() {return sensor_ids_;}
   // void set_message(unsigned char);
-  // TODO remove? 
+  // TODO remove?
 };
 
 #endif

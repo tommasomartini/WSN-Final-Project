@@ -12,18 +12,21 @@ using namespace std;
 class BlacklistMessage : public Message {
  private:
   unsigned int* sensor_id_; //contains id of sensors which are expired
+  vector<unsigned int>* sensor_ids_ptr_;	// contains the ids of the expired sensors
   int length_;  // number of expired sensors
   int hop_counter_;
   
  public: 
   BlacklistMessage();
   BlacklistMessage(unsigned int*);
-  BlacklistMessage(unsigned int*, int /*length*/);
+  BlacklistMessage(unsigned int*, int /*length*/);	// TODO remove
+  BlacklistMessage(vector<unsigned int>*);
   void set_id_list(unsigned int*);
   void set_length(int);
   
-  unsigned int* get_id_list(){return sensor_id_;}
-  int get_length() {return length_;}
+  vector<unsigned int>* get_id_list(){return sensor_ids_ptr_;}
+  unsigned int* get_id_list2(){return sensor_id_;}	// TODO remove
+  int get_length() {return length_;}	// TODO remove
   int get_hop_counter() {return hop_counter_;}
 
   int increase_hop_counter();

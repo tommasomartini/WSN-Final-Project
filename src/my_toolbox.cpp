@@ -31,8 +31,8 @@ double MyToolbox::bit_error_prob = 0;
 double MyToolbox::ray_length = 0;
 double MyToolbox::tx_range = 0;
 
-int MyToolbox::ping_frequency = 0;
-int MyToolbox::check_sensors_frequency = 0; 
+MyToolbox::MyTime MyToolbox::ping_frequency = 0;
+MyToolbox::MyTime MyToolbox::check_sensors_frequency = 0;
 
 double MyToolbox::C1 = 0;
 int MyToolbox::max_num_hops = 0;

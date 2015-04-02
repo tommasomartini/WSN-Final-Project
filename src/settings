@@ -22,7 +22,7 @@ square_size=5 in m
 space_precision=1000 how many units in a meter
 
 user_velocity=0.8 m/s
-user_update_time=2;
+user_update_time=2000000000 ns
 
 mean_processing_time=100000 ns
 std_dev_processing_time=10000 ns

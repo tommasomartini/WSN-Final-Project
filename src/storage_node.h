@@ -50,7 +50,7 @@ class StorageNode : public Node {
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
   map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>
-  vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the supervisior of
+  vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the supervisor of TODO remove
   map<unsigned int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 

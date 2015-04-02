@@ -40,8 +40,8 @@ class MyToolbox {
   static double ray_length;
   static double tx_range;
 
-  static int ping_frequency;
-  static int check_sensors_frequency; 
+  static MyTime ping_frequency;
+  static MyTime check_sensors_frequency;
 
   static double C1;
   static int max_num_hops;
