@@ -20,6 +20,8 @@ Event::Event(MyTime event_time) {
 Event::Event(MyTime event_time, Event::EventTypes event_type) {
   time_ = event_time;
   event_type_ = event_type;
+  agent_ = NULL;
+  message_ = NULL;
 }
 
 bool Event::operator<(Event event) {
@@ -143,7 +145,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case blacklist_sensor: {
-      new_events = ((StorageNode*)agent_)->spread_blacklist(time_, (BlacklistMessage*)message_);
+      new_events = ((StorageNode*)agent_)->spread_blacklist((BlacklistMessage*)message_);
       // cout <<"Il nuovo evento creato da blacklist è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
     }
@@ -185,7 +187,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case check_sensors: {
-      new_events = ((StorageNode*)agent_)->check_sensors(time_);
+      new_events = ((StorageNode*)agent_)->check_sensors();
       //cout <<"Il nuovo evento creato da check è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
     }

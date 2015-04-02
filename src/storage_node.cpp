@@ -131,15 +131,15 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 
 /*  Occasionally I check if the sensors I am supervising are OK
 */
-vector<Event> StorageNode::check_sensors(int event_time){       // assumption: sensors always wake up TODO ???????
+vector<Event> StorageNode::check_sensors() {       // assumption: sensors always wake up TODO ???????
   vector<Event> new_events;
   int expired_sensors[supervisioned_map_.size()];
   int i = 0;
   bool new_blacklist_element = false;
 
-  for (auto& x: supervisioned_map_){
-    if(x.second +(3*MyToolbox::ping_frequency) < event_time){  // don't ping in last 3*ping_frequency
-      my_blacklist_.push_back( x.first);
+  for (auto& x : supervisioned_map_){
+    if(x.second +(3*MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // don't ping in last 3*ping_frequency
+      my_blacklist_.push_back(x.first);
       new_blacklist_element = true;
       expired_sensors[i] = x.first;
       i++;    
@@ -154,16 +154,20 @@ vector<Event> StorageNode::check_sensors(int event_time){       // assumption: s
   } 
 
   if (new_blacklist_element == true) {     //make event for spread blacklist
-    int* ex_sensors = expired_sensors;  // TODOTOM perche faccio questo??
-    BlacklistMessage* list = new BlacklistMessage(ex_sensors,i);
-    unsigned int next_node_index = rand() % near_storage_nodes.size();
-    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    unsigned int* ex_sensors = expired_sensors;  // I am passing an array of unsigned_int
+    BlacklistMessage* list = new BlacklistMessage(ex_sensors, i);
+    unsigned int next_node_index = rand() % near_storage_nodes_->size();
+    map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+    for (int i = 0; i < next_node_index; i++) {
+      node_iter++;
+    }
+    StorageNode *next_node = (StorageNode*)node_iter->second;
     list->set_receiver_node_id(next_node->get_node_id());
     list->message_type_= Message::message_type_blacklist;
     new_events = send(next_node, list);
   }
 
-  Event new_event(event_time + MyToolbox::check_sensors_frequency, Event::check_sensors); 
+  Event new_event(MyToolbox::get_current_time() + MyToolbox::check_sensors_frequency, Event::check_sensors);
   new_event.set_agent(this);   
   new_events.push_back(new_event);
 
@@ -172,19 +176,24 @@ vector<Event> StorageNode::check_sensors(int event_time){       // assumption: s
 
 /*  I received a blacklist message: this message contains the measure I have to remove
 */
-vector<Event> StorageNode::spread_blacklist(int event_time, BlacklistMessage* list) {
+vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
   vector<Event> new_events;
-  for (int i=0; i < list->get_length(); i++) {
-    if ( last_measures_.find(list->get_id_list()[i]) != last_measures_.end() )
-      my_blacklist_.push_back(list->get_id_list()[i]);
+  for (int i=0; i < list->get_length(); i++) { 	// for each id in the blacklist...
+    if (last_measures_.find(list->get_id_list()[i]) != last_measures_.end()) {	// ...if I have a measure from that sensor...
+      my_blacklist_.push_back(list->get_id_list()[i]);	// ...put its id in my backlist too
+    }
   }  
   int hop_limit = MyToolbox::max_num_hops;
   if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     list->increase_hop_counter();
-    int next_node_index = rand() % near_storage_nodes.size();
-    StorageNode *next_node = (StorageNode*)near_storage_nodes.at(next_node_index);
+    unsigned int next_node_index = rand() % near_storage_nodes_->size();
+    map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+    for (int i = 0; i < next_node_index; i++) {
+      node_iter++;
+    }
+    StorageNode *next_node = (StorageNode*)node_iter->second;
     list->set_receiver_node_id(next_node->get_node_id());
-    list->message_type_=Message::message_type_blacklist;
+    list->message_type_ = Message::message_type_blacklist;
     new_events = send(next_node, list);
   }
   

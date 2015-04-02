@@ -40,8 +40,8 @@ class StorageNode : public Node {
   vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
   vector<Event> try_retx(Message*, int /*next_node_id*/); // Tom
   vector<Event> receive_user_request(unsigned int /*sender user id*/); // Tom
-  vector<Event> check_sensors(int); // Arianna
-  vector<Event> spread_blacklist(int, BlacklistMessage*); // Arianna
+  vector<Event> check_sensors(); // Arianna
+  vector<Event> spread_blacklist(BlacklistMessage*); // Arianna
   vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
 
  private:
@@ -51,7 +51,7 @@ class StorageNode : public Node {
   unsigned char xored_measure_;
   map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>
   vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the supervisior of
-  map<int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
+  map<unsigned int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 
   vector<Event> send(Node* /*next_node*/, Message*);

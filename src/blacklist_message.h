@@ -10,25 +10,24 @@
 using namespace std;
 
 class BlacklistMessage : public Message {
-private:
-     int* sensor_id_; //contains id of sensors which are expired
-     int length_;  // number of expired sensors
-     int hop_counter_;
+ private:
+  unsigned int* sensor_id_; //contains id of sensors which are expired
+  int length_;  // number of expired sensors
+  int hop_counter_;
   
  public: 
-     BlacklistMessage();
-     BlacklistMessage(int*);
-     BlacklistMessage(int*, int /*length*/);
-     void set_id_list(int*);
-     void set_length(int);
+  BlacklistMessage();
+  BlacklistMessage(unsigned int*);
+  BlacklistMessage(unsigned int*, int /*length*/);
+  void set_id_list(unsigned int*);
+  void set_length(int);
   
-     int* get_id_list(){return sensor_id_;}
-     int get_length() {return length_;}
-     int get_hop_counter() {return hop_counter_;}
+  unsigned int* get_id_list(){return sensor_id_;}
+  int get_length() {return length_;}
+  int get_hop_counter() {return hop_counter_;}
 
-
-     int increase_hop_counter();
-     unsigned int get_message_size();
+  int increase_hop_counter();
+  unsigned int get_message_size();
 
 };
 
