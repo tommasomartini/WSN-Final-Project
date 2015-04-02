@@ -109,7 +109,8 @@ vector<Event> SensorNode::sensor_ping() {
   } else {  // sender and receiver both idle, can send the message
 	StorageNode *supervisior_node = (StorageNode*)near_storage_nodes_->at(my_supervisor_id_);
 	supervisior_node->set_supervision_map_(node_id_, MyToolbox::get_current_time());
-	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);
+	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::broken_sensor);	// FIXME for debug only
+//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);
 	new_event.set_agent(this);
 	new_events.push_back(new_event);
   }

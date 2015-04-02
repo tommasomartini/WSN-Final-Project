@@ -108,7 +108,7 @@ string Event::int2type(int num) {
 vector<Event> Event::execute_action() {
 
   unsigned int gh_id = ((Node*)agent_)->get_node_id();
-  cout << "Execution: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
+  cout << "EXECUTION: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
 
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
@@ -201,12 +201,12 @@ vector<Event> Event::execute_action() {
 
 
   // DEBUGGING
-  cout << "=== Nuovi eventi da inserire in lista:" << endl;
-  for (unsigned int i = 0; i < new_events.size(); i++) {
-    Event event = new_events.at(i);
-    unsigned int df_id = ((Node*)(event.get_agent()))->get_node_id();
-    cout << MyToolbox::int2nodetype(df_id) << " " << df_id << ", event type: " << int2type(event.get_event_type()) << ", time: " << event.get_time() << endl;
-  }
+//  cout << "=== Nuovi eventi da inserire in lista:" << endl;
+//  for (unsigned int i = 0; i < new_events.size(); i++) {
+//    Event event = new_events.at(i);
+//    unsigned int df_id = ((Node*)(event.get_agent()))->get_node_id();
+//    cout << MyToolbox::int2nodetype(df_id) << " " << df_id << ", event type: " << int2type(event.get_event_type()) << ", time: " << event.get_time() << endl;
+//  }
 
   return new_events; 
 }

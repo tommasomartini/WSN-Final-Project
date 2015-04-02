@@ -265,10 +265,6 @@ int main() {
     event_list.insert(event_iterator, first_check);
   }
 
-  for (auto& ee : event_list) {
-	  cout << "sensor: " << ((SensorNode*)ee.get_agent())->get_node_id() << ", event time: " << ee.get_time() << endl;
-  }
-
   while (!event_list.empty()) {
   // for (int i = 0; i < 5; i++) {
 

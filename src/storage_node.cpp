@@ -147,6 +147,7 @@ vector<Event> StorageNode::check_sensors() {       // assumption: sensors always
   }
 
   if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
+	  cout << "there are some expired sensors"<< endl;
     BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
     int next_node_index = rand() % near_storage_nodes_->size();
     map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
@@ -170,12 +171,12 @@ vector<Event> StorageNode::check_sensors() {       // assumption: sensors always
 */
 vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
   vector<Event> new_events;
+  cout << "aa" << endl;
   vector<unsigned int>* expired_sensors = list->get_id_list();
-//  for (int i=0; i < list->get_length(); i++) { 	// for each id in the blacklist...
-//    if (last_measures_.find(list->get_id_list()[i]) != last_measures_.end()) {	// ...if I have a measure from that sensor...
-//      my_blacklist_.push_back(list->get_id_list()[i]);	// ...put its id in my backlist too
-//    }
-//  }
+  cout << expired_sensors->size() << endl;
+  for (int i = 0; i < expired_sensors->size(); i++) {
+	  cout << "Expired sensor: " << expired_sensors->at(i) << endl;
+  }
   for (vector<unsigned int>::iterator it = expired_sensors->begin(); it != expired_sensors->end(); it++) { 	// for each id in the blacklist...
     bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// ...if I have a measure from that sensor...
     bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// ...and this sensor is not yet in my blacklist...
@@ -262,15 +263,6 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = processing_time + transfer_time;
-
-  /* Compute the message time (OLD VERSION)
-  double distance = (sqrt(pow(y_coord_ - next_node->get_y_coord(), 2) + pow(x_coord_ - next_node->get_x_coord(), 2))) / 1000;  // in meters
-  MyTime propagation_time = (MyTime)((distance / MyToolbox::kLightSpeed) * pow(10, 9));   // in nano-seconds
-  MyTime processing_time = MyToolbox::get_random_processing_time();
-  unsigned int num_total_bits = message->get_message_size();
-  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
-  MyTime message_time = propagation_time + processing_time + transfer_time;
-  */
   
   cout<<"bit = "<<message->get_message_size()<<endl;
 

@@ -4,6 +4,7 @@
 #define __BLACKLIST_MESSAGE_H__  
 
 #include <vector>
+#include <iostream>
 
 #include "message.h"
 
@@ -24,7 +25,7 @@ class BlacklistMessage : public Message {
   void set_id_list(unsigned int*);
   void set_length(int);
   
-  vector<unsigned int>* get_id_list(){return sensor_ids_ptr_;}
+  vector<unsigned int>* get_id_list(){cout << "first: " << sensor_ids_ptr_->size() << endl; return sensor_ids_ptr_;}
   unsigned int* get_id_list2(){return sensor_id_;}	// TODO remove
   int get_length() {return length_;}	// TODO remove
   int get_hop_counter() {return hop_counter_;}

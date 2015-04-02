@@ -2,7 +2,7 @@
 #include "my_toolbox.h"
 
 BlacklistMessage::BlacklistMessage() {
-    sensor_id_=nullptr;
+    sensor_id_ = nullptr;
     hop_counter_=0;
     length_=0;
 }
