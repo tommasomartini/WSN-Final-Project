@@ -127,7 +127,6 @@ vector<Event> Event::execute_action() {
           - a new measure generation of the same node OR the sensor's failure
           - the reception of the measure to a storage node
       */ 
-    	cout << "  sensor generate msr" << endl;
       new_events = ((SensorNode*)agent_)->generate_measure(); 
       break;
     }
@@ -188,6 +187,16 @@ vector<Event> Event::execute_action() {
     }
     case check_sensors: {
       new_events = ((StorageNode*)agent_)->check_sensors();
+//      for (int tt = 0; tt < new_events.size(); tt++) {
+//    	  cout << "--" << Event::int2type(new_events.at(tt).get_event_type()) << endl;
+//      }
+//      if (new_events.size() > 1 && new_events.at(0).event_type_ == EventTypes::blacklist_sensor) {
+//    	  BlacklistMessage* bbl = (BlacklistMessage*)(new_events.at(0).get_message());
+//    	  cout << "-----------------------dentro forevent.cpp:" << bbl->get_id_list()->size() << endl;
+//    	  for (int jj = 0; jj < 10; jj++) {
+//    		  cout << bbl->get_id_list()->at(jj) << endl;
+//    	  }
+//      }
       //cout <<"Il nuovo evento creato da check è al tempo "<<new_events.at(0).get_time()<<"ed è di tipo"<<new_events.at(0).event_type_<<endl;
       break;
     }
@@ -200,12 +209,19 @@ vector<Event> Event::execute_action() {
   }
 
 
-  // DEBUGGING
+//  // DEBUGGING
 //  cout << "=== Nuovi eventi da inserire in lista:" << endl;
 //  for (unsigned int i = 0; i < new_events.size(); i++) {
 //    Event event = new_events.at(i);
 //    unsigned int df_id = ((Node*)(event.get_agent()))->get_node_id();
 //    cout << MyToolbox::int2nodetype(df_id) << " " << df_id << ", event type: " << int2type(event.get_event_type()) << ", time: " << event.get_time() << endl;
+//  }
+
+//  for (unsigned int i = 0; i < new_events.size(); i++) {
+//	  Event ev = new_events.at(i);
+//	  if (ev.event_type_ == EventTypes::blacklist_sensor) {
+//		  cout << "(add event) list size " << ((BlacklistMessage*)ev.message_)->get_id_list()->size() << endl;
+//	  }
 //  }
 
   return new_events; 

@@ -131,7 +131,7 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 
 /*  Occasionally I check if the sensors I am supervising are OK
 */
-vector<Event> StorageNode::check_sensors() {       // assumption: sensors always wake up TODO ???????
+vector<Event> StorageNode::check_sensors() {
   vector<Event> new_events;
   vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
 
@@ -147,8 +147,8 @@ vector<Event> StorageNode::check_sensors() {       // assumption: sensors always
   }
 
   if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
-	  cout << "there are some expired sensors"<< endl;
-    BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
+//    BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
+    BlacklistMessage* list = new BlacklistMessage(expired_sensors);
     int next_node_index = rand() % near_storage_nodes_->size();
     map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
     for (int i = 0; i < next_node_index; i++) {
@@ -171,13 +171,8 @@ vector<Event> StorageNode::check_sensors() {       // assumption: sensors always
 */
 vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
   vector<Event> new_events;
-  cout << "aa" << endl;
-  vector<unsigned int>* expired_sensors = list->get_id_list();
-  cout << expired_sensors->size() << endl;
-  for (int i = 0; i < expired_sensors->size(); i++) {
-	  cout << "Expired sensor: " << expired_sensors->at(i) << endl;
-  }
-  for (vector<unsigned int>::iterator it = expired_sensors->begin(); it != expired_sensors->end(); it++) { 	// for each id in the blacklist...
+  vector<unsigned int> expired_sensors = list->get_id_list3();
+  for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) { 	// for each id in the blacklist...
     bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// ...if I have a measure from that sensor...
     bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// ...and this sensor is not yet in my blacklist...
 	if (msr_from_this_sns && not_yet_in_my_blacklist) {
@@ -197,7 +192,6 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
     list->message_type_ = Message::message_type_blacklist;
     new_events = send(next_node, list);
   }
-  
   return new_events;
 }
 
@@ -262,10 +256,8 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
   MyTime processing_time = MyToolbox::get_random_processing_time();
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
-  MyTime message_time = processing_time + transfer_time;
+  MyTime message_time = /*processing_time + transfer_time;*/ 5;	// FIXME debug
   
-  cout<<"bit = "<<message->get_message_size()<<endl;
-
   // Update the timetable
   if (!event_queue_.empty()) {  // already some pending event
     // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
@@ -343,6 +335,6 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
       }
     }
   }
-  
+
   return new_events;
 }
