@@ -8,6 +8,7 @@
 #include "sensor_node.h"
 #include "storage_node.h"
 #include "measure.h"
+#include "data_collector.h"
 
 
 /**************************************

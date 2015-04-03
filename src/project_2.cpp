@@ -21,6 +21,7 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "event.h"
 #include "user.h"
 #include "storage_node_message.h"
+#include "data_collector.h"
 
 using namespace std;
 
@@ -116,6 +117,10 @@ int main() {
   import_settings();
 
   MyToolbox::initialize_toolbox();
+
+  DataCollector data_coll = DataCollector();
+  MyToolbox::dc = &data_coll;
+
 
 // Set up the network
   // I use these vectors ONLY to set up the network
@@ -231,38 +236,38 @@ int main() {
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
   uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency / 2, MyToolbox::ping_frequency);
   for (auto& sensor_pair : sensors_map) {
-//	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
-//	  first_measure.set_agent(sensor_pair.second);
+	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
+	  first_measure.set_agent(sensor_pair.second);
 	  vector<Event>::iterator event_iterator = event_list.begin();
-//	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
-//		  if (first_measure < *event_iterator) {
-//			  break;
-//		  }
-//	  }
-//	  event_list.insert(event_iterator, first_measure);
-
-	  Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
-	  first_ping.set_agent(sensor_pair.second);
-	  event_iterator = event_list.begin();
 	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
-		  if (first_ping < *event_iterator) {
+		  if (first_measure < *event_iterator) {
 			  break;
 		  }
 	  }
-	  event_list.insert(event_iterator, first_ping);
+	  event_list.insert(event_iterator, first_measure);
+
+//	  Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
+//	  first_ping.set_agent(sensor_pair.second);
+//	  event_iterator = event_list.begin();
+//	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
+//		  if (first_ping < *event_iterator) {
+//			  break;
+//		  }
+//	  }
+//	  event_list.insert(event_iterator, first_ping);
   }
 
   uniform_int_distribution<int> first_check_distrib(MyToolbox::check_sensors_frequency / 2, MyToolbox::check_sensors_frequency);
   for (auto& cache_pair : storage_nodes_map) {
-    Event first_check(first_check_distrib(generator), Event::check_sensors);
-    first_check.set_agent(cache_pair.second);
-    vector<Event>::iterator event_iterator = event_list.begin();
-    for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
-      if (first_check < *event_iterator) {
-        break;
-      }
-    }
-    event_list.insert(event_iterator, first_check);
+//    Event first_check(first_check_distrib(generator), Event::check_sensors);
+//    first_check.set_agent(cache_pair.second);
+//    vector<Event>::iterator event_iterator = event_list.begin();
+//    for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
+//      if (first_check < *event_iterator) {
+//        break;
+//      }
+//    }
+//    event_list.insert(event_iterator, first_check);
   }
 
   while (!event_list.empty()) {

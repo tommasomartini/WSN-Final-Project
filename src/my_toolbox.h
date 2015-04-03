@@ -16,6 +16,8 @@ class StorageNode;
 class User;
 class Node;
 
+class DataCollector;
+
 using namespace std;
 
 class MyToolbox {
@@ -23,6 +25,8 @@ class MyToolbox {
   typedef unsigned long MyTime;
 
   static constexpr double kLightSpeed = 299792458; // meter / seconds
+
+  static DataCollector* dc;
 
   //  Global values
   static int num_storage_nodes;

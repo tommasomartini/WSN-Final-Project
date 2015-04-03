@@ -14,6 +14,7 @@ using namespace std;
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
 unsigned int MyToolbox::node_id_ = 0;
+DataCollector* MyToolbox::dc;
 
 //  Global values
 int MyToolbox::num_storage_nodes = 0;
