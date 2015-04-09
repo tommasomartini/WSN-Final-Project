@@ -67,8 +67,6 @@ void import_settings() {
           MyToolbox::bitrate = (double)num;
         } else if (value_name == "bit_error_prob") {
           MyToolbox::bit_error_prob = (double)num;
-        } else if (value_name == "ray_length") {
-          MyToolbox::ray_length = (double)num;
         } else if (value_name == "tx_range") {
           MyToolbox::tx_range = (double)num;
         } else if (value_name == "ping_frequency") {
@@ -119,8 +117,7 @@ int main() {
   MyToolbox::initialize_toolbox();
 
   DataCollector data_coll = DataCollector();
-  MyToolbox::dc = &data_coll;
-
+//  MyToolbox::dc = &data_coll;
 
 // Set up the network
   // I use these vectors ONLY to set up the network
@@ -143,6 +140,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     SensorNode* node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
+    node->data_collector = &data_coll;
     sensors_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
@@ -151,6 +149,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     StorageNode* node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
+    node->data_collector = &data_coll;
     storage_nodes_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
@@ -159,6 +158,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     User* user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
+    user->data_collector = &data_coll;
     users_map.insert(pair<unsigned int, Node*>(user->get_node_id(), user));
     timetable.insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
@@ -187,7 +187,7 @@ int main() {
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::ray_length) {
+      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range) {
     	pair<map<unsigned int, Node*>::iterator, bool> res;
         res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
@@ -197,7 +197,7 @@ int main() {
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::ray_length) {
+      if (distance <= MyToolbox::tx_range) {
         sensor1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
@@ -211,7 +211,7 @@ int main() {
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::ray_length) {
+      if (distance <= MyToolbox::tx_range) {
         storage_node1->near_sensors_->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
@@ -220,7 +220,7 @@ int main() {
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::ray_length) {
+      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::tx_range) {
         storage_node1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
@@ -290,14 +290,14 @@ int main() {
       event_list.insert(old_event_iterator, *new_event_iterator);
     }
 
-    cout << "**event list: " << endl;
-    for (vector<Event>::iterator ii = event_list.begin(); ii != event_list.end(); ii++) {
-    	unsigned int tt_id = ((Node*)ii->get_agent())->get_node_id();
-    	cout << ii->get_time() << ", event type: " << Event::int2type(ii->get_event_type()) << ", del " << MyToolbox::int2nodetype(tt_id) << ": " << tt_id << endl;
-    }
-    cout << "**" << endl;
+//    show the list of the events
+//    cout << "**event list: " << endl;
+//    for (vector<Event>::iterator ii = event_list.begin(); ii != event_list.end(); ii++) {
+//    	unsigned int tt_id = ((Node*)ii->get_agent())->get_node_id();
+//    	cout << ii->get_time() << ", event type: " << Event::int2type(ii->get_event_type()) << ", del " << MyToolbox::int2nodetype(tt_id) << ": " << tt_id << endl;
+//    }
+//    cout << "**" << endl;
   }
-
 
 
   

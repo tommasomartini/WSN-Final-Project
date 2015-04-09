@@ -27,58 +27,58 @@ void User::collect_data(Message xored_message) {
     Public methods
 **************************************/
 
-vector<Event> User::move_user(int event_time) {
-  vector<Event> new_events; 
-  // simulate the user moving
-  y_coord_=y_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision + rand() % 2*MyToolbox::tx_range *MyToolbox::space_precision); 
-  x_coord_=x_coord_+(-MyToolbox::tx_range * MyToolbox::space_precision+ rand() % 2*MyToolbox::tx_range*MyToolbox::space_precision);
-  y_coord_ = max(0.0, min(y_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision)));  //to avoid that coords are outside area
-  x_coord_ = max(0.0, min(x_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision))); 
-  // find new near_storage and near_user
-  MyToolbox::set_near_storage_node(this);
-  MyToolbox::set_near_user(this);
-  
-  // creates event user_node_query with all near nodes
-  for(int i=0; i<near_storage_nodes.size(); i++){
-      //Event new_event(event_time + MyToolbox::get_tx_offset(), Event::node_send_to_user); //event time distanziarli
-      //new_event.set_agent(near_storage_nodes.at(i));
-      //Message* new_msg_ptr = new Message();
-      //new_msg_ptr->set_sender_node_id(node_id_);
-      //new_event.set_message(new_msg_ptr);
-      //new_events.push_back(new_event);
-      UserMessage* message = new UserMessage();
-      unsigned char xor_message = ((StorageNode*)near_storage_nodes.at(i))->get_xored_measure();
-      vector <unsigned int> id_list = ((StorageNode*) near_storage_nodes.at(i))->get_ids();
-     if(id_list.size()>0){
-        vector <StorageNodeMessage> symbol = {StorageNodeMessage(xor_message,id_list)};
-        message->set_symbols(symbol);
-        message->set_user_to_reply(this);
-        message->message_type_=Message::message_type_user_to_user;    //->>sarebbe node_to_user ma in send non c'è
-        new_events = send(near_storage_nodes.at(i),message);
-     }
-  }
-  // creates event user_user_query with all near users
-  for(int i=0; i<near_users.size(); i++){
-      if((((User*)near_users.at(i))->output_symbols_).size()>0){
-        UserMessage* message = new UserMessage();
-        message->set_symbols(((User*)near_users.at(i))->output_symbols_);
-        message->set_user_to_reply(this);
-        // message->set_receiver_node_id(this->node_id_);
-        message->message_type_=Message::message_type_user_to_user;
-        new_events = send(near_users.at(i),message);
-        //Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
-        //new_event.set_agent(near_users.at(i));
-        // new_event.set_agent_to_reply(this);
-        //new_events.push_back(new_event);
-      }
-  }
-  // create next move_user
-  Event new_event(event_time+(MyToolbox::user_update_time * pow (10,9)),Event::move_user);
-  new_event.set_agent(this);
-  new_events.push_back(new_event);
-        
-  return new_events;
-}
+//vector<Event> User::move_user(int event_time) {
+//  vector<Event> new_events;
+//  // simulate the user moving
+//  y_coord_=y_coord_+(-MyToolbox::ray_length * MyToolbox::space_precision + rand() % 2*MyToolbox::ray_length *MyToolbox::space_precision);
+//  x_coord_=x_coord_+(-MyToolbox::ray_length * MyToolbox::space_precision+ rand() % 2*MyToolbox::ray_length*MyToolbox::space_precision);
+//  y_coord_ = max(0.0, min(y_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision)));  //to avoid that coords are outside area
+//  x_coord_ = max(0.0, min(x_coord_, (double)(MyToolbox::square_size * MyToolbox::space_precision)));
+//  // find new near_storage and near_user
+//  MyToolbox::set_near_storage_node(this);
+//  MyToolbox::set_near_user(this);
+//
+//  // creates event user_node_query with all near nodes
+//  for(int i=0; i<near_storage_nodes.size(); i++){
+//      //Event new_event(event_time + MyToolbox::get_tx_offset(), Event::node_send_to_user); //event time distanziarli
+//      //new_event.set_agent(near_storage_nodes.at(i));
+//      //Message* new_msg_ptr = new Message();
+//      //new_msg_ptr->set_sender_node_id(node_id_);
+//      //new_event.set_message(new_msg_ptr);
+//      //new_events.push_back(new_event);
+//      UserMessage* message = new UserMessage();
+//      unsigned char xor_message = ((StorageNode*)near_storage_nodes.at(i))->get_xored_measure();
+//      vector <unsigned int> id_list = ((StorageNode*) near_storage_nodes.at(i))->get_ids();
+//     if(id_list.size()>0){
+//        vector <StorageNodeMessage> symbol = {StorageNodeMessage(xor_message,id_list)};
+//        message->set_symbols(symbol);
+//        message->set_user_to_reply(this);
+//        message->message_type_=Message::message_type_user_to_user;    //->>sarebbe node_to_user ma in send non c'è
+//        new_events = send(near_storage_nodes.at(i),message);
+//     }
+//  }
+//  // creates event user_user_query with all near users
+//  for(int i=0; i<near_users.size(); i++){
+//      if((((User*)near_users.at(i))->output_symbols_).size()>0){
+//        UserMessage* message = new UserMessage();
+//        message->set_symbols(((User*)near_users.at(i))->output_symbols_);
+//        message->set_user_to_reply(this);
+//        // message->set_receiver_node_id(this->node_id_);
+//        message->message_type_=Message::message_type_user_to_user;
+//        new_events = send(near_users.at(i),message);
+//        //Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
+//        //new_event.set_agent(near_users.at(i));
+//        // new_event.set_agent_to_reply(this);
+//        //new_events.push_back(new_event);
+//      }
+//  }
+//  // create next move_user
+//  Event new_event(event_time+(MyToolbox::user_update_time * pow (10,9)),Event::move_user);
+//  new_event.set_agent(this);
+//  new_events.push_back(new_event);
+//
+//  return new_events;
+//}
 
 vector<Event> User::move() {
   default_random_engine generator = MyToolbox::get_random_generator();

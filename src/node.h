@@ -7,6 +7,7 @@
 
 #include "agent.h"
 #include "event.h"
+#include "data_collector.h"
 
 using namespace std;
 
@@ -16,6 +17,8 @@ class Node : public Agent {
   vector<Node*> near_storage_nodes;
   vector<Node*> near_sensor_nodes;
   vector<Node*> near_users;
+
+  DataCollector* data_collector;
 
   map<unsigned int, Node*>* near_sensors_;
   map<unsigned int, Node*>* near_storage_nodes_;

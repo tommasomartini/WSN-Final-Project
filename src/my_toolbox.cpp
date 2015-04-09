@@ -14,7 +14,7 @@ using namespace std;
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
 unsigned int MyToolbox::node_id_ = 0;
-DataCollector* MyToolbox::dc;
+//DataCollector* MyToolbox::dc;
 
 //  Global values
 int MyToolbox::num_storage_nodes = 0;
@@ -29,7 +29,6 @@ int MyToolbox::num_bits_for_measure_id = 0;
 
 double MyToolbox::bitrate = 0;
 double MyToolbox::bit_error_prob = 0;
-double MyToolbox::ray_length = 0;
 double MyToolbox::tx_range = 0;
 
 MyToolbox::MyTime MyToolbox::ping_frequency = 0;
@@ -82,7 +81,6 @@ int MyToolbox::ping_frequency_ = 0;
 int MyToolbox::check_sensors_frequency_=0;
 double MyToolbox::user_velocity_=0;
 long MyToolbox::user_update_time_=0;
-int MyToolbox::tx_range_=0;
 int MyToolbox::space_precision_=0;
 int MyToolbox::square_size_=0;
 /**/
@@ -99,9 +97,9 @@ void MyToolbox::set_timetable(map<unsigned int, MyTime> timetable) {
   timetable_ = timetable;
 }
 
-void MyToolbox::set_user_update_time() {
-    user_update_time = (tx_range / user_velocity)*pow(10,9);  
-}
+//void MyToolbox::set_user_update_time() {
+//    user_update_time = (tx_range / user_velocity)*pow(10,9);
+//}
 
 ///////////////////////////////////////////////////// TODO remove
 /*
@@ -151,10 +149,6 @@ void MyToolbox::set_check_sensors_frequency(int check_sensors_frequency) {
 }
 void MyToolbox::set_user_velocity(double velocity){
     user_velocity_ = velocity;
-}
-
-void MyToolbox::set_tx_range(int range) {
-    tx_range_=range;
 }
 
 void MyToolbox::set_space_precision(int space_precision){

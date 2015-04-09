@@ -16,7 +16,7 @@ class StorageNode;
 class User;
 class Node;
 
-class DataCollector;
+//class DataCollector;
 
 using namespace std;
 
@@ -26,7 +26,7 @@ class MyToolbox {
 
   static constexpr double kLightSpeed = 299792458; // meter / seconds
 
-  static DataCollector* dc;
+//  static DataCollector* dc;
 
   //  Global values
   static int num_storage_nodes;
@@ -41,7 +41,6 @@ class MyToolbox {
 
   static double bitrate;
   static double bit_error_prob;
-  static double ray_length;
   static double tx_range;
 
   static MyTime ping_frequency;
@@ -88,7 +87,6 @@ class MyToolbox {
   static double get_channel_bit_rate_() {return channel_bit_rate_;}
   static int get_ping_frequency() {return ping_frequency_;}
   static int get_check_sensors_frequency_() {return check_sensors_frequency_;}
-  static int get_tx_range() {return tx_range_;}
   static long get_user_update_time(){return user_update_time_;} 
   static int get_user_size() {return users_.size();}
   static int get_square_size(){return square_size_;} 
@@ -118,7 +116,6 @@ class MyToolbox {
   static void set_ping_frequency(int);
   static void set_check_sensors_frequency(int);
   static void set_user_velocity(double);
-  static void set_tx_range(int);
   static void set_space_precision(int);
   static void set_square_size(int);
   /**/
@@ -182,7 +179,6 @@ class MyToolbox {
   static int check_sensors_frequency_; // frequency at which node chek if its supervisioned sensors are alive
   static double user_velocity_;    //velocity of the user in the network [m/s]
   static long user_update_time_; //frequency at which we move the users
-  static int tx_range_;
   static int space_precision_;
   static int square_size_; 
   /**/ 

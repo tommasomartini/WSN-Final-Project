@@ -54,6 +54,8 @@ vector<Event> SensorNode::generate_measure() {
   measure_ = Measure(xored_measure_value, new_measure_id(), node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   first_generated_measure_ = false;
   measure_.set_receiver_node_id(next_node->get_node_id());
+
+  data_collector->add_msr(measure_.get_measure_id(), node_id_);
   /*
     2 events:
     - send the generated measure to another node. This may be successful or not, that is I can generate either a 

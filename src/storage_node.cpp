@@ -19,11 +19,11 @@ using namespace std;
 /*  Receive a measure either from a sensor or from another cache node
 */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
-  cout << "Misura ricevuta da me, che sono " << node_id_ << ", del sensore " << measure->get_source_sensor_id() << endl;
+//  cout << "Misura ricevuta da me, che sono " << node_id_ << ", del sensore " << measure->get_source_sensor_id() << endl;
   vector<Event> new_events;
   unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
-    cout << "Misura nuova " << endl;
+//    cout << "Misura nuova " << endl;
     if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
       int k = MyToolbox::num_sensors;
       int d = LT_degree_;
@@ -34,37 +34,12 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
       if (true) {
         xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
         last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
-        cout << "Mi prendo la misura. Ora salvo: " << int(xored_measure_) << endl;
-        cout << "last measures contiene " << last_measures_.size() << " misure" << endl;
+//        cout << "Mi prendo la misura. Ora salvo: " << int(xored_measure_) << endl;
+//        cout << "last measures contiene " << last_measures_.size() << " misure" << endl;
+        data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 2);
+      } else {
+        data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 1);
       }
-
-      /*
-        Sampling interval must be larger smaller than the smallest interval probability.
-        I have only 2 intervals: [0, d/k] and [d/k, 1]. Call the smaller min_int = min(d/k, (1 - d/k))
-        Divide the interval [0, 1] in M intervals with length 1/M.
-
-        1/M < min_int => M > 1 / min_int = 1 / min(d/k, (1 - d/k)) = max(1 / (d/k), 1 / (1 - d/k)) = 
-        = max(k/d, k/(k - d)).
-
-        Then we can take M = 10 * max(k/d, k/(k - d))
-
-        Choose randomly one element between 0 and M - 1 with "rand() % M".
-        Divide it by (M - 1) to normaliz between 0 and 1
-      
-      int k = MyToolbox::num_sensors;
-      int d = LT_degree_;
-      double prob = 1;
-      if (d != k) { // if d == k I keep all the incoming measures and prob remains 1
-        int M = 10 * max(k/d, k/(k - d)); // if d == k this gives a zero denominator
-        prob = (rand() % M) / (double)(M - 1);
-      }
-      // accept the new msg with probability d/k
-      if (prob <= LT_degree_ / k) { // accept it!
-        cout << "Mi prendo la misura!" << endl;
-        xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-        last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
-      }
-      */
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
     cout << "Misura update" << endl;
