@@ -398,4 +398,85 @@ string MyToolbox::int2nodetype(unsigned int num) {
 	return res;
 }
 
+void MyToolbox::show_clouds() {
+  int color = 0;
+  vector<pair<int, unsigned int>> clouds;	// cloud_id - node_id
+  map<unsigned int, Node*> allnodes;
+  map<unsigned int, Node*> allnodes2;
+  // copy all the nodes into the allnodes map
+  for (map<unsigned int, Node*>::iterator it_cache = storage_nodes_map_ptr->begin(); it_cache != storage_nodes_map_ptr->end(); it_cache++) {
+    allnodes.insert(pair<unsigned int, Node*>(it_cache->first, it_cache->second));
+    allnodes2.insert(pair<unsigned int, Node*>(it_cache->first, it_cache->second));
+  }
+  for (map<unsigned int, Node*>::iterator it_sns = sensors_map_ptr->begin(); it_sns != sensors_map_ptr->end(); it_sns++) {
+	allnodes.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
+	allnodes2.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
+  }
+
+  clouds.push_back(pair<int, unsigned int>(color++, allnodes.begin()->first));	// insert in the cloud the seed, the first node
+  allnodes.erase(allnodes.begin());	// erase the element
+
+  vector<pair<int, unsigned int>>::iterator node_it1 = clouds.begin();
+  while (!allnodes.empty()) {	// in allnodes there are the not-yet-classified nodes
+	  cout << "NodeA " << node_it1->second << " (color " << node_it1->first << ")" << endl;
+	map<unsigned int, Node*>::iterator node_it2 = allnodes.begin();
+	while (node_it2 != allnodes.end()) {
+		cout << " NodeB " << node_it2->first << endl;
+	  double x1 = allnodes2.find(node_it1->second)->second->get_x_coord();
+	  double y1 = allnodes2.find(node_it1->second)->second->get_y_coord();
+	  double x2 = node_it2->second->get_x_coord();
+	  double y2 = node_it2->second->get_y_coord();
+	  bool near = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2)) <= tx_range;
+	  if (near) {
+		clouds.push_back(pair<int, unsigned int>(node_it1->first, node_it2->first));
+		node_it2 = allnodes.erase(node_it2);
+		cout << "  near! ora it2 is "<< node_it2->first << endl;
+//		allnodes.erase(node_it2->first);
+//		node_it2 = allnodes.begin();	// just to be sure the map is not messed up by the remotion of a pair!
+	  } else {
+		node_it2++;
+		if (node_it2 == allnodes.end())
+			cout << "arrivato alla fine" << endl;
+		else
+		cout << "NOT near ora it2 is " << node_it2->first << endl;
+	  }
+	}
+	node_it1++;
+	if (node_it1 == clouds.end()) {	// new cloud
+		cout << "arrivato alla fine" << endl;
+	  unsigned int new_first = allnodes.begin()->first;	// element I am going to insert
+	  clouds.insert(clouds.end(), pair<int, unsigned int>(color++, allnodes.begin()->first));
+	  allnodes.erase(allnodes.begin()->first);
+	  node_it1 = find(clouds.begin(), clouds.end(), pair<int, unsigned int>(color - 1, new_first));
+	}
+  }
+
+//  int how_many_colors = 0;
+//  vector<int> cloud_num;
+//  int elem_counter = 0;
+//  int ccol = -1;
+//  for (vector<pair<int, unsigned int>>::iterator it = clouds.begin(); it != clouds.end(); it++) {
+//	if (it->first != ccol) {
+//      cloud_num.push_back(elem_counter);
+//	  elem_counter = 1;
+//	  ccol = it->first;
+//	} else {
+//	  elem_counter++;
+//	}
+//  }
+  cout << color-- << " clouds:" << endl;
+  int curr_color = -1;
+  vector<pair<int, unsigned int>>::iterator it3 = clouds.begin();
+  while (it3 != clouds.end()) {
+	if (it3->first == curr_color) {
+	  cout << " " << it3->second;
+	} else {
+	  curr_color = it3->first;
+	  cout << endl;
+	  cout << "Color " << it3->first << " -> " << it3->second;
+	}
+	it3++;
+  }
+  cout << endl;
+}
 

@@ -73,12 +73,10 @@ vector<Event> SensorNode::generate_measure() {
   uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay / 2000, MyToolbox::max_measure_generation_delay / 1000);	// between 5ms and 10ms
   MyTime time_next_measure_or_failure = unif_distrib(generator) * 1000;
   if (generate_another_measure) {
-	cout << "time next measure: " << time_next_measure_or_failure << endl;
     Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
     next_measure_event.set_agent(this);
     new_events.push_back(next_measure_event);
   } else {
-	cout << "time next break: " << time_next_measure_or_failure << endl;
     Event failure_event(time_next_measure_or_failure, Event::broken_sensor);
     failure_event.set_agent(this);
     new_events.push_back(failure_event);
@@ -120,33 +118,31 @@ vector<Event> SensorNode::sensor_ping() {
   return new_events;
 }
 
-vector<Event> SensorNode::sensor_ping(int event_time) {
-  map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
-  //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
-  cout<<"il mio supervisior è "<<my_supervisor_id_;
-  vector<Event> new_events;
-  if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
-    cout<<"nodo impegnato!"<<endl;
-    Event new_event(timetable_.find(my_supervisor_id_)->second + MyToolbox::get_tx_offset_ping(), Event::sensor_ping);
-    new_event.set_agent(this);  
-    new_events.push_back(new_event);
-  }
-  else {
-    // TODO: questo viene molto meglio con una mappa!
-    for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
-      if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
-        StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
-        supervisior_node->set_supervision_map_(node_id_,event_time);     
-      }
-    }
-    cout<<"nodo libero! prossimo ping tra "<<MyToolbox::ping_frequency;
-
-    Event new_event(event_time + MyToolbox::ping_frequency, Event::sensor_ping);   
-    new_event.set_agent(this);
-    new_events.push_back(new_event);
-  }
-  return new_events;
-}
+//vector<Event> SensorNode::sensor_ping(int event_time) {
+//  map<unsigned int, MyTime> timetable_ = MyToolbox::get_timetable();
+//  //my_supervisor_id_ = 0;  // DA TOGLIERE!!!!
+//  vector<Event> new_events;
+//  if (timetable_.find(my_supervisor_id_)->second > event_time){  //supervisor is awake
+//    Event new_event(timetable_.find(my_supervisor_id_)->second + MyToolbox::get_tx_offset_ping(), Event::sensor_ping);
+//    new_event.set_agent(this);
+//    new_events.push_back(new_event);
+//  }
+//  else {
+//    // TODO: questo viene molto meglio con una mappa!
+//    for(int i =0; i<near_storage_nodes.size(); i++ ){   //sensor try to ping just when supervisor wakes up
+//      if(near_storage_nodes.at(i)->get_node_id() == my_supervisor_id_){
+//        StorageNode *supervisior_node = (StorageNode*)near_storage_nodes.at(i);
+//        supervisior_node->set_supervision_map_(node_id_,event_time);
+//      }
+//    }
+//    cout<<"nodo libero! prossimo ping tra "<<MyToolbox::ping_frequency;
+//
+//    Event new_event(event_time + MyToolbox::ping_frequency, Event::sensor_ping);
+//    new_event.set_agent(this);
+//    new_events.push_back(new_event);
+//  }
+//  return new_events;
+//}
 
 void SensorNode::set_supervisor() {
   // choose my supervisor as the first node in my list (does not matter how I choose it)
@@ -196,7 +192,6 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   MyTime message_time = processing_time + transfer_time;
 
   if (!event_queue_.empty()) {  // already some pending event
-    cout << "Coda eventi NON vuota" << endl;
     /* I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
        I will unfold it and I will build up a brand new event with its pieces and then I will set
        a significant schedule time!
@@ -211,13 +206,9 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
   } else {  // no pending events
     map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
     MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-    cout << "Current time " << current_time << endl;
     MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
-    cout << "My available time " << my_available_time * 1. / 1000000 << endl;
     MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
-    cout << "Next node available time " << next_node_available_time * 1. / 1000000 << endl;
     if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
-      cout << "non posso inviare: io non sono libero" << endl;
       MyTime offset;
       switch (message->message_type_) {
         case Message::message_type_measure: {
@@ -234,12 +225,10 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
       }
       MyTime new_schedule_time = my_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
-      cout << "prova a inviare al tempo " << new_schedule_time << endl;
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-      cout << "non posso inviare: io sono libero, ma non il mio RX" << endl;
       MyTime offset;
       switch (message->message_type_) {
         case Message::message_type_measure: {
@@ -247,7 +236,6 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
           break;
         }
         case Message::message_type_ping: {
-          cout << "Errore! Non dovrei mai entrare qui (sensor_node.cpp, case message_type_ping second if)" << endl;
           offset = MyToolbox::get_tx_offset_ping();
           break;
         }
@@ -256,12 +244,10 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
       }
       MyTime new_schedule_time = next_node_available_time + offset;
       Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
-      cout << "prova a inviare al tempo " << new_schedule_time << endl;
       try_again_event.set_agent(this);
       try_again_event.set_message(message);
       new_events.push_back(try_again_event);
     } else {  // sender and receiver both idle, can send the message
-      cout << "posso inviare" << endl;
       // Schedule the new receive event
       MyTime new_schedule_time = current_time + message_time;
       // Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
@@ -280,7 +266,6 @@ vector<Event> SensorNode::send(StorageNode* next_node, Message* message) {
           break;
       }
       Event receive_message_event(new_schedule_time, this_event_type);
-      cout << "riceve a " << new_schedule_time << endl;
       receive_message_event.set_agent(next_node);
       receive_message_event.set_message(message);
       new_events.push_back(receive_message_event);

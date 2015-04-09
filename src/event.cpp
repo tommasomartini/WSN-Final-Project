@@ -108,7 +108,7 @@ string Event::int2type(int num) {
 vector<Event> Event::execute_action() {
 
   unsigned int gh_id = ((Node*)agent_)->get_node_id();
-  cout << "EXECUTION: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
+//  cout << "EXECUTION: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
 
   MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;

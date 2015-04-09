@@ -147,6 +147,7 @@ class MyToolbox {
   static void remove_sensor(unsigned int /*sensor_id*/);
 
   static string int2nodetype(unsigned int);	// TODO just for debug
+  static void show_clouds();	// TODO just for debugging
 
  private:
   /*  This timetable contains pairs of the type:

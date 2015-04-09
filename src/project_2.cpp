@@ -229,7 +229,7 @@ int main() {
   for (auto& sensor_pair : sensors_map) {
 	SensorNode* sns = (SensorNode*)sensor_pair.second;
     sns->set_supervisor();
-    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
+//    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
   }
 
   vector<Event> event_list;
@@ -269,6 +269,8 @@ int main() {
 //    }
 //    event_list.insert(event_iterator, first_check);
   }
+
+  MyToolbox::show_clouds();
 
   while (!event_list.empty()) {
   // for (int i = 0; i < 5; i++) {

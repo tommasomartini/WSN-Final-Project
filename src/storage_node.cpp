@@ -42,9 +42,9 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
       }
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-    cout << "Misura update" << endl;
+//    cout << "Misura update" << endl;
     if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
-      cout << "Gia ricevuta misura da questo nodo" << endl;
+//      cout << "Gia ricevuta misura da questo nodo" << endl;
       xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
       last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
     }
@@ -52,8 +52,8 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 
   measure->increase_hop_counter();
   int hop_limit = MyToolbox::max_num_hops;
-  cout << "Hop hop_limit " << hop_limit << endl;
-  cout << "Hop counter " << measure->get_hop_counter() << endl;
+//  cout << "Hop hop_limit " << hop_limit << endl;
+//  cout << "Hop counter " << measure->get_hop_counter() << endl;
   if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
     int next_node_index = rand() % near_storage_nodes_->size();
     map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
@@ -61,7 +61,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
     	node_iter++;
     }
     StorageNode *next_node = (StorageNode*)node_iter->second;
-    cout << "Propago a " << next_node->get_node_id() << endl;
+//    cout << "Propago a " << next_node->get_node_id() << endl;
     measure->set_receiver_node_id(next_node->get_node_id());
     new_events = send(next_node, measure);
   }
@@ -300,7 +300,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 
       // Update the event_queue_
       if (!event_queue_.empty()) {  // if there are other events in the queue
-        cout << "Coda eventi NON vuota" << endl;
+//        cout << "Coda eventi NON vuota" << endl;
         Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
         event_queue_.pop(); // remove the oldest event frrm the queue
         Event popped_event(current_time + message_time + MyToolbox::get_tx_offset(), top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time
