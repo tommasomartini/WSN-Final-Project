@@ -119,6 +119,35 @@ int main() {
   DataCollector data_coll = DataCollector();
 //  MyToolbox::dc = &data_coll;
 
+//  vector<pair<int, int>> v;
+//
+//  v.push_back(pair<int, int>(-1, 1));
+////  vector<pair<int, int>>::iterator itt = v.begin();
+////  cout << "itt: " << itt->first << ", " << itt->second << endl;
+//  v.push_back(pair<int, int>(-2, 2));
+//  v.push_back(pair<int, int>(-3, 3));
+//  v.push_back(pair<int, int>(-4, 4));
+////  itt++;
+////  cout << "itt: " << itt->first << ", " << itt->second << endl;
+////  itt++;
+////  itt++;
+////  cout << "itt: " << itt->first << ", " << itt->second << endl;
+//  cout << v.at(2).first << endl;
+//
+////  int cc = 1;
+////  for (vector<pair<int, int>>::iterator itt = v.begin(); itt != v.end(); itt++) {
+////	  itt->first = cc * (-2);
+////	  itt->second = cc * 2;
+////	  cc++;
+////  }
+////  for (vector<pair<int, int>>::iterator itt = v.begin(); itt != v.end(); itt++) {
+////  	  int a = itt->first;
+////  	  int b = itt->second;
+////  	  cout << "|" << a << ", " << b;
+////    }
+////  cout << "|" << endl;
+
+
 // Set up the network
   // I use these vectors ONLY to set up the network
 //  vector<SensorNode*> sensors;
