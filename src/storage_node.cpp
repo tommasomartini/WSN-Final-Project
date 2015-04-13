@@ -64,6 +64,9 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 //    cout << "Propago a " << next_node->get_node_id() << endl;
     measure->set_receiver_node_id(next_node->get_node_id());
     new_events = send(next_node, measure);
+  } else {
+	  cout << "message stops" << endl;
+	  data_collector->print_data();
   }
 
   return new_events;

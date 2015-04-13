@@ -427,12 +427,6 @@ void MyToolbox::show_clouds() {
 	allnodes.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
   }
 
-//  cout << "allnodes: ";
-//  for (map<unsigned int, Node*>::iterator it = allnodes.begin(); it != allnodes.end(); it++) {
-//	cout << "|" << it->first << " (" << it->second->get_x_coord() << ", " << it->second->get_y_coord() << ")";
-//  }
-//  cout << "|" << endl;
-
   clouds.push_back(pair<int, Node*>(color, allnodes.begin()->second));	// insert in the cloud the seed, the first node
   allnodes.erase(allnodes.begin());	// erase the element
   int cloud_index = 0;	// pointing to the first (and only!) element in the cloud vector

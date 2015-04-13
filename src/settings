@@ -10,7 +10,7 @@ num_bits_for_measure_id=3
 
 bitrate=70 in MBit/s
 bit_error_prob=0.01
-tx_range=1.5 in m
+tx_range=25 in m
 
 ping_frequency=1000 1000000000
 check_sensors_frequency=3000 5000000000  

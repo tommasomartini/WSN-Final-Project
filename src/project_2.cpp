@@ -119,34 +119,6 @@ int main() {
   DataCollector data_coll = DataCollector();
 //  MyToolbox::dc = &data_coll;
 
-//  vector<pair<int, int>> v;
-//
-//  v.push_back(pair<int, int>(-1, 1));
-////  vector<pair<int, int>>::iterator itt = v.begin();
-////  cout << "itt: " << itt->first << ", " << itt->second << endl;
-//  v.push_back(pair<int, int>(-2, 2));
-//  v.push_back(pair<int, int>(-3, 3));
-//  v.push_back(pair<int, int>(-4, 4));
-////  itt++;
-////  cout << "itt: " << itt->first << ", " << itt->second << endl;
-////  itt++;
-////  itt++;
-////  cout << "itt: " << itt->first << ", " << itt->second << endl;
-//  cout << v.at(2).first << endl;
-//
-////  int cc = 1;
-////  for (vector<pair<int, int>>::iterator itt = v.begin(); itt != v.end(); itt++) {
-////	  itt->first = cc * (-2);
-////	  itt->second = cc * 2;
-////	  cc++;
-////  }
-////  for (vector<pair<int, int>>::iterator itt = v.begin(); itt != v.end(); itt++) {
-////  	  int a = itt->first;
-////  	  int b = itt->second;
-////  	  cout << "|" << a << ", " << b;
-////    }
-////  cout << "|" << endl;
-
 
 // Set up the network
   // I use these vectors ONLY to set up the network
@@ -255,11 +227,12 @@ int main() {
     }
   }
 
-  for (auto& sensor_pair : sensors_map) {
-	SensorNode* sns = (SensorNode*)sensor_pair.second;
-    sns->set_supervisor();
-//    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
-  }
+  // Check sensors' supervisors
+//  for (auto& sensor_pair : sensors_map) {
+//	SensorNode* sns = (SensorNode*)sensor_pair.second;
+//    sns->set_supervisor();
+////    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
+//  }
 
   vector<Event> event_list;
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
@@ -275,6 +248,7 @@ int main() {
 	  }
 	  event_list.insert(event_iterator, first_measure);
 
+	  // Activate pings
 //	  Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
 //	  first_ping.set_agent(sensor_pair.second);
 //	  event_iterator = event_list.begin();
@@ -286,6 +260,7 @@ int main() {
 //	  event_list.insert(event_iterator, first_ping);
   }
 
+  	  // Activate ping check of caches
   uniform_int_distribution<int> first_check_distrib(MyToolbox::check_sensors_frequency / 2, MyToolbox::check_sensors_frequency);
   for (auto& cache_pair : storage_nodes_map) {
 //    Event first_check(first_check_distrib(generator), Event::check_sensors);
@@ -299,10 +274,9 @@ int main() {
 //    event_list.insert(event_iterator, first_check);
   }
 
-  MyToolbox::show_clouds();
+//  MyToolbox::show_clouds();	// for debug only: to see if all the nodes can communicate
 
   while (!event_list.empty()) {
-  // for (int i = 0; i < 5; i++) {
 
     // TODO: verify next event has a different schedule time than this
       
@@ -329,148 +303,6 @@ int main() {
 //    }
 //    cout << "**" << endl;
   }
-
-
-  
-
-  // Event test_event(10, Event::sensor_generate_measure);
-  // test_event.set_agent(sensors.at(0));
-  // Measure mmeasure(18, 11, 0, Measure::measure_type_new);
-  // mmeasure.set_receiver_node_id(1);
-  // Event test_event(0, Event::sensor_try_to_send);
-  // test_event.set_agent(sensors.at(0));
-  // test_event.set_message(&mmeasure);
-  // test_event.execute_action();
-
-  // event_list.push_back(Event(7));
-  // event_list.push_back(Event(8));
-  // event_list.push_back(Event(78));
-
-  
-  
-  // check correctness Arianna's part 
-  /*
-  map <int,int> mappa;
-  mappa[0]=1;
-  mappa[1]=4;
-  
-  MyToolbox::set_timetable(mappa);
-  Event test_event2(30, Event::sensor_ping);
-  test_event2.set_agent(sensors.at(0));
-  
-  
-   test_event2 = test_event2.execute_action();
-  
-   Event test_event3(70, Event::check_sensors);
-  test_event3.set_agent(storage_nodes.at(0));
-     test_event3 = test_event3.execute_action();
-
-     Event test_event4(71,Event::blacklist_sensor);
-     int a=0;
-     int*biiii= &a;
-        BlacklistMessage list(biiii,1);
-     test_event4.set_agent(storage_nodes.at(0));
-     test_event4.set_blacklist(list);
-     test_event4 = test_event4.execute_action();
-  
-  
-  
-  Event test_event4(71,Event::remove_measure);
-     test_event4.set_agent(storage_nodes.at(0));
-     vector<Event> aaa = test_event4.execute_action();
-  
-  */
-  // for (User *user : users) {
-  //   cout<<"y "<<user->get_y_coord()<<"x "<<user->get_x_coord();}
-
-    //Event test_event2(30, Event::move_user);
-   //test_event2.set_agent(users.at(0));
-   //vector<Event> aaa = test_event2.execute_action();
-   
-//   users.at(1)->set_output_symbol();
- //  Event test_event3(33, Event::user_send_to_user);
-  // test_event3.set_agent(users.at(1));
-  // test_event3.set_agent_to_reply(users.at(0));
-  // vector<Event> aaaa = test_event3.execute_action();
-  // test_event.execute_action();
-
-
-  // Measure mmeasure(18, 11, 0, Measure::measure_type_new);
-  // mmeasure.set_receiver_node_id(1);
-  // Event test_event(0, Event::sensor_try_to_send);
-  // test_event.set_agent(sensors.at(0));
-  // test_event.set_message(&mmeasure);
-  // test_event.execute_action();
-
-  // event_list.push_back(Event(7));
-  // event_list.push_back(Event(8));
-  // event_list.push_back(Event(78));
-
-  // while (!event_list.empty()) {
-  // for (int i = 0; i < 5; i++) {
-
-  //   // TODO: verify next event has a different schedule time than this
-
-  //   Event next_event = *(event_list.begin());
-  //   event_list.erase(event_list.begin());
-  //   vector<Event> new_events = next_event.execute_action();
-
-  //   vector<Event>::iterator new_event_iterator = new_events.begin();
-  //   vector<Event>::iterator old_event_iterator = event_list.begin();
-  //   for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-  //     for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-  //       if (*old_event_iterator > *new_event_iterator)
-  //         break;
-  //     }
-  //   }
-  //   event_list.insert(old_event_iterator, *new_event_iterator);
-  // }
-  
-  
-  // check correctness Arianna's part 
-  /*
-  map <int,int> mappa;
-  mappa[0]=1;
-  mappa[1]=4;
-  
-  MyToolbox::set_timetable(mappa);
-  Event test_event2(30, Event::sensor_ping);
-  test_event2.set_agent(sensors.at(0));
-  
-  
-   test_event2 = test_event2.execute_action();
-  
-   Event test_event3(70, Event::check_sensors);
-  test_event3.set_agent(storage_nodes.at(0));
-     test_event3 = test_event3.execute_action();
-
-     Event test_event4(71,Event::blacklist_sensor);
-     int a=0;
-     int*biiii= &a;
-        BlacklistMessage list(biiii,1);
-     test_event4.set_agent(storage_nodes.at(0));
-     test_event4.set_blacklist(list);
-     test_event4 = test_event4.execute_action();
-  
-  
-  
-  Event test_event4(71,Event::remove_measure);
-     test_event4.set_agent(storage_nodes.at(0));
-     vector<Event> aaa = test_event4.execute_action();
-  
-  */
-  // for (User *user : users) {
-  //   cout<<"y "<<user->get_y_coord()<<"x "<<user->get_x_coord();}
-
-    //Event test_event2(30, Event::move_user);
-   //test_event2.set_agent(users.at(0));
-   //vector<Event> aaa = test_event2.execute_action();
-   
-//   users.at(1)->set_output_symbol();
- //  Event test_event3(33, Event::user_send_to_user);
-  // test_event3.set_agent(users.at(1));
-  // test_event3.set_agent_to_reply(users.at(0));
-  // vector<Event> aaaa = test_event3.execute_action();
 
   return 0;
 }

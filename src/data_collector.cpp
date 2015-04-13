@@ -28,7 +28,6 @@ void DataCollector::print_data() {
 }
 
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
-//  cout << "added msr " << msr_id << " sns " << sns_id << endl;
   vector<unsigned int> v(MyToolbox::num_storage_nodes);
   for (int i = 0; i < v.size(); i++) {
     v.at(i) = 0;
