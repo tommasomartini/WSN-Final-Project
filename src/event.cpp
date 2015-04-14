@@ -201,7 +201,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case broken_sensor: {
-      MyToolbox::remove_sensor(((Node*)agent_)->get_node_id());
+//      MyToolbox::remove_sensor(((Node*)agent_)->get_node_id());
       break;
     }
     default:

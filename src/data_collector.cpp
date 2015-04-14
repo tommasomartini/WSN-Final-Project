@@ -13,15 +13,21 @@ void DataCollector::print_data() {
 	string data = "no data";
 	for (map<pair<unsigned int, unsigned int>, vector<unsigned int>>::iterator it = msr_register.begin(); it != msr_register.end(); it++) {
 	  pair<unsigned int, unsigned int> p = it->first;
-	  cout << "msr id " << p.first << ", sns id " << p.second;
 	  vector<unsigned int> v = it->second;
-	  int counter = 0;
+	  cout << "(msr " << p.first << ", sns " << p.second;
+	  int counter_seen = 0;
+	  int counter_held = 0;
+	  int counter_tot = 0;
 	  for (vector<unsigned int>::iterator it_v = v.begin(); it_v != v.end(); it_v++) {
-	    if (*it_v > 0) {
-	      counter++;
+	    if (*it_v == 1) {
+	      counter_seen++;
+	      counter_tot++;
+	    } else if (*it_v == 2) {
+	      counter_held++;
+	      counter_tot++;
 	    }
 	  }
-	  cout << ", tot " << counter;
+	  cout << "): seen " << counter_seen << ", held " << counter_held << " (tot " << counter_tot << ") | ";
 	}
 	cout << endl;
 //	cout << data << endl;
@@ -43,6 +49,10 @@ void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigne
   for (int i = 0; i < ind; i++) {
     v_it++;
   }
-  vv->insert(v_it, sym);
+  if (*v_it == 0 || (*v_it == 1 && sym == 2)) {
+	//vv->insert(v_it, sym);
+	  *v_it = sym;
+  }
+
 //  print_data();
 }

@@ -25,21 +25,22 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
   if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
 //    cout << "Misura nuova " << endl;
     if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+      data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 1);
       int k = MyToolbox::num_sensors;
       int d = LT_degree_;
       default_random_engine gen = MyToolbox::get_random_generator();
-      bernoulli_distribution bernoulli_distrib(d / k);
+      bernoulli_distribution bernoulli_distrib(d * 1. / k);
+//      bernoulli_distribution bernoulli_distrib(0.5);
       // accept the new msg with probability d/k
-//      if (bernoulli_distrib(gen)) { // accept it!	//TODO pee debug accetto sempre!
-      if (true) {
+      if (bernoulli_distrib(gen)) { // accept it!	//TODO per debug accetto sempre!
+//      if (false) {
         xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-        last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+        //last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
 //        cout << "Mi prendo la misura. Ora salvo: " << int(xored_measure_) << endl;
 //        cout << "last measures contiene " << last_measures_.size() << " misure" << endl;
         data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 2);
-      } else {
-        data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 1);
       }
+      last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
     }
   } else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
 //    cout << "Misura update" << endl;
@@ -65,7 +66,6 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
     measure->set_receiver_node_id(next_node->get_node_id());
     new_events = send(next_node, measure);
   } else {
-	  cout << "message stops" << endl;
 	  data_collector->print_data();
   }
 

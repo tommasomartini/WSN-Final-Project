@@ -1,5 +1,5 @@
 num_storage_nodes=5
-num_sensors=1
+num_sensors=3
 max_num_users=10
 num_users=3
 

@@ -281,19 +281,19 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
   uniform_real_distribution<double> distribution(0.0, 1.0);
   double rnd_point = distribution(generator);
 
-  double up_bound = 1. / num_storage_nodes;
+  double up_bound = 1. / num_sensors;
   double interval_length = up_bound;
   if (rnd_point <= up_bound) { // between 0 and 1/k -> degree = 1;
 	  return 1;
   }
-  for (int i = 2; i <= num_storage_nodes; i++) {
+  for (int i = 2; i <= num_sensors; i++) {
 	  interval_length = 1. / (i * (i - 1));
 	  up_bound += interval_length;
 	  if (rnd_point <= up_bound) {
 		  return i;
 	  }
   }
-  return num_storage_nodes;
+  return num_sensors;
 }
 
 int MyToolbox::get_robust_soliton_distribution_degree() {
