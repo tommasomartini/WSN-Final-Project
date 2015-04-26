@@ -52,6 +52,7 @@ vector<Event> SensorNode::generate_measure() {
 
   // Create a measure object
   measure_ = Measure(xored_measure_value, new_measure_id(), node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
+  cout << "Sensore " << node_id_ << " generates measures " << measure_.get_measure_id() << endl;
   first_generated_measure_ = false;
   measure_.set_receiver_node_id(next_node->get_node_id());
 

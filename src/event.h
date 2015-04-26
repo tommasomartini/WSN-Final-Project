@@ -24,6 +24,8 @@ class Event {
     broken_sensor,
     user_try_to_send,
     user_try_to_send_to_user,
+	storage_get_reinit_query,
+	storage_get_reinit_response,
 
     // Arianna
     blacklist_sensor,

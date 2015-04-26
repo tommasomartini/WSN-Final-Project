@@ -26,9 +26,9 @@ class StorageNode : public Node {
   // getters
   unsigned char get_xored_measure() {return xored_measure_;}
   vector<unsigned int> get_ids () {
-      vector<unsigned int> ids;
-      for (auto& i : last_measures_) 
-            ids.push_back(i.first);
+    vector<unsigned int> ids;
+    for (auto& i : last_measures_)
+      ids.push_back(i.first);
     return ids;
   }
 
@@ -37,9 +37,11 @@ class StorageNode : public Node {
 
   // Event execution methods
   vector<Event> receive_measure(Measure*); // Tom
-  vector<Event> try_retx_measure(Measure*, int /*next_node_id*/); // Tom
-  vector<Event> try_retx(Message*, int /*next_node_id*/); // Tom
+  vector<Event> try_retx_measure(Measure*, unsigned int /*next_node_id*/); // Tom	// FIXME remove
+  vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
   vector<Event> receive_user_request(unsigned int /*sender user id*/); // Tom
+  vector<Event> receive_reinit_query(unsigned int /*sender user id*/, vector<unsigned int> /*neighbours list*/); // Tom
+  vector<Event> receive_reinit_response(); // Tom
   vector<Event> check_sensors(); // Arianna
   vector<Event> spread_blacklist(BlacklistMessage*); // Arianna
   vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
@@ -47,15 +49,17 @@ class StorageNode : public Node {
  private:
   typedef MyToolbox::MyTime MyTime;
 
+  bool reinit_mode_ = false;
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
-  map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>
+  map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id
+  vector<unsigned int> ignore_new_list;		// when I don't accept a NEW msr from a sns I save here it
   vector<unsigned int> supervisioned_sensor_ids_;  // list of the sensor id's this node is the supervisor of TODO remove
   map<unsigned int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 
   vector<Event> send(Node* /*next_node*/, Message*);
- 
+  vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
 };
 
 #endif
