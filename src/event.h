@@ -69,6 +69,7 @@ class Event {
   EventTypes get_event_type() {return event_type_;}
 
   // setters
+  void set_time(MyTime);
   void set_agent(Agent*);
   void set_message(Message*);
   

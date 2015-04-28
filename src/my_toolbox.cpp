@@ -13,7 +13,7 @@ using namespace std;
 
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
-unsigned int MyToolbox::node_id_ = 0;
+unsigned int MyToolbox::node_id_ = 10;	// the first 10 ids are reserved
 //DataCollector* MyToolbox::dc;
 
 //  Global values
@@ -259,6 +259,7 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
   return false;
 }
 
+// Made by Tom
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
   timetable_.erase(sensor_id);
   sensors_map_ptr->erase(sensor_id);

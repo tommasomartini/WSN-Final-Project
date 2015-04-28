@@ -86,17 +86,16 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
  */
 vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
 	vector<Event> new_events;
-	Node* next_node = near_storage_nodes_->at(next_node_id);
-	if (next_node != near_storage_nodes_->end()->second) {	// there is still the node I want to tx to
-		new_events = send(next_node, message);
-	} else {	// the node I want to tx to there is no longer. Never try to tx again
-		event_queue_.pop();	// the top event is the retx to the node there is no longer
-	}
+	re_send(message);
 	return new_events;
+}
 
-//	map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
-//	StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
-//	return send(next_node, message);
+/*  I have already tried to send a message to someone, but I failed. Now I try again!
+ */
+vector<Event> StorageNode::try_retx(Message* message) {
+	vector<Event> new_events;
+	re_send(message);
+	return new_events;
 }
 
 /*  A sensor is telling me it is alive
@@ -314,12 +313,14 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);
 			new_events.push_back(try_again_event);
 		} else {  // sender and receiver both idle, can send the message
 			// Schedule the new receive event
@@ -343,7 +344,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 				this_event_type = Event::user_receive_data;
 				break;
 			}
-			case Message::messgae_type_reinit_query: {
+			case Message::message_type_reinit_query: {
 				this_event_type = Event::storage_get_reinit_query;
 				break;
 			}
@@ -362,6 +363,7 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 			}
 			MyToolbox::set_timetable(timetable);  // upload the updated timetable
 
+			// FIXME I am in the if(empty queue!! The queueu is ALWAYS EMPTY!!)
 			// Update the event_queue_
 			if (!event_queue_.empty()) {  // if there are other events in the queue
 				//        cout << "Coda eventi NON vuota" << endl;
@@ -376,6 +378,238 @@ vector<Event> StorageNode::send(Node* next_node, Message* message) {
 	}
 
 	return new_events;
+}
+
+// this method is only for the first send!
+vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
+	vector<Event> new_events;
+
+	// Set sender and receiver
+	message->set_receiver_node_id(next_node_id);
+	message->set_sender_node_id(node_id_);
+
+	if (!event_queue_.empty()) {  // already some pending event
+		Event event_to_enqueue(0, Event::storage_node_try_to_send);	// execution time does not matter now...
+		event_to_enqueue.set_agent(this);
+		event_to_enqueue.set_message(message);
+		event_queue_.push(event_to_enqueue);
+	} else {  // no pending events
+		map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+		MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+			try_again_event.set_agent(this);
+			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);	// goes in first position
+			new_events.push_back(try_again_event);
+		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+			try_again_event.set_agent(this);
+			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);	// goes in first position
+			new_events.push_back(try_again_event);
+		} else {  // sender and receiver both idle, can send the message
+			// Compute the message time
+			MyTime processing_time = MyToolbox::get_random_processing_time();
+			unsigned int num_total_bits = message->get_message_size();
+			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+			if (message->message_type_ == Message::message_type_reinit_query) {
+				processing_time = 0;
+			}
+			MyTime message_time = processing_time + transfer_time;
+			// Schedule the new receive event
+			MyTime new_schedule_time = current_time + message_time;
+			// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+			// Just in case I want to give priority to some particular message...
+			Event::EventTypes this_event_type;
+			switch (message->message_type_) {
+			case Message::message_type_measure: {
+				this_event_type = Event::storage_node_receive_measure;
+				break;
+			}
+			case Message::message_type_blacklist: {
+				this_event_type = Event::blacklist_sensor;
+				break;
+			}
+			case Message::message_type_remove_measure: {
+				this_event_type = Event::remove_measure;
+				break;
+			}
+			case Message::message_type_measures_for_user: {
+				this_event_type = Event::user_receive_data;
+				break;
+			}
+			case Message::message_type_reinit_query: {
+				this_event_type = Event::storage_get_reinit_query;
+				break;
+			}
+			case Message::message_type_reinit_response: {
+				this_event_type = Event::storage_get_reinit_response;
+				break;
+			}
+			default:
+				break;
+			}
+			Event receive_message_event(new_schedule_time, this_event_type);
+			receive_message_event.set_agent(near_storage_nodes_->find(next_node_id)->second);
+			receive_message_event.set_message(message);
+			new_events.push_back(receive_message_event);
+
+			// Update the timetable
+			timetable.find(node_id_)->second = current_time + message_time; // update my available time
+			for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+				timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+			}
+			MyToolbox::set_timetable(timetable);  // upload the updated timetable
+		}
+	}
+	return new_events;
+}
+
+vector<Event> StorageNode::re_send(Message* message) {
+	vector<Event> new_events;
+
+	unsigned int next_node_id = message->get_receiver_node_id();
+	if (near_storage_nodes_->find(next_node_id) == near_storage_nodes_->end()) {	// my neighbour there is no longer
+		bool give_up;
+		switch (message->message_type_) {
+		case Message::message_type_measure: {
+			give_up = false;
+			break;
+		}
+		case Message::message_type_blacklist: {
+			give_up = false;
+			break;
+		}
+		case Message::message_type_remove_measure: {
+			give_up = false;
+			break;
+		}
+		case Message::message_type_measures_for_user: {
+			give_up = true;
+			break;
+		}
+		case Message::message_type_reinit_query: {
+			give_up = true;
+			break;
+		}
+		case Message::message_type_reinit_response: {
+			give_up = true;
+			break;
+		}
+		default:
+			break;
+		}
+		if (give_up) {	// do not try to tx this message, pass to the following one
+			event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
+			if (event_queue_.empty()) {	// if the queue is now empty...
+				return new_events;	// return an empty vector, I don't have new events to schedule
+			} else {
+				Message* new_message = event_queue_.front().get_message();
+				return re_send(new_message);
+			}
+		} else {	// I cannot give up! Find another node to spread the message
+			next_node_id = get_random_neighbor();	// find another neighbour
+			if (next_node_id == 0) {	// no more neighbours, I'm isolated. Postpone my delivery
+				MyTime schedule_time = (message->message_type_ == Message::message_type_reinit_query ? 0 : MyToolbox::get_random_processing_time()) + MyToolbox::get_tx_offset();
+				event_queue_.front().set_time(schedule_time);
+
+				Event try_again_event(schedule_time, Event::storage_node_try_to_send);
+				try_again_event.set_agent(this);
+				try_again_event.set_message(message);
+				new_events.push_back(try_again_event);
+				return new_events;	// return, there's no more I can do!
+			}
+			// if next_node_id is a valid id...
+			message->set_receiver_node_id(next_node_id);	// set the new node id and go on
+		}
+	}
+
+	// If I arrive here I have a neighbour to whom I can try to send
+
+	map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+	MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+		Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+		try_again_event.set_agent(this);
+		try_again_event.set_message(message);
+		new_events.push_back(try_again_event);
+		return new_events;
+	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+		Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+		try_again_event.set_agent(this);
+		try_again_event.set_message(message);
+		new_events.push_back(try_again_event);
+		return new_events;
+	} else {  // sender and receiver both idle, can send the message
+		// Compute the message time
+		MyTime processing_time = MyToolbox::get_random_processing_time();
+		unsigned int num_total_bits = message->get_message_size();
+		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+		if (message->message_type_ == Message::message_type_reinit_query) {
+			processing_time = 0;
+		}
+		MyTime message_time = processing_time + transfer_time;
+		// Schedule the new receive event
+		MyTime new_schedule_time = current_time + message_time;
+		// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+		Event::EventTypes this_event_type;
+		switch (message->message_type_) {
+		case Message::message_type_measure: {
+			this_event_type = Event::storage_node_receive_measure;
+			break;
+		}
+		case Message::message_type_blacklist: {
+			this_event_type = Event::blacklist_sensor;
+			break;
+		}
+		case Message::message_type_remove_measure: {
+			this_event_type = Event::remove_measure;
+			break;
+		}
+		case Message::message_type_measures_for_user: {
+			this_event_type = Event::user_receive_data;
+			break;
+		}
+		case Message::message_type_reinit_query: {
+			this_event_type = Event::storage_get_reinit_query;
+			break;
+		}
+		default:
+			break;
+		}
+		Event receive_message_event(new_schedule_time, this_event_type);
+		receive_message_event.set_agent(near_storage_nodes_->find(next_node_id)->second);
+		receive_message_event.set_message(message);
+		new_events.push_back(receive_message_event);
+
+		// Update the timetable
+		timetable.find(node_id_)->second = current_time + message_time; // update my available time
+		for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
+			timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
+		}
+		MyToolbox::set_timetable(timetable);  // upload the updated timetable
+
+		// Update the event_queue_
+		event_queue_.pop();	// remove the current send event, now successful
+		if (!event_queue_.empty()) {  // if there are other events in the queue
+			// I will be available, in the best case scenario, after message_time
+			MyTime sched_time = current_time + message_time + MyToolbox::get_tx_offset();
+			Event next_send_event(sched_time, event_queue_.front().get_event_type());
+			next_send_event.set_agent(this);
+			next_send_event.set_message(event_queue_.front().get_message());
+			new_events.push_back(next_send_event); // schedule the next event
+		}
+		return new_events;
+	}
 }
 
 /*
@@ -406,4 +640,18 @@ vector<Event> StorageNode::reinitialize() {
 	new_events = send(next_node, &reinit_query);
 
 	return new_events;
+}
+
+unsigned int StorageNode::get_random_neighbor() {
+	if (near_storage_nodes_->size() == 0) {	// I don't hve neighbours
+		return 0;
+	} else {
+		int next_node_index = rand() % near_storage_nodes_->size();
+		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+		for (int i = 0; i < next_node_index; i++) {
+			node_iter++;
+		}
+		StorageNode *next_node = (StorageNode*)node_iter->second;
+		return next_node->get_node_id();
+	}
 }

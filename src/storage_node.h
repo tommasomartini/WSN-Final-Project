@@ -38,7 +38,8 @@ class StorageNode : public Node {
   // Event execution methods
   vector<Event> receive_measure(Measure*); // Tom
   vector<Event> try_retx_measure(Measure*, unsigned int /*next_node_id*/); // Tom	// FIXME remove
-  vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
+  vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom	// FIXME remove
+  vector<Event> try_retx(Message*); // Tom
   vector<Event> receive_user_request(unsigned int /*sender user id*/); // Tom
   vector<Event> receive_reinit_query(unsigned int /*sender user id*/, vector<unsigned int> /*neighbours list*/); // Tom
   vector<Event> receive_reinit_response(); // Tom
@@ -59,7 +60,10 @@ class StorageNode : public Node {
   vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
 
   vector<Event> send(Node* /*next_node*/, Message*);
+  vector<Event> send2(unsigned int /*next_node_id*/, Message*);
+  vector<Event> re_send(Message*);
   vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
+  unsigned int get_random_neighbor();
 };
 
 #endif

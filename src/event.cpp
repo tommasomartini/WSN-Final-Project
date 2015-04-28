@@ -3,14 +3,12 @@
 #include <vector>
 
 #include "event.h"
-#include "my_toolbox.h"
 #include "sensor_node.h"
 #include "measure.h"
 #include "storage_node.h"
 #include "measure.h"
 #include "user.h"
 #include "outdated_measure.h"
-#include "blacklist_message.h"
 
 
 Event::Event(MyTime event_time) {
@@ -30,6 +28,10 @@ bool Event::operator<(Event event) {
 
 bool Event::operator>(Event event) {
   return time_ > event.get_time();
+}
+
+void Event::set_time(MyTime time) {
+	time_ = time;
 }
 
 void Event::set_agent(Agent *agent) {
@@ -139,8 +141,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case storage_node_try_to_send: {
-      int next_node_id = message_->get_receiver_node_id();
-      new_events = ((StorageNode*)agent_)->try_retx(message_, next_node_id);
+      new_events = ((StorageNode*)agent_)->try_retx(message_);
       break;
     }
     case blacklist_sensor: {

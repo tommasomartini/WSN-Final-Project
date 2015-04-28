@@ -14,10 +14,10 @@ class Message {
     message_type_ping,
     message_type_measures_for_user,
     message_type_intra_user,
-	messgae_type_reinit_query,
+	message_type_reinit_query,
 	message_type_reinit_response,
-    message_type_new_node,
-    message_type_user_to_user,  // TODOTOM: per cosa lo uso?
+    message_type_new_node,	// FIXME ancora necessario?
+    message_type_user_to_user,  // TODO: per cosa lo uso?
   } message_type_;
 
   // Message() {message_type_ = message_type_ping;};
