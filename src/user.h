@@ -51,12 +51,13 @@ class User: public Node {
 
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree
-  map<unsigned int, NodeInfoMessage> nodes_info;
+  map<unsigned int, NodeInfoMessage> nodes_info_;
   map<unsigned int, unsigned int> updated_sensors_measures_;
   vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 
   vector<Event> send(Node*, Message*);
   bool message_passing(); // implements the message passing procedure
+  bool message_passing2(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
   void add_symbols(vector<StorageNodeMessage>, User*);
 };
