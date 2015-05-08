@@ -202,6 +202,8 @@ vector<Event> User::receive_data(NodeInfoMessage node_info_msg) {
 	}
 
 	// Now I use the data!
+
+
 	// Message passing...
 	// Detect blacklist measures
 	// Communicate measures of dead sensors to the nodes

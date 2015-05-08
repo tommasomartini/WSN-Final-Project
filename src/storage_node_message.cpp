@@ -12,7 +12,7 @@ StorageNodeMessage::StorageNodeMessage(unsigned char xored_message, map<unsigned
 	message_type_ = message_type_measures_for_user;
 	xored_message_ = xored_message;
 	msrs_info_ = msrs_info;
-	sensor_ids_ = nullptr;	// FIXME to be deprecated
+//	sensor_ids_ = nullptr;	// FIXME to be deprecated
 }
 
 // FIXME to be deprecated
@@ -20,7 +20,7 @@ StorageNodeMessage::StorageNodeMessage(unsigned char xored_message, vector<unsig
   message_type_ = message_type_measures_for_user;
   xored_message_ = xored_message;
   sensor_ids_ = sensor_ids;
-  msrs_info_ = nullptr;
+//  msrs_info_ = nullptr;
 }
 
 

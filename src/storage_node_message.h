@@ -2,6 +2,7 @@
 #define __STORAGE_NODE_MESSAGE_H__   
 
 #include <vector>
+#include <map>
 #include "message.h"
 
 using namespace std;
