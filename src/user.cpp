@@ -155,6 +155,60 @@ vector<Event> User::user_receive_data(UserMessage* message){
   return new_events;
 }
 
+vector<Event> User::receive_data(NodeInfoMessage node_info_msg) {
+	vector<Event> new_events;
+	nodes_info.erase(node_info_msg.node_id_);	// remove the old info. There could be none!
+	/* Just for debug
+	int num_removed = nodes_info.erase(node_info_msg.node_id_);	// remove the old info. There could be no one, then num_removed == 0!
+	if (num_removed == 0) {
+		cout << "User::receive_data no previous info from node " << node_info_msg.node_id_ << endl;
+	} else {
+		cout << "User::receive_data removed " << num_removed << " previous info from node " << node_info_msg.node_id_ << endl;
+	}
+	*/
+	pair<unsigned int, NodeInfoMessage> new_info_pair(node_info_msg.node_id_, node_info_msg);
+	nodes_info.insert(new_info_pair);
+
+	// Update the measure id
+	for (map<unsigned int, unsigned int>::iterator it_msrs_info = node_info_msg.msrs_info_.begin(); it_msrs_info != node_info_msg.msrs_info_.end(); it_msrs_info++) {
+		unsigned int current_sns_id = it_msrs_info->first;
+		unsigned int current_msr_id = it_msrs_info->second;
+		if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
+			updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
+		} else {	// already received a measure from this sensor -> update it!
+			unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
+			if (current_msr_id > current_updated_msr_id) {	// Update the measure id
+				updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;
+			}
+		}
+	}
+
+	// Check to have only updated messages
+	vector<unsigned int> node_info_to_remove = vector<unsigned int>();
+	for (map<unsigned int, unsigned int>::iterator it_msr = updated_sensors_measures_.begin(); it_msr != updated_sensors_measures_.end(); it_msr++) {
+		unsigned int current_sns_id = it_msr->first;
+		unsigned int updated_msr_id = it_msr->second;
+		for (map<unsigned int, NodeInfoMessage>::iterator it_info = nodes_info.begin(); it_info != nodes_info.end(); it_info++) {
+			unsigned int curr_msr_id = it_info->second.msrs_info_.find(updated_msr_id)->second;
+			if (curr_msr_id < updated_msr_id) {		// this measure is no more valid
+				node_info_to_remove.push_back(it_info->first);	// add this node to the list of the measures to remove
+			}
+		}
+	}
+
+	// Remove the node info with outdated measures
+	for (vector<unsigned int>::iterator to_remove_it = node_info_to_remove.begin(); to_remove_it != node_info_to_remove.end(); to_remove_it++) {
+		nodes_info.erase(*to_remove_it);
+	}
+
+	// Now I use the data!
+	// Message passing...
+	// Detect blacklist measures
+	// Communicate measures of dead sensors to the nodes
+
+	return new_events;
+}
+
 /*  This user receives a "beep" from another user, asking him to send him his measures
 */
 vector<Event> User::user_send_to_user(unsigned int sender_user_id) {

@@ -66,15 +66,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	//  cout << "Hop hop_limit " << hop_limit << endl;
 	//  cout << "Hop counter " << measure->get_hop_counter() << endl;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-		int next_node_index = rand() % near_storage_nodes_->size();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-		for (int i = 0; i < next_node_index; i++) {
-			node_iter++;
-		}
-		StorageNode *next_node = (StorageNode*)node_iter->second;
-		//    cout << "Propago a " << next_node->get_node_id() << endl;
-//		measure->set_receiver_node_id(next_node->get_node_id());
-		new_events = send(next_node, measure);
+		new_events = send2(get_random_neighbor(), measure);
 	} else {
 		data_collector->print_data();
 	}
@@ -84,6 +76,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 
 /*  I have already tried to send a message to someone, but I failed. Now I try again!
  */
+// FIXME to deprecate
 vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
 	vector<Event> new_events;
 	re_send(message);
@@ -115,14 +108,15 @@ void StorageNode::set_supervision_map_(int sensor_id, int new_time){
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
-		vector<unsigned int> my_sensor_ids;
-		for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
-			my_sensor_ids.push_back(it->first);
-		}
-		StorageNodeMessage msg(xored_measure_, my_sensor_ids);
+//		vector<unsigned int> my_sensor_ids;
+//		for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
+//			my_sensor_ids.push_back(it->first);
+//		}
+		map<unsigned int, unsigned int> msrs_info = last_measures_;
+		StorageNodeMessage msg(xored_measure_, msrs_info);
 		Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
 //		msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
-		new_events = send(next_node, &msg);
+		new_events = send2(sender_user_id, &msg);
 	}
 	return new_events;
 }
@@ -147,15 +141,15 @@ vector<Event> StorageNode::check_sensors() {
 	if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
 		//    BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
 		BlacklistMessage* list = new BlacklistMessage(expired_sensors);
-		int next_node_index = rand() % near_storage_nodes_->size();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-		for (int i = 0; i < next_node_index; i++) {
-			node_iter++;
-		}
-		StorageNode *next_node = (StorageNode*)node_iter->second;
-		list->set_receiver_node_id(next_node->get_node_id());
+//		int next_node_index = rand() % near_storage_nodes_->size();
+//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+//		for (int i = 0; i < next_node_index; i++) {
+//			node_iter++;
+//		}
+//		StorageNode *next_node = (StorageNode*)node_iter->second;
+//		list->set_receiver_node_id(next_node->get_node_id());
 		list->message_type_= Message::message_type_blacklist;
-		new_events = send(next_node, list);
+		new_events = send2(get_random_neighbor(), list);
 	}
 
 	Event new_event(MyToolbox::get_current_time() + MyToolbox::check_sensors_frequency, Event::check_sensors);
@@ -190,7 +184,7 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 		StorageNode *next_node = (StorageNode*)node_iter->second;
 //		list->set_receiver_node_id(next_node->get_node_id());
 		list->message_type_ = Message::message_type_blacklist;
-		new_events = send(next_node, list);
+		new_events = send2(next_node->get_node_id(), list);
 	}
 	return new_events;
 }
@@ -214,21 +208,19 @@ vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
 	int hop_limit = MyToolbox::max_num_hops;
 	if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		message_to_remove->increase_hop_counter();
-		unsigned int next_node_index = rand() % near_storage_nodes_->size();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-		for (int i = 0; i < next_node_index; i++) {
-			node_iter++;
-		}
-		StorageNode *next_node = (StorageNode*)node_iter->second;
-		//    new_events = send(next_node, message_to_remove);	// my choice is not to flood the network with heavy messages
+//		unsigned int next_node_index = rand() % near_storage_nodes_->size();
+//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+//		for (int i = 0; i < next_node_index; i++) {
+//			node_iter++;
+//		}
+//		StorageNode *next_node = (StorageNode*)node_iter->second;
+////		    new_events = send2(next_node->get_node_id(), message_to_remove);	// my choice is not to flood the network with heavy messages
 	}
 	return new_events;
 }
 
-vector<Event> StorageNode::receive_reinit_query(unsigned int sender_user_id, vector<unsigned int> neighbours_list) {
+vector<Event> StorageNode::receive_reinit_query(unsigned int sender_user_id) {
 	vector<Event> new_events;
-	vector<unsigned int>::iterator neighbours_iter = find(neighbours_list.begin(), neighbours_list.end(), node_id_);
-	neighbours_list.erase(neighbours_iter);
 	unsigned char to_pass_xored_measure = 0;
 	map<unsigned int, unsigned int> to_pass_last_msrs;
 	vector<unsigned int> to_pass_blacklist;
@@ -241,16 +233,15 @@ vector<Event> StorageNode::receive_reinit_query(unsigned int sender_user_id, vec
 	reinit_response->xored_measure_ = to_pass_xored_measure;
 	reinit_response->last_measures_ = to_pass_last_msrs;
 	reinit_response->blacklist_ = to_pass_blacklist;
-	reinit_response->updated_neighbour_list = neighbours_list;
 
-	Node* next_node = near_storage_nodes_->at(sender_user_id);
-	new_events = send(next_node, reinit_response);
+	new_events = send2(sender_user_id, reinit_response);
 
 	return new_events;
 }
 
 vector<Event> StorageNode::receive_reinit_response() {
 	vector<Event> new_events;
+
 	return new_events;
 }
 
@@ -619,7 +610,7 @@ vector<Event> StorageNode::re_send(Message* message) {
  */
 vector<Event> StorageNode::reinitialize() {
 	vector<Event> new_events;
-	cout << "Storage node " << node_id_ << " reinitialized" << endl;
+	cout << "Storage node " << node_id_ << " reinitializing" << endl;
 
 	reinit_mode_ = true;
 
@@ -630,14 +621,22 @@ vector<Event> StorageNode::reinitialize() {
 	ignore_new_list.clear();	// erase all the ignore ids
 	my_blacklist_.clear();	// erase my blacklist
 
-	// List of the neighbours to interrogate
-	vector<unsigned int> neighbours_to_query;
+//	// List of the neighbours to interrogate
+//	vector<unsigned int> neighbours_to_query;
+//	for (map<unsigned int, Node*>::iterator it = near_storage_nodes_->begin(); it != near_storage_nodes_->end(); it++) {
+//		neighbours_to_query.push_back(it->first);
+//	}
+//
+//	Node* next_node = near_storage_nodes_->begin()->second;
+//	new_events = send(next_node, &reinit_query);
+
+	ReinitQuery reinit_query;
+	vector<Event> partial_event_list;
 	for (map<unsigned int, Node*>::iterator it = near_storage_nodes_->begin(); it != near_storage_nodes_->end(); it++) {
-		neighbours_to_query.push_back(it->first);
+		partial_event_list = send2(it->first, &reinit_query);
+		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());
+		partial_event_list.clear();
 	}
-	ReinitQuery reinit_query(neighbours_to_query);
-	Node* next_node = near_storage_nodes_->begin()->second;
-	new_events = send(next_node, &reinit_query);
 
 	return new_events;
 }

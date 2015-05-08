@@ -2,10 +2,10 @@
 
 using namespace std;
 
-//ReinitQuery::ReinitQuery() {
+ReinitQuery::ReinitQuery() {
 //	neighbours_to_query_ = nullptr;
-//}
-
-ReinitQuery::ReinitQuery(vector<unsigned int> neighbours) {
-	neighbours_to_query_ = neighbours;
 }
+
+//ReinitQuery::ReinitQuery(vector<unsigned int> neighbours) {
+//	neighbours_to_query_ = neighbours;
+//}

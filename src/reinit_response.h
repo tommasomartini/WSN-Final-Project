@@ -10,7 +10,7 @@ class ReinitResponse : public Message {
   unsigned char xored_measure_;
   std::map<unsigned int, unsigned int> last_measures_;
   std::vector<unsigned int> blacklist_;
-  std::vector<unsigned int> updated_neighbour_list;
+//  std::vector<unsigned int> updated_neighbour_list;
 
   ReinitResponse();
 

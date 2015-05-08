@@ -6,10 +6,10 @@
 
 class ReinitQuery : public Message {
 public:
-  std::vector<unsigned int> neighbours_to_query_;
+//  std::vector<unsigned int> neighbours_to_query_;
 
-  //ReinitQuery();
-  ReinitQuery(std::vector<unsigned int> /*neighbours_to_query*/);
+  ReinitQuery();
+//  ReinitQuery(std::vector<unsigned int> /*neighbours_to_query*/);
 
   unsigned int get_message_size() {return 0;}	// it is just a "ping"
 };

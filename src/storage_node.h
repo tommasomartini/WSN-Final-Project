@@ -41,7 +41,7 @@ class StorageNode : public Node {
   vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom	// FIXME remove
   vector<Event> try_retx(Message*); // Tom
   vector<Event> receive_user_request(unsigned int /*sender user id*/); // Tom
-  vector<Event> receive_reinit_query(unsigned int /*sender user id*/, vector<unsigned int> /*neighbours list*/); // Tom
+  vector<Event> receive_reinit_query(unsigned int /*sender user id*/); // Tom
   vector<Event> receive_reinit_response(); // Tom
   vector<Event> check_sensors(); // Arianna
   vector<Event> spread_blacklist(BlacklistMessage*); // Arianna
