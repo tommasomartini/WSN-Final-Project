@@ -29,11 +29,10 @@ class User: public Node {
   User(unsigned int node_id) : Node (node_id) {}
   User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
 
-  map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of correspondent sensor
-  vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes
+  map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of corresponding sensor	// TODO to remove
+  vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes	// TODO to remove
   
   void collect_data(Message /*xored_message*/); // for debugging only
-
   vector<Event> move_user(int);  // the user "walks" randomly among the area
   vector<Event> move(); // different implementation of the random walk
   vector<Event> user_send_to_user(unsigned int /*sender user*/);  // Tom
@@ -51,8 +50,10 @@ class User: public Node {
 
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree
-  map<unsigned int, NodeInfoMessage> nodes_info_;
-  map<unsigned int, unsigned int> updated_sensors_measures_;
+  map<unsigned int, NodeInfoMessage> nodes_info_;	// output symbols
+  map<unsigned int, unsigned char> decoded_symbols_;	// input symbols
+  map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent
+  map<unsigned int, unsigned char> blacklist_;		// dead sensors and relative measures
   vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 
   vector<Event> send(Node*, Message*);
