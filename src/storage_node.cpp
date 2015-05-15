@@ -22,6 +22,7 @@ using namespace std;
  */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
+	bool should_reinitialize = false;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
 		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
@@ -51,24 +52,27 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
 						cout << "Update measure from sensor " << measure->get_source_sensor_id() << "(msr id = " << measure->get_measure_id() << ")" << endl;
-					} else if (measure->get_measure_id() == last_measures_.at(source_id)) {	// already receive this update measure
+					} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
 						// do nothing
 					} else {	// out of order update measure: node must be reset
-						reinitialize();
+						should_reinitialize = true;	// after propagating I will have to reinitialize
+//						new_events = reinitialize();
 					}
 				}
 			}
 		}
 	}
 
-	measure->increase_hop_counter();
+	measure->increase_hop_counter();	// increase the hop-counter
 	int hop_limit = MyToolbox::max_num_hops;
-	//  cout << "Hop hop_limit " << hop_limit << endl;
-	//  cout << "Hop counter " << measure->get_hop_counter() << endl;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-		new_events = send2(get_random_neighbor(), measure);
+		new_events = send2(get_random_neighbor(), measure);	// propagate it!
 	} else {
 		data_collector->print_data();
+	}
+	if (should_reinitialize) {	// after propagating I have to reinitialize
+		vector<Event> other_events = reinitialize();	// reinitialize and get some new events
+		new_events.insert(new_events.end(), other_events.begin(), other_events.end());	// append the new events
 	}
 
 	return new_events;
@@ -79,7 +83,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 // FIXME to deprecate
 vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
 	vector<Event> new_events;
-	re_send(message);
+	new_events = re_send(message);
 	return new_events;
 }
 
@@ -87,7 +91,7 @@ vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id)
  */
 vector<Event> StorageNode::try_retx(Message* message) {
 	vector<Event> new_events;
-	re_send(message);
+	new_events = re_send(message);
 	return new_events;
 }
 
@@ -619,7 +623,7 @@ vector<Event> StorageNode::reinitialize() {
 	xored_measure_ = 0;	// reinitialize the xored measure
 	last_measures_.clear();	// erase all the last measures
 	ignore_new_list.clear();	// erase all the ignore ids
-	my_blacklist_.clear();	// erase my blacklist
+	//my_blacklist_.clear();	// erase my blacklist	// not necessary!
 
 //	// List of the neighbours to interrogate
 //	vector<unsigned int> neighbours_to_query;
@@ -631,11 +635,11 @@ vector<Event> StorageNode::reinitialize() {
 //	new_events = send(next_node, &reinit_query);
 
 	ReinitQuery reinit_query;
-	vector<Event> partial_event_list;
-	for (map<unsigned int, Node*>::iterator it = near_storage_nodes_->begin(); it != near_storage_nodes_->end(); it++) {
-		partial_event_list = send2(it->first, &reinit_query);
-		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());
-		partial_event_list.clear();
+	vector<Event> partial_event_list;	// events returned by the communication with each neighbour
+	for (map<unsigned int, Node*>::iterator it = near_storage_nodes_->begin(); it != near_storage_nodes_->end(); it++) {	// for each neighbour...
+		partial_event_list = send2(it->first, &reinit_query);	// ...send him the reinit request, or at least schedule it...
+		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());	// ...add the events to the list of events...
+		partial_event_list.clear();	// ...and set the list for the next round and neighbour
 	}
 
 	return new_events;
