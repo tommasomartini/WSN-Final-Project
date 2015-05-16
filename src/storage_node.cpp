@@ -22,7 +22,7 @@ using namespace std;
  */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
-	bool should_reinitialize = false;
+	bool out_of_order_msr = false;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
 		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
@@ -55,8 +55,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 					} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
 						// do nothing
 					} else {	// out of order update measure: node must be reset
-						should_reinitialize = true;	// after propagating I will have to reinitialize
-//						new_events = reinitialize();
+						out_of_order_msr = true;	// after propagating I will have to reinitialize
 					}
 				}
 			}
@@ -70,7 +69,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	} else {
 		data_collector->print_data();
 	}
-	if (should_reinitialize) {	// after propagating I have to reinitialize
+	if (out_of_order_msr) {	// after propagating I have to reinitialize
 		vector<Event> other_events = reinitialize();	// reinitialize and get some new events
 		new_events.insert(new_events.end(), other_events.begin(), other_events.end());	// append the new events
 	}

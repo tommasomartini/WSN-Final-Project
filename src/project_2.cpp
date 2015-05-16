@@ -234,6 +234,11 @@ int main() {
 ////    cout << "sensor " << sns->get_node_id() << " sup " << sns->get_my_supervisor_id() << endl;
 //  }
 
+  /************************************************************************************************
+   *
+   * EVENTS
+   *
+   ************************************************************************************************/
   vector<Event> event_list;
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
   uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency / 2, MyToolbox::ping_frequency);
