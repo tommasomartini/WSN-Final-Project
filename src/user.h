@@ -23,27 +23,12 @@ class UserMessage;
 class User: public Node {
 
  private:
-  struct NodeInfoKey {
-    unsigned int sensor_id_;
-    unsigned int measure_id_;
-    NodeInfoKey(unsigned int sns_id, unsigned int msr_id) {
-      sensor_id_ = sns_id;
-      measure_id_ = msr_id;
-    }
-    bool operator == (const NodeInfoKey y) {
-      return sensor_id_ == y.sensor_id_ && measure_id_ == y.measure_id_;
-    }
-    bool operator < (const NodeInfoKey &y) const {
-      if (sensor_id_ < y.sensor_id_) {
-        return true;
-      } else if (sensor_id_ > y.sensor_id_) {
-    	return false;
-      } else { 	// equal sensor ids, check the
-    	if (measure_id_ < y.measure_id_) {
-    	  return true;
-    	}
-    	return false;
-      }
+  struct OutputSymbol {
+    unsigned char xored_msg_;
+    std::vector<MyToolbox::MeasureKey> sources_;
+    OutputSymbol(unsigned char xored_msg, std::vector<MyToolbox::MeasureKey> sources) {
+      xored_msg_ = xored_msg;
+      sources_ = sources;
     }
   };
 
@@ -53,7 +38,7 @@ class User: public Node {
   User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
 
   std::map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of corresponding sensor	// TODO to remove
-  std::vector<StorageNodeMessage> output_symbols_; // list of the xored messages retrieved from the storage nodes	// TODO to remove
+  std::vector<StorageNodeMessage> output_symbols2_; // list of the xored messages retrieved from the storage nodes	// TODO to remove
   
   void collect_data(Message /*xored_message*/); // for debugging only
   std::vector<Event> move_user(int);  // the user "walks" randomly among the area
@@ -70,19 +55,23 @@ class User: public Node {
   
  private:
   typedef MyToolbox::MyTime MyTime;
+  typedef MyToolbox::MeasureKey MeasureKey;
 
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree
   std::map<unsigned int, NodeInfoMessage> nodes_info_;	// output symbols
-  std::map<NodeInfoKey, int> nodes_info2_;	// output symbols
+  std::map<unsigned int, OutputSymbol> nodes_info2_;	// output symbols
   std::map<unsigned int, unsigned char> decoded_symbols_;	// input symbols
+  std::map<MeasureKey, unsigned char> decoded_symbols2_;	// input symbols
   std::map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent
   std::map<unsigned int, unsigned char> blacklist_;		// dead sensors and relative measures
+  std::map<MeasureKey, unsigned char> outdated_measures_;		// old measures
   std::vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 
   std::vector<Event> send(Node*, Message*);
   bool message_passing(); // implements the message passing procedure
   bool message_passing2(); // implements the message passing procedure
+  bool message_passing3(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
   void add_symbols(std::vector<StorageNodeMessage>, User*);	// TODO what for??
 };

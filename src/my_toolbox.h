@@ -22,6 +22,43 @@ using namespace std;
 
 class MyToolbox {
  public:
+  struct MeasureKey {
+    unsigned int sensor_id_;
+	unsigned int measure_id_;
+	MeasureKey(unsigned int sns_id, unsigned int msr_id) {
+      sensor_id_ = sns_id;
+      measure_id_ = msr_id;
+	}
+	bool operator == (const MeasureKey y) {
+	  return sensor_id_ == y.sensor_id_ && measure_id_ == y.measure_id_;
+	}
+	bool operator < (const MeasureKey &y) const {
+	  if (sensor_id_ < y.sensor_id_) {
+		  return true;
+	  } else if (sensor_id_ > y.sensor_id_) {
+		return false;
+	  } else { 	// equal sensor ids, check the
+		if (measure_id_ < y.measure_id_) {
+		  return true;
+		}
+		return false;
+	  }
+	}
+  };
+
+  // TODO replace all the unsigned char with this
+  struct MeasureData {
+    unsigned int data_;
+    unsigned int size_;
+    MeasureData(unsigned int data) {
+      data_ = data;
+    }
+    MeasureData(unsigned int data, unsigned int size) {
+      data_ = data;
+      size_ = size;
+    }
+  };
+
   typedef unsigned long MyTime;
 
   static constexpr double kLightSpeed = 299792458; // meter / seconds

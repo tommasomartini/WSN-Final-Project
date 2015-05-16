@@ -81,17 +81,19 @@ void User::collect_data(Message xored_message) {
 //}
 
 vector<Event> User::move() {
+  vector<Event> new_events;
+
   default_random_engine generator = MyToolbox::get_random_generator();
   uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
   int deviation = distribution(generator);
-  direction_ += deviation;
+  direction_ += deviation;	// change a bit my direction
 
-  double new_x = x_coord_ + speed_ * sin(direction_);
+  double new_x = x_coord_ + speed_ * sin(direction_);	// compute my new position
   double new_y = y_coord_ + speed_ * cos(direction_);
 
   // I could also let the user go out! Just comment the following block of code!
   bool inside_area = false;
-  while (!inside_area) {
+  while (!inside_area) {	// if I am going outside the area...
     if (new_x < 0 || new_x > MyToolbox::square_size || new_y < 0 || new_y > MyToolbox::square_size) { // I am going out from the area
       direction_ += 30; // rotate of 30 degree in clockwise sense
       new_x = x_coord_ + speed_ * sin(direction_);
@@ -105,10 +107,11 @@ vector<Event> User::move() {
   y_coord_ = new_y;
   MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
-  vector<Event> new_events;
-  Event new_event(MyToolbox::get_current_time() + MyToolbox::user_observation_time, Event::move_user);
-  new_event.set_agent(this);
-  new_events.push_back(new_event);
+  // TODO I have to interrogate my neighbours! If the message passing fails I schedule another move_event, otherwise I schedule a new_user event
+
+//  Event new_event(MyToolbox::get_current_time() + MyToolbox::user_observation_time, Event::move_user);	// set the new move_user event
+//  new_event.set_agent(this);
+//  new_events.push_back(new_event);
   return new_events;
 }
 
@@ -119,7 +122,7 @@ vector<Event> User::user_receive_data(UserMessage* message){
   vector<Event> new_events;
   vector<StorageNodeMessage> symbols_from_msg = message->get_symbols();
   for (vector<StorageNodeMessage>::iterator sym_it = symbols_from_msg.begin(); sym_it != symbols_from_msg.end(); sym_it++) {	// for each new symbol...
-    output_symbols_.push_back(*sym_it);	// ...add it to the list of the encoded symbols
+    output_symbols2_.push_back(*sym_it);	// ...add it to the list of the encoded symbols
   }
 //  User* user_to_update = message->get_user_to_reply();	// TODO why??
 //  User::add_symbols(message->get_symbols(), message->get_user_to_reply());	// FIXME why???????
@@ -159,10 +162,10 @@ vector<Event> User::user_receive_data(UserMessage* message){
 vector<Event> User::receive_data(NodeInfoMessage node_info_msg) {
 	vector<Event> new_events;
 
-	// No matter if I will keep these info or not because they are not updated: info about the blacklist cannot be "outdated", I'll heep it anyway
-	for (vector<unsigned int>::iterator bl_it = node_info_msg.blacklist_.begin(); bl_it != node_info_msg.blacklist_.end(); bl_it++) {	// for each blacklisted sensor in the new info
-		if (blacklist_.find(*bl_it) != blacklist_.end()) {	// this id is not yet in my blacklist
-			blacklist_.insert(pair<unsigned int, unsigned char>(*bl_it, 0));	// add it, with a void measure...
+	// No matter if I will keep these info or not because they are not updated: info about the blacklist cannot be "outdated", I'll keep it anyway
+	for (vector<MeasureKey>::iterator old_msr_it = node_info_msg.outdated_measures_.begin(); old_msr_it != node_info_msg.outdated_measures_.end(); old_msr_it++) {	// for each outdated in the new info
+		if (outdated_measures_.find(*old_msr_it) != outdated_measures_.end()) {	// this measure is not yet in my outdated list
+			outdated_measures_.insert(pair<MeasureKey, unsigned char>(*old_msr_it, 0));	// add it, with a void measure...
 		}
 	}
 
@@ -175,16 +178,17 @@ vector<Event> User::receive_data(NodeInfoMessage node_info_msg) {
 		cout << "User::receive_data removed " << num_removed << " previous info from node " << node_info_msg.node_id_ << endl;
 	}
 	*/
-	pair<unsigned int, NodeInfoMessage> new_info_pair(node_info_msg.node_id_, node_info_msg);
-	nodes_info_.insert(new_info_pair);
+	OutputSymbol curr_output_symbol_(node_info_msg.output_message_, node_info_msg.sources_);
+	pair<unsigned int, OutputSymbol> new_output_symbol(node_info_msg.node_id_, curr_output_symbol_);
+	nodes_info2_.insert(new_output_symbol);
 
 	// Update the measure id
-	for (map<unsigned int, unsigned int>::iterator it_msrs_info = node_info_msg.msrs_info_.begin(); it_msrs_info != node_info_msg.msrs_info_.end(); it_msrs_info++) {	// for each measure of the just inserted node info...
-		unsigned int current_sns_id = it_msrs_info->first;	// id of the sensor which generated ths measure
-		unsigned int current_msr_id = it_msrs_info->second;	// id of the measure
+	for (vector<MeasureKey>::iterator msr_key_it_ = node_info_msg.sources_.begin(); msr_key_it_ != node_info_msg.sources_.end(); msr_key_it_++) {	// for each of the measure just received...
+		unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
+		unsigned int current_msr_id = (*msr_key_it_).measure_id_;	// id of the measure
 		if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
 			updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
-		} else {	// already received a measure from this sensor -> update it!
+		} else {	// already received a measure from this sensor -> update it if the new measure is newer
 			unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
 			if (current_msr_id > current_updated_msr_id) {	// the just received measure is more recent than the one I had
 				updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;	// replace the old measure with the new one, just received
@@ -192,30 +196,30 @@ vector<Event> User::receive_data(NodeInfoMessage node_info_msg) {
 		}
 	}
 
-	// Check to have only updated messages
-	vector<unsigned int> node_info_to_remove = vector<unsigned int>();	// here will go the node info which contains outdated measures
-	for (map<unsigned int, unsigned int>::iterator it_msr = updated_sensors_measures_.begin(); it_msr != updated_sensors_measures_.end(); it_msr++) {	// for each measure I consider "updated"...
-		unsigned int current_sns_id = it_msr->first;	// id of the sensor which generated it
-		unsigned int updated_msr_id = it_msr->second;	// id of the measure
-		for (map<unsigned int, NodeInfoMessage>::iterator it_info = nodes_info_.begin(); it_info != nodes_info_.end(); it_info++) {	// for each node info I have...
-			unsigned int curr_msr_id = it_info->second.msrs_info_.find(current_sns_id)->second;	//
-			if (curr_msr_id < updated_msr_id) {		// this measure is the most recent no more
-				node_info_to_remove.push_back(it_info->first);	// add this node to the list of the measures to remove
-			}
-		}
-	}
-
-	// Remove the node info with outdated measures
-	for (vector<unsigned int>::iterator to_remove_it = node_info_to_remove.begin(); to_remove_it != node_info_to_remove.end(); to_remove_it++) {	// for each node info having outdated measure...
-		nodes_info_.erase(*to_remove_it);	// ...discard it!
-	}
-
-	// TODO: Arianna's method: hold both the measures, outdated and updated and look at the measure as a pair (sns, id)
-
-	// Now I use the data!
+//	// Check to have only updated messages
+//	vector<unsigned int> node_info_to_remove = vector<unsigned int>();	// here will go the node info which contains outdated measures
+//	for (map<unsigned int, unsigned int>::iterator it_msr = updated_sensors_measures_.begin(); it_msr != updated_sensors_measures_.end(); it_msr++) {	// for each measure I consider "updated"...
+//		unsigned int current_sns_id = it_msr->first;	// id of the sensor which generated it
+//		unsigned int updated_msr_id = it_msr->second;	// id of the measure
+//		for (map<unsigned int, OutputSymbol>::iterator it_info = nodes_info2_.begin(); it_info != nodes_info2_.end(); it_info++) {	// for each node info I have...
+//			vector<MeasureKey> key_vector = it_info->second.sources_;	// ...take its key vector
+//			vector<MeasureKey>::iterator key_vec_it = key_vector.begin();	// iterator to browse the key vector
+//			for (; key_vec_it != key_vector.end(); key_vec_it++) {	// span the whole vector
+//				if ((*key_vec_it).sensor_id_ == current_sns_id) {	// if there is a measure from this sensor...
+//					if ((*key_vec_it).measure_id_ < updated_msr_id) {	// ...but the measure id is older than the most updated I have...
+//						node_info_to_remove.push_back(it_info->first);	// ...add this node to the list of the measures to remove
+//					}
+//				}
+//			}
+//		}
+//	}
+//	// Remove the node info with outdated measures
+//	for (vector<unsigned int>::iterator to_remove_it = node_info_to_remove.begin(); to_remove_it != node_info_to_remove.end(); to_remove_it++) {	// for each node info having outdated measure...
+//		nodes_info2_.erase(*to_remove_it);	// ...discard it!
+//	}
 
 	// Message passing...
-	if (message_passing2()) {	// message passing succeeded! I have decoded all the symbols
+	if (message_passing3()) {	// message passing succeeded! I have decoded all the symbols
 		// Communicate measures of dead sensors to the nodes
 
 		// TODO when I will have communicated the new info to all the nodes I'll create an event: new_user, in which this user exits and a new one is created
@@ -231,7 +235,7 @@ vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
   vector<Event> new_events;
 
   IntraUserMessage intra_user_msg;  // msg to send to another user
-  intra_user_msg.messages_ = output_symbols_;
+  intra_user_msg.messages_ = output_symbols2_;
   Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
   intra_user_msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
   new_events = send(next_node, &intra_user_msg);
@@ -242,6 +246,70 @@ vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
 /**************************************
     Private methods
 **************************************/
+
+bool User::message_passing3() {
+	bool message_passing_succeeded = true;
+
+	// Create a copy of the node info to work with
+	map<unsigned int, OutputSymbol> info = nodes_info2_;
+
+	map<MeasureKey, unsigned char> resolved_symbols;
+	map<MeasureKey, unsigned char> released_symbols;
+	vector<unsigned int> links_to_remove;
+	while (true) {
+		released_symbols.clear();   // released symbols are different at each step
+		links_to_remove.clear();	// and so are the links I have to remove when I release an output symbol
+		for (map<unsigned int, OutputSymbol>::iterator info_it = info.begin(); info_it != info.end(); info_it++) {	// scan the output symbols...
+			OutputSymbol curr_output_symbol = info_it->second;
+			if (curr_output_symbol.sources_.size() == 1) {  // ...to find the ones with output degree 1
+				// store the resolved symbol
+				resolved_symbols.insert(pair<MeasureKey, unsigned char>(*(curr_output_symbol.sources_.begin()), curr_output_symbol.xored_msg_));
+				released_symbols.insert(pair<MeasureKey, unsigned char>(*(curr_output_symbol.sources_.begin()), curr_output_symbol.xored_msg_));
+				links_to_remove.push_back(info_it->first);
+				// Note that using a map if I try to insert two pairs with the same key, the second insertion does not succeed. In this way
+				// I am guaranteed to insert only one entry for each sns id in the lists and not to have duplicated symbols.
+			} else if (curr_output_symbol.sources_.empty()) {  // no more links to this node
+				links_to_remove.push_back(info_it->first); // if an output symbol does not have any output link anymore it is useless, let's remove it!
+			}
+		}
+
+		// Erase from the (copy of the) info the row relative to the removed links. I don't need that symbol anymore
+		for (vector<unsigned int>::iterator links_it = links_to_remove.begin(); links_it != links_to_remove.end(); links_it++) {
+			info.erase(*links_it);
+		}
+
+		// Now we have to XOR the just released output symbols with the output symbols containing them
+		if (released_symbols.size() > 0) {  // at least one symbol has been released
+			for(map<MeasureKey, unsigned char>::iterator released_iterator = released_symbols.begin(); released_iterator != released_symbols.end(); released_iterator++) {  // for each released symbol...
+				MeasureKey current_msr_key = released_iterator->first;	// id of the sensor who produced the released symbol and id of the measure
+				unsigned char current_value = released_iterator->second;	// xored measure of this sensor
+				// for each output symbol (use an iterator to use a pointer and modify the actual values!):
+				for (map<unsigned int, OutputSymbol>::iterator out_sym_it = info.begin(); out_sym_it != info.end(); out_sym_it++) {	// ...for each output symbol not yet released (still in the copied buffer)...
+					vector<MeasureKey>::iterator key_vec_it = find(out_sym_it->second.sources_.begin(), out_sym_it->second.sources_.end(), current_msr_key);	// ...look for this key in its key vector
+					if (key_vec_it != out_sym_it->second.sources_.end()) {	// if its xored message is also formed by this measure...
+						unsigned char new_xor = current_value ^ out_sym_it->second.xored_msg_;  // ...XOR the released symbol with the current output one...
+						out_sym_it->second.xored_msg_ = new_xor; // ...replace it...
+						out_sym_it->second.sources_.erase(key_vec_it);	// ...and remove the link
+					}
+				}
+			}
+		} else {  // no symbol released at this round
+			if (info.empty()) {  // if no other symbols, everything is ok
+				decoded_symbols2_ = resolved_symbols;	// store the decoded measures...
+				// ...and update the backlist
+				for (map<MeasureKey, unsigned char>::iterator bl_it = outdated_measures_.begin(); bl_it != outdated_measures_.end(); bl_it++) {	// for each blacklisted id...
+					bl_it->second = decoded_symbols2_.find(bl_it->first)->second;	// ...store the just decoded measure
+				}
+				break;
+			} else {
+				cerr << "Impossible to decode! Message passing failed!" << endl;
+				message_passing_succeeded = false;
+				break;
+			}
+		}
+	}
+	return message_passing_succeeded;
+}
 
 bool User::message_passing2() {
 	bool message_passing_succeeded = true;
@@ -322,8 +390,8 @@ bool User::message_passing() {
     released_symbols.clear();   // released symbols are different at each step
     links_to_remove.clear();
     // for (Message current_msg : output_symbols_) {  // scan the output symbols...
-    for (int i = 0; i < output_symbols_.size(); i++) {  // scan the output symbols...
-      StorageNodeMessage current_msg = output_symbols_.at(i);	// (...current symbol...)
+    for (int i = 0; i < output_symbols2_.size(); i++) {  // scan the output symbols...
+      StorageNodeMessage current_msg = output_symbols2_.at(i);	// (...current symbol...)
       if (current_msg.sensor_ids_.size() == 1) {  // ...to find the ones with output degree 1
         // store the resolved symbol
         resolved_symbols.insert(pair<unsigned int, unsigned char>(current_msg.sensor_ids_.at(0), current_msg.xored_message_));
@@ -343,7 +411,7 @@ bool User::message_passing() {
     unsigned int index_to_remove;
     for (int i = links_to_remove.size() - 1; i >= 0 ; i--) {  // remove the links of the resolved symbols
       index_to_remove = links_to_remove.at(i);  // index of output_symbols_ to remove
-      output_symbols_.erase(output_symbols_.begin() + index_to_remove);
+      output_symbols2_.erase(output_symbols2_.begin() + index_to_remove);
     }
     // Now we have to XOR the just released output symbols with the output symbols containing them
     vector<unsigned int> curr_output_header;
@@ -353,7 +421,7 @@ bool User::message_passing() {
         unsigned int current_id = released_iterator->first;
         unsigned char current_value = released_iterator->second;
         // for each output symbol (use an iterator to use a pointer and modify the actual values!):
-        for(vector<StorageNodeMessage>::iterator output_sym_it = output_symbols_.begin(); output_sym_it != output_symbols_.end(); output_sym_it++) { 
+        for(vector<StorageNodeMessage>::iterator output_sym_it = output_symbols2_.begin(); output_sym_it != output_symbols2_.end(); output_sym_it++) { 
         // for(Message current_msg : output_symbols_) {  // for each output symbol (use an iterator to use a pointer and modify the actual values!):
           // Message *curr_msg_ptr = &current_msg;
           curr_output_header = output_sym_it->sensor_ids_; // in this vector there are the source ids forming the output symbol
@@ -366,7 +434,7 @@ bool User::message_passing() {
         }
       }
     } else {  // no symbol released at this round
-      if (output_symbols_.empty()) {  // if no other symbols, everything is ok
+      if (output_symbols2_.empty()) {  // if no other symbols, everything is ok
         break;
       } else {
         cerr << "Impossible to decode! Message passing failed!" << endl;
@@ -473,8 +541,8 @@ vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
 */      //metodo user_send_to_user diventato obsoleto!
 
 void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){	// FIXME che cacchio e' questo metodo??
-  user->output_symbols_.reserve(user->output_symbols_.size() + symbols.size()); // reallocate the memory of the vector in order to contain all the new symbols
-  (user->output_symbols_).insert((user->output_symbols_).end(), symbols.begin(), symbols.end());  // append the new symbols
+  user->output_symbols2_.reserve(user->output_symbols2_.size() + symbols.size()); // reallocate the memory of the vector in order to contain all the new symbols
+  (user->output_symbols2_).insert((user->output_symbols2_).end(), symbols.begin(), symbols.end());  // append the new symbols
 }
 
 vector<Event> User::try_retx(Message* message, int next_node_id) {

@@ -169,17 +169,20 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 	if (!reinit_mode_) {	// if in reinit mode just spread the blacklist, but don't look at it
 		vector<unsigned int> expired_sensors = list->get_id_list3();
 		for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) { 	// for each id in the blacklist...
-			bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// ...if I have a measure from that sensor...
-			bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// ...and this sensor is not yet in my blacklist...
-			if (msr_from_this_sns && not_yet_in_my_blacklist) {
+			bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// Do I have a measure from this sensor?
+			bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// Is it NOT already in my blacklist?
+			if (msr_from_this_sns && not_yet_in_my_blacklist) {	// if so...
 				my_blacklist_.push_back(*it);	// ...put its id in my backlist too
+				unsigned int msr_id = last_measures_.find(*it)->second;	// then pick the id of the last measure I received from this dead sensor...
+				MeasureKey key(*it, msr_id);	// ...make a key of the pair...
+				outdated_measure_keys_.push_back(key);	// ...and store the pair into my outdated measure key vector
 			}
 		}
 	}
 	int hop_limit = MyToolbox::max_num_hops;
 	if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		list->increase_hop_counter();
-		int next_node_index = rand() % near_storage_nodes_->size();
+		unsigned int next_node_index = get_random_neighbor();
 		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
 		for (int i = 0; i < next_node_index; i++) {
 			node_iter++;
