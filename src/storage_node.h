@@ -60,7 +60,6 @@ class StorageNode : public Node {
   std::vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
   std::vector<MeasureKey> outdated_measure_keys_;  // list of the measures I have belonging to sensors no longer in the network
 
-  std::vector<Event> send(Node* /*next_node*/, Message*);
   std::vector<Event> send2(unsigned int /*next_node_id*/, Message*);
   std::vector<Event> re_send(Message*);
   std::vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
