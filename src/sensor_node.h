@@ -16,11 +16,7 @@ class SensorNode: public Node {
   SensorNode (unsigned int node_id) : Node (node_id) {measure_id_ = 0;}  // TODO remove
   SensorNode (unsigned int node_id, double y_coord, double x_coord);
 
-  // setters
-  // void set_measure(Measure);  // TODO remove
-
-  // getters
-  // Measure get_measure() {return measure_;}    // TODO remove. Qundo lo uso??
+  int how_many_measures_ = 0;	// TODO debug
 
   // Event execution methods
   std::vector<Event> generate_measure(); // Tom
@@ -43,8 +39,6 @@ class SensorNode: public Node {
   unsigned int measure_id_ = 0;
   bool first_generated_measure_;
 
-  std::vector<Event> send_measure(StorageNode*); // TODO DEPRECATED
-  std::vector<Event> send(StorageNode*, Message*);	// TODO to remove
   std::vector<Event> send2(unsigned int /*next node id*/, Message*);
   std::vector<Event> re_send(Message*);
 //  unsigned int get_random_neighbor();

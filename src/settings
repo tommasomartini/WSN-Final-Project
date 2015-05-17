@@ -1,4 +1,4 @@
-num_storage_nodes=200
+num_storage_nodes=20
 num_sensors=1
 max_num_users=10
 num_users=3
@@ -8,7 +8,7 @@ num_bits_for_measure=80000
 num_bits_phy_mac_overhead=160
 num_bits_for_measure_id=3
 
-bitrate=100 in MBit/s
+bitrate=1000 in MBit/s
 bit_error_prob=0.01
 tx_range=7 in m
 
@@ -31,5 +31,5 @@ max_tx_offset_ping=5000000 ns
 
 user_observation_time=1000000000 ns (= 1s)
 
-max_measure_generation_delay=5000000000000 ns 4000
+max_measure_generation_delay=5000000 ns 4000
 sensor_failure_prob=0  0.2

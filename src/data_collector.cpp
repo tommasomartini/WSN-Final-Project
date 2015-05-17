@@ -54,6 +54,7 @@ void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigne
 		if (!measures_register.find(key)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = measures_register.find(key)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this measure
+				cout << "Cache " << cache_id << " saw (s" << sns_id << ", " << msr_id << ")" << endl;
 				measures_register.find(key)->second.node_map_.insert(pair<unsigned int, int>(cache_id, 1));
 			} else {	// this node already saw this measure
 				// do nothing

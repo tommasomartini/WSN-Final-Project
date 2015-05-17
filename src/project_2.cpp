@@ -282,6 +282,7 @@ int main() {
   for (auto& sensor_pair : sensors_map) {
 	  // Activate measure generation
 	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
+	  cout << "first measure time " << first_measure.get_time() << endl;
 	  first_measure.set_agent(sensor_pair.second);
 	  vector<Event>::iterator event_iterator = event_list.begin();
 	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
