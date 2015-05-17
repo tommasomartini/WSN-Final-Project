@@ -202,6 +202,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case broken_sensor: {
+    	cout << "Sensor " << ((Node*)agent_)->get_node_id() << " broken" << endl;
 //      MyToolbox::remove_sensor(((Node*)agent_)->get_node_id());
       break;
     }

@@ -50,7 +50,7 @@ vector<Event> SensorNode::generate_measure() {
   first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
 
   // TODO debug
-  data_collector->add_msr2(measure_.measure_id_, node_id_);
+//  data_collector->add_msr(measure_.measure_id_, node_id_);
 
 //  data_collector->add_msr(measure_.get_measure_id(), node_id_);
   /*
@@ -199,6 +199,8 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 				this_event_type = Event::storage_node_receive_measure;
 				((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 				old_measure_data = new_measure_data;	// update the old measure value
+				// TODO debug
+				data_collector->add_msr(measure_.measure_id_, node_id_);
 				break;
 			}
 			default:

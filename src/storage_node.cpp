@@ -22,7 +22,7 @@ using namespace std;
  */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
-	data_collector->record_msr2(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
+	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
 //	bool out_of_order_msr = false;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
@@ -73,7 +73,8 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		new_events = send2(get_random_neighbor(), measure);	// propagate it!
 	} else {	// the message must not be forwarded again
-		cout << "measure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ") stops" << endl;
+		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
+//		cout << "measure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ") stops" << endl;
 //		data_collector->print_data();
 	}
 //	if (out_of_order_msr) {	// after propagating I have to reinitialize
