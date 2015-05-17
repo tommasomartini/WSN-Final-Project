@@ -7,8 +7,6 @@
 
 #include "message.h"
 
-using namespace std;
-
 class Measure : public Message {
  public:
   enum MeasureTypes {
@@ -16,7 +14,6 @@ class Measure : public Message {
     measure_type_update  // XOR of new measure and old measure
   };
 
- private:
   unsigned char measure_;
   unsigned int measure_id_;  // id of this measure
   unsigned int source_sensor_id_;  // id of the sensor who generated this measure

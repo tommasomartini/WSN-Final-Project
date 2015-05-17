@@ -348,6 +348,8 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::set_timetable(timetable);  // upload the updated timetable
+
+			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
 		}
 	}
 	return new_events;
@@ -358,7 +360,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 
 	unsigned int next_node_id = message->get_receiver_node_id();
 	if (near_storage_nodes_->find(next_node_id) == near_storage_nodes_->end()) {	// my neighbor there is no longer
-		bool give_up;	// I could gie up transmitting: it depends on the message type!
+		bool give_up = false;	// I could gie up transmitting: it depends on the message type!
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
 			give_up = false;
@@ -385,6 +387,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			break;
 		}
 		default:
+			give_up = true;
 			break;
 		}
 		if (give_up) {	// do not try to tx this message, pass to the following one
@@ -532,16 +535,16 @@ vector<Event> StorageNode::reinitialize() {
 	return new_events;
 }
 
-unsigned int StorageNode::get_random_neighbor() {
-	if (near_storage_nodes_->size() == 0) {	// I don't hve neighbours
-		return 0;
-	} else {
-		int next_node_index = rand() % near_storage_nodes_->size();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-		for (int i = 0; i < next_node_index; i++) {
-			node_iter++;
-		}
-		StorageNode *next_node = (StorageNode*)node_iter->second;
-		return next_node->get_node_id();
-	}
-}
+//unsigned int StorageNode::get_random_neighbor() {
+//	if (near_storage_nodes_->size() == 0) {	// I don't hve neighbours
+//		return 0;
+//	} else {
+//		int next_node_index = rand() % near_storage_nodes_->size();
+//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+//		for (int i = 0; i < next_node_index; i++) {
+//			node_iter++;
+//		}
+//		StorageNode *next_node = (StorageNode*)node_iter->second;
+//		return next_node->get_node_id();
+//	}
+//}

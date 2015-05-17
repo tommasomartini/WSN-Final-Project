@@ -54,3 +54,17 @@ bool Node::are_nodes_near(Node* n1, Node* n2) {
     else
         return false;
 }
+
+unsigned int Node::get_random_neighbor() {
+	if (near_storage_nodes_->size() == 0) {	// I don't have neighbors
+		return 0;
+	} else {
+		int next_node_index = rand() % near_storage_nodes_->size();
+		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+		for (int i = 0; i < next_node_index; i++) {
+			node_iter++;
+		}
+		Node *next_node = node_iter->second;
+		return next_node->get_node_id();
+	}
+}

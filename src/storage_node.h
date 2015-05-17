@@ -63,7 +63,7 @@ class StorageNode : public Node {
   std::vector<Event> send2(unsigned int /*next_node_id*/, Message*);
   std::vector<Event> re_send(Message*);
   std::vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
-  unsigned int get_random_neighbor();
+//  unsigned int get_random_neighbor();
 };
 
 #endif

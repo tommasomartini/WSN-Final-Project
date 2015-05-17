@@ -53,6 +53,7 @@ class Node : public Agent {
   */ 
   queue<Event> event_queue_; 
   
+  unsigned int get_random_neighbor();
 };
 
 #endif
