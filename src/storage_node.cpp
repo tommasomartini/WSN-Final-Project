@@ -344,8 +344,8 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 
 			// Update the timetable
 			timetable.find(node_id_)->second = new_schedule_time; // update my available time
-			for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
-				timetable.find(near_storage_nodes.at(i)->get_node_id())->second = new_schedule_time;
+			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
+				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::set_timetable(timetable);  // upload the updated timetable
 		}
@@ -475,8 +475,8 @@ vector<Event> StorageNode::re_send(Message* message) {
 
 		// Update the timetable
 		timetable.find(node_id_)->second = new_schedule_time; // update my available time
-		for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
-			timetable.find(near_storage_nodes.at(i)->get_node_id())->second = new_schedule_time;
+		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
+			timetable.find(node_it->first)->second = new_schedule_time;
 		}
 		MyToolbox::set_timetable(timetable);  // upload the updated timetable
 

@@ -635,9 +635,9 @@ vector<Event> User::send(Node* next_node, Message* message) {
       // Update the timetable
       timetable.find(node_id_)->second = current_time + message_time; // update my available time
       // TODO devo aggiornre la mappa, non il vettore!!!
-      for (int i = 0; i < near_storage_nodes.size(); i++) { // update the available time of all my neighbours
-        timetable.find(near_storage_nodes.at(i)->get_node_id())->second = current_time + message_time;
-      }
+      for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
+      				timetable.find(node_it->first)->second = new_schedule_time;
+      			}
       MyToolbox::set_timetable(timetable);  // upload the updated timetable
 
       // Update the event_queue_

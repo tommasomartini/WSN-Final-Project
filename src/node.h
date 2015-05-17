@@ -14,9 +14,9 @@ using namespace std;
 class Node : public Agent {
  public:
   // TODO: sostituire con una mappa <id, riferimento al nodo> ?
-  vector<Node*> near_storage_nodes;
-  vector<Node*> near_sensor_nodes;
-  vector<Node*> near_users;
+//  vector<Node*> near_storage_nodes;
+//  vector<Node*> near_sensor_nodes;
+//  vector<Node*> near_users;
 
   DataCollector* data_collector;
 

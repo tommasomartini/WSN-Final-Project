@@ -205,27 +205,27 @@ void MyToolbox::set_close_nodes(User* user) {
   }
 }
 
-void MyToolbox::set_near_storage_node(Node* node) {
-  // while(node->near_storage_nodes.size()>0)
-  //   MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(0));
-  for(int i = 0; i< storage_nodes_.size(); i++){
-    if (node!= storage_nodes_.at(i) && Node::are_nodes_near(storage_nodes_.at(i),node) == true)
-      node->add_near_sensor_node(storage_nodes_.at(i));
-  }
-}
-
-void MyToolbox::set_near_user(Node* node){
-     while(node->near_users.size()>0)
-          MyToolbox::remove_near_user(node, (User*)node->near_users.at(0));
-     for(int i = 0; i< users_.size(); i++){
-          if (node!=users_.at(i) && Node::are_nodes_near(users_.at(i),node) == true)
-            node->add_near_user(users_.at(i));
-      }   
-}
-
-void MyToolbox::remove_near_storage_node(Node* node, StorageNode* storage_node) {
-   node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
-}
+//void MyToolbox::set_near_storage_node(Node* node) {
+//  // while(node->near_storage_nodes.size()>0)
+//  //   MyToolbox::remove_near_storage_node(node, (StorageNode*)node->near_storage_nodes.at(0));
+//  for(int i = 0; i< storage_nodes_.size(); i++){
+//    if (node!= storage_nodes_.at(i) && Node::are_nodes_near(storage_nodes_.at(i),node) == true)
+//      node->add_near_sensor_node(storage_nodes_.at(i));
+//  }
+//}
+//
+//void MyToolbox::set_near_user(Node* node){
+//     while(node->near_users.size()>0)
+//          MyToolbox::remove_near_user(node, (User*)node->near_users.at(0));
+//     for(int i = 0; i< users_.size(); i++){
+//          if (node!=users_.at(i) && Node::are_nodes_near(users_.at(i),node) == true)
+//            node->add_near_user(users_.at(i));
+//      }
+//}
+//
+//void MyToolbox::remove_near_storage_node(Node* node, StorageNode* storage_node) {
+//   node->near_storage_nodes.erase(find(node->near_storage_nodes.begin(), node->near_storage_nodes.end(), storage_node));
+//}
 
 void MyToolbox::remove_near_user(Node* node, User* user) {
    // node->near_users.erase(find(node->near_users.begin(), node->near_users.end(), user));
