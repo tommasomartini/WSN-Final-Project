@@ -133,7 +133,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case sensor_try_to_send: {
-      new_events = ((SensorNode*)agent_)->try_retx(message_, message_->get_receiver_node_id()); 
+      new_events = ((SensorNode*)agent_)->try_retx(message_);
       break;
     }
     case storage_node_receive_measure: {

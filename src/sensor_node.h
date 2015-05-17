@@ -24,7 +24,7 @@ class SensorNode: public Node {
 
   // Event execution methods
   std::vector<Event> generate_measure(); // Tom
-  std::vector<Event> try_retx(Message*, unsigned int /*next_node_id*/); // Tom
+  std::vector<Event> try_retx(Message*); // Tom
   std::vector<Event> sensor_ping(); // Tom
   std::vector<Event> sensor_ping(int); // Arianna
   

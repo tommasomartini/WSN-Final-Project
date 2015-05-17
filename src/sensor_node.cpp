@@ -79,10 +79,10 @@ vector<Event> SensorNode::generate_measure() {
   return new_events;
 }
 
-vector<Event> SensorNode::try_retx(Message* message, unsigned int next_node_id) {
-  map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
-  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
-  return send(next_node, message);
+vector<Event> SensorNode::try_retx(Message* message) {
+	vector<Event> new_events;
+	new_events = re_send(message);
+	return new_events;
 }
 
 vector<Event> SensorNode::sensor_ping() {
