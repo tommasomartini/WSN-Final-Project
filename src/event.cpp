@@ -182,7 +182,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case sensor_ping: {
-      new_events = ((SensorNode*)agent_)->sensor_ping();	// entra nell'evnto di Tom
+      new_events = ((SensorNode*)agent_)->sensor_ping2();
       //cout <<"Il nuovo evento creato è al tempo "<<new_events.at(0).get_time()<<endl;
       break;
     }

@@ -85,6 +85,23 @@ vector<Event> SensorNode::try_retx(Message* message) {
 	return new_events;
 }
 
+vector<Event> SensorNode::sensor_ping2() {
+	vector<Event> new_events;
+	map<unsigned int, Node*>::iterator supervisor_it = near_storage_nodes_->find(my_supervisor_id_);
+	while (supervisor_it == near_storage_nodes_->end()) {	// until I don't find a valid neighbour...
+		my_supervisor_id_ = get_random_neighbor();	// ...try a new one
+		if (my_supervisor_id_ == 0) {	// this sensor has no more neighbours
+			return new_events;	// return now and do not schedule another ping!
+		}
+		supervisor_it = near_storage_nodes_->find(my_supervisor_id_);
+	}
+	((StorageNode*)supervisor_it->second)->receive_hello(node_id_);	// send the hello ping
+	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
+	new_event.set_agent(this);
+	new_events.push_back(new_event);
+	return new_events;
+}
+
 vector<Event> SensorNode::sensor_ping() {
   vector<Event> new_events;
   map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)

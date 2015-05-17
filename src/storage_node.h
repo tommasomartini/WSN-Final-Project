@@ -31,7 +31,7 @@ class StorageNode : public Node {
   }
 
   // setters
-  void set_supervision_map_(int, int);
+  void set_supervision_map_(int, int);	// TODO to be deprecated
 
   // Event execution methods
   std::vector<Event> receive_measure(Measure*); // Tom
@@ -44,6 +44,8 @@ class StorageNode : public Node {
   std::vector<Event> check_sensors(); // Arianna
   std::vector<Event> spread_blacklist(BlacklistMessage*); // Arianna
   std::vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
+
+  void receive_hello(unsigned int /*sensor id*/);
 
  private:
   typedef MyToolbox::MyTime MyTime;

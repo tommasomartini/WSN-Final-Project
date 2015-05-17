@@ -105,6 +105,7 @@ vector<Event> StorageNode::try_retx(Message* message) {
 
 /*  A sensor is telling me it is alive
  */
+// TODO to be deprecated
 void StorageNode::set_supervision_map_(int sensor_id, int new_time){
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
@@ -112,6 +113,19 @@ void StorageNode::set_supervision_map_(int sensor_id, int new_time){
 	}
 	else {
 		supervisioned_map_.find(sensor_id)->second = new_time;
+	}
+}
+
+
+/*  A sensor is telling me it is alive
+ */
+void StorageNode::receive_hello(unsigned int sensor_id) {
+	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
+	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
+		supervisioned_map_.insert(std::pair<int, int>(sensor_id, MyToolbox::get_current_time()));
+	}
+	else {
+		supervisioned_map_.find(sensor_id)->second = MyToolbox::get_current_time();
 	}
 }
 

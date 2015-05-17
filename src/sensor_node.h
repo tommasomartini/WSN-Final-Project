@@ -26,6 +26,7 @@ class SensorNode: public Node {
   std::vector<Event> generate_measure(); // Tom
   std::vector<Event> try_retx(Message*); // Tom
   std::vector<Event> sensor_ping(); // Tom
+  std::vector<Event> sensor_ping2(); // fast and simple way
   std::vector<Event> sensor_ping(int); // Arianna
   
   void set_my_supervisor(unsigned int); // TODO: uno dei due metodi e' da rimuovere
