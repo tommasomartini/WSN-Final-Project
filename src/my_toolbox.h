@@ -44,6 +44,10 @@ class MyToolbox {
 		return false;
 	  }
 	}
+//	string toString() {
+//		string str = "(s" + sensor_id_ + ", " + measure_id_ + ")";
+//		return str;
+//	}
   };
 
   // TODO replace all the unsigned char with this
@@ -184,7 +188,7 @@ class MyToolbox {
   static void remove_sensor(unsigned int /*sensor_id*/);
 
   static string int2nodetype(unsigned int);	// TODO just for debug
-  static void show_clouds();	// TODO just for debugging
+  static int show_clouds();	// TODO just for debugging
 
  private:
   /*  This timetable contains pairs of the type:

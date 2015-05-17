@@ -237,9 +237,13 @@ void MyToolbox::remove_near_user(Node* node, User* user) {
     Functions
 **************************************/
 void MyToolbox::initialize_toolbox() {
-  cout << "Devo ancora fare l'inizializzazione!!" << endl;
+  cout << "Toolbox initialization..." << endl;
+  cout << "Setting maximum number of hops: ";
   max_num_hops = ceil(C1 * num_storage_nodes * log(num_storage_nodes));
+  cout << max_num_hops << endl;
+  cout << "Setting default random engine...";
   generator = default_random_engine(time(NULL));
+  cout << " done!" << endl;
 }
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
@@ -416,7 +420,7 @@ void show_c(vector<pair<int, Node*>>* clouds_, int num_clouds) {
   cout << endl;
 }
 
-void MyToolbox::show_clouds() {
+int MyToolbox::show_clouds() {
   int color = 0;
   vector<pair<int, Node*>> clouds;	// cloud_id - node
   map<unsigned int, Node*> allnodes;
@@ -432,16 +436,16 @@ void MyToolbox::show_clouds() {
   allnodes.erase(allnodes.begin());	// erase the element
   int cloud_index = 0;	// pointing to the first (and only!) element in the cloud vector
   while (!allnodes.empty()) {	// in allnodes there are the not-yet-classified nodes
-	map<unsigned int, Node*>::iterator allnodes_iter = allnodes.begin();
-	while (allnodes_iter != allnodes.end()) {
-	  double x1 = clouds.at(cloud_index).second->get_x_coord();
+	map<unsigned int, Node*>::iterator allnodes_iter = allnodes.begin();	// first element of allnodes
+	while (allnodes_iter != allnodes.end()) {	// while I don't finish the nodes in the list...
+	  double x1 = clouds.at(cloud_index).second->get_x_coord();	// get the coordinates of the node in the cloud
 	  double y1 = clouds.at(cloud_index).second->get_y_coord();
-	  double x2 = allnodes_iter->second->get_x_coord();
+	  double x2 = allnodes_iter->second->get_x_coord();	// get the coordinates of the node in allnode
 	  double y2 = allnodes_iter->second->get_y_coord();
-	  bool near = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2)) <= tx_range;
-	  if (near) {
-		clouds.push_back(pair<int, Node*>(color, allnodes_iter->second));
-		allnodes_iter = allnodes.erase(allnodes_iter);
+	  bool near = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2)) <= tx_range;	// compute the distance
+	  if (near) {	// if they are near
+		clouds.push_back(pair<int, Node*>(color, allnodes_iter->second));	// put this node into the cloud
+		allnodes_iter = allnodes.erase(allnodes_iter);	// erase it and return a pointer to the following element (C++11)
 	  } else {
 		allnodes_iter++;
 	  }
@@ -456,5 +460,6 @@ void MyToolbox::show_clouds() {
   }
 
   show_c(&clouds, color + 1);
+  return color + 1;
 }
 

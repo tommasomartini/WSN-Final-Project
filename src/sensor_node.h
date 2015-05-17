@@ -29,8 +29,7 @@ class SensorNode: public Node {
   std::vector<Event> sensor_ping2(); // fast and simple way
   std::vector<Event> sensor_ping(int); // Arianna
   
-  void set_my_supervisor(unsigned int); // TODO: uno dei due metodi e' da rimuovere
-  void set_supervisor();
+  void set_supervisor();	// this function has to be called at the beginning of the program, after the network initialization
   
   unsigned int get_my_supervisor_id() {return my_supervisor_id_;}	// TODO just for debug
 

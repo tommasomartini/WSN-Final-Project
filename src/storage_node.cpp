@@ -22,6 +22,7 @@ using namespace std;
  */
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
+	data_collector->record_msr2(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
 //	bool out_of_order_msr = false;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
@@ -35,24 +36,24 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 					default_random_engine gen = MyToolbox::get_random_generator();
 					bernoulli_distribution bernoulli_distrib(d * 1. / k);
 					if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
-						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... KEEP!" << endl;
+//						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... KEEP!" << endl;
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
 //						data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 2);
 					} else {
-						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... IGNORE!" << endl;
+//						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... IGNORE!" << endl;
 //						ignore_new_list.push_back(measure->get_source_sensor_id());
 					}
 					//      last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
 				}
 			} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-				cout << node_id_ << " misura update <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << ">" << endl;
+//				cout << node_id_ << " misura update <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << ">" << endl;
 				if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
 					// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
 					if (measure->get_measure_id() == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
-						cout << "Update measure from sensor " << measure->get_source_sensor_id() << "(msr id = " << measure->get_measure_id() << ")" << endl;
+//						cout << "Update measure from sensor " << measure->get_source_sensor_id() << "(msr id = " << measure->get_measure_id() << ")" << endl;
 					} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
 						// do nothing
 					} else {	// out of order update measure
@@ -71,7 +72,8 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	int hop_limit = MyToolbox::max_num_hops;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		new_events = send2(get_random_neighbor(), measure);	// propagate it!
-	} else {
+	} else {	// the message must not be forwarded again
+		cout << "measure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ") stops" << endl;
 //		data_collector->print_data();
 	}
 //	if (out_of_order_msr) {	// after propagating I have to reinitialize
@@ -120,6 +122,7 @@ void StorageNode::set_supervision_map_(int sensor_id, int new_time){
 /*  A sensor is telling me it is alive
  */
 void StorageNode::receive_hello(unsigned int sensor_id) {
+	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << endl;
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
 		supervisioned_map_.insert(std::pair<int, int>(sensor_id, MyToolbox::get_current_time()));
@@ -154,33 +157,29 @@ vector<Event> StorageNode::check_sensors() {
 	vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
 
 	for (auto& x : supervisioned_map_){	// for each sensor in my supervised list...
-		if(x.second + (3 * MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // ...if it didn't answer for  times...
+		if(x.second + (3 * MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // ...if it didn't answer for 3 times...
+			cout << "Sensor " << x.first << " dead" << endl;
 			my_blacklist_.push_back(x.first);	// ...put it in my blacklist...
 			expired_sensors.push_back(x.first);	// ...and in a list I use to update the structures
 		}
 	}
 	// remove from the supervisioned_map the dead sensors
 	for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
-		supervisioned_map_.erase(supervisioned_map_.find(*it));
+		supervisioned_map_.erase(*it);
+//		supervisioned_map_.erase(supervisioned_map_.find(*it));
 	}
 
 	if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
-		//    BlacklistMessage* list = new BlacklistMessage(&expired_sensors);
 		BlacklistMessage* list = new BlacklistMessage(expired_sensors);
-//		int next_node_index = rand() % near_storage_nodes_->size();
-//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-//		for (int i = 0; i < next_node_index; i++) {
-//			node_iter++;
-//		}
-//		StorageNode *next_node = (StorageNode*)node_iter->second;
-//		list->set_receiver_node_id(next_node->get_node_id());
 		list->message_type_= Message::message_type_blacklist;
 		new_events = send2(get_random_neighbor(), list);
 	}
 
-	Event new_event(MyToolbox::get_current_time() + MyToolbox::check_sensors_frequency, Event::check_sensors);
-	new_event.set_agent(this);
-	new_events.push_back(new_event);
+	if (supervisioned_map_.size() > 0) {	// if I have some supervisioned sensor check it in a while
+		Event new_event(MyToolbox::get_current_time() + MyToolbox::check_sensors_frequency, Event::check_sensors);
+		new_event.set_agent(this);
+		new_events.push_back(new_event);
+	}
 
 	return new_events;
 }
