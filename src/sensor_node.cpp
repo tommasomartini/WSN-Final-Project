@@ -113,32 +113,32 @@ vector<Event> SensorNode::sensor_ping2() {
 	return new_events;
 }
 
-vector<Event> SensorNode::sensor_ping() {
-  vector<Event> new_events;
-  map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-  MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-  MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
-  MyTime next_node_available_time = timetable.find(my_supervisor_id_)->second;  // time next_node gets free
-  if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
-    MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset_ping();
-    Event try_again_event(new_schedule_time, Event::sensor_ping);
-    try_again_event.set_agent(this);
-    new_events.push_back(try_again_event);
-  } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-    MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset_ping();
-    Event try_again_event(new_schedule_time, Event::sensor_ping);
-    try_again_event.set_agent(this);
-    new_events.push_back(try_again_event);
-  } else {  // sender and receiver both idle, can send the message
-	StorageNode *supervisior_node = (StorageNode*)near_storage_nodes_->at(my_supervisor_id_);
-	supervisior_node->set_supervision_map_(node_id_, MyToolbox::get_current_time());
-	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::broken_sensor);	// FIXME for debug only
-//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);
-	new_event.set_agent(this);
-	new_events.push_back(new_event);
-  }
-  return new_events;
-}
+//vector<Event> SensorNode::sensor_ping() {
+//  vector<Event> new_events;
+//  map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
+//  MyTime current_time = MyToolbox::get_current_time();  // current time of the system
+//  MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
+//  MyTime next_node_available_time = timetable.find(my_supervisor_id_)->second;  // time next_node gets free
+//  if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
+//    MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset_ping();
+//    Event try_again_event(new_schedule_time, Event::sensor_ping);
+//    try_again_event.set_agent(this);
+//    new_events.push_back(try_again_event);
+//  } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+//    MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset_ping();
+//    Event try_again_event(new_schedule_time, Event::sensor_ping);
+//    try_again_event.set_agent(this);
+//    new_events.push_back(try_again_event);
+//  } else {  // sender and receiver both idle, can send the message
+//	StorageNode *supervisior_node = (StorageNode*)near_storage_nodes_->at(my_supervisor_id_);
+//	supervisior_node->set_supervision_map_(node_id_, MyToolbox::get_current_time());
+//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::broken_sensor);	// FIXME for debug only
+////	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);
+//	new_event.set_agent(this);
+//	new_events.push_back(new_event);
+//  }
+//  return new_events;
+//}
 
 void SensorNode::set_supervisor() {
   // choose my supervisor as the first node in my list (does not matter how I choose it)

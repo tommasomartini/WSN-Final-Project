@@ -31,8 +31,6 @@ unsigned int UserMessage::get_message_size() {
   unsigned int message_size = 0;
   // int num_measures = measure_type_ == measure_type_new ? 1 : 2; // new or update measure? It may contain 1 or 2 measures
   message_size += MyToolbox::get_bits_for_measure(); 
-  message_size += MyToolbox::get_bits_for_id(); 
-  message_size += MyToolbox::get_bits_for_phy_mac_overhead();
   message_size = message_size * symbols_.size();
   message_size += blacklist_.get_message_size(); 
   return message_size;

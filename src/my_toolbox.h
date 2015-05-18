@@ -53,13 +53,8 @@ class MyToolbox {
   // TODO replace all the unsigned char with this
   struct MeasureData {
     unsigned int data_;
-    unsigned int size_;
     MeasureData(unsigned int data) {
       data_ = data;
-    }
-    MeasureData(unsigned int data, unsigned int size) {
-      data_ = data;
-      size_ = size;
     }
   };
 
@@ -72,13 +67,9 @@ class MyToolbox {
   //  Global values
   static int num_storage_nodes;
   static int num_sensors;
-  static int max_num_users;
   static int num_users;
 
-  static int num_bits_for_id;
   static int num_bits_for_measure;
-  static int num_bits_phy_mac_overhead;
-  static int num_bits_for_measure_id;
 
   static double bitrate;
   static double bit_error_prob;
@@ -96,11 +87,9 @@ class MyToolbox {
   static double user_velocity;
   static MyTime user_update_time;
 
-  static MyTime mean_processing_time;
-  static MyTime std_dev_processing_time;
+  static MyTime processing_time;
 
   static MyTime max_tx_offset;
-  static MyTime max_tx_offset_ping;
 
   static MyTime user_observation_time;
 
@@ -113,9 +102,9 @@ class MyToolbox {
   static map<unsigned int, Node*>* users_map_ptr; 
   
   // Vectors of the nodes  TODO remove!!
-  static vector<SensorNode*> sensor_nodes_;
-  static vector<StorageNode*> storage_nodes_;
-  static vector<User*> users_;
+//  static vector<SensorNode*> sensor_nodes_;
+//  static vector<StorageNode*> storage_nodes_;
+//  static vector<User*> users_;
 
   // TODO all of these variables are public
   // getters
@@ -133,11 +122,7 @@ class MyToolbox {
   static int get_square_size(){return square_size_;} 
   /**/
   //static int get_k() {return num_storage_nodes;}
-  static int get_bits_for_id() {return num_bits_for_id;}
   static int get_bits_for_measure() {return num_bits_for_measure;}
-  static int get_bits_for_measure_id() {return num_bits_for_measure_id;}
-  static int get_bits_for_phy_mac_overhead() {return num_bits_phy_mac_overhead;}
-  static int get_bits_for_hop_counter() {return 3;} // TODO fare qualcosa di questo!!
   static int get_space_precision() {return space_precision;}
 
   // setters

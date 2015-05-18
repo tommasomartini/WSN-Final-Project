@@ -567,7 +567,7 @@ vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
 vector<Event> User::send(Node* next_node, Message* message) {
   vector<Event> new_events;
 
-  MyTime processing_time = MyToolbox::mean_processing_time;  
+  MyTime processing_time = MyToolbox::processing_time;  
   unsigned int num_total_bits = message->get_message_size();
   MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
   MyTime message_time = processing_time + transfer_time;

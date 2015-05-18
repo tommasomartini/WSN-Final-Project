@@ -23,7 +23,7 @@ class SensorNode: public Node {
   std::vector<Event> try_retx(Message*); // Tom
   std::vector<Event> sensor_ping(); // Tom
   std::vector<Event> sensor_ping2(); // fast and simple way
-  std::vector<Event> sensor_ping(int); // Arianna
+//  std::vector<Event> sensor_ping(int); // Arianna
   
   void set_supervisor();	// this function has to be called at the beginning of the program, after the network initialization
   

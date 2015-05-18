@@ -19,13 +19,9 @@ unsigned int MyToolbox::node_id_ = 10;	// the first 10 ids are reserved
 //  Global values
 int MyToolbox::num_storage_nodes = 0;
 int MyToolbox::num_sensors = 0;
-int MyToolbox::max_num_users = 0;
 int MyToolbox::num_users = 0;
 
-int MyToolbox::num_bits_for_id = 0;
 int MyToolbox::num_bits_for_measure = 0;
-int MyToolbox::num_bits_phy_mac_overhead = 0;
-int MyToolbox::num_bits_for_measure_id = 0;
 
 double MyToolbox::bitrate = 0;
 double MyToolbox::bit_error_prob = 0;
@@ -43,11 +39,9 @@ int MyToolbox::space_precision = 0;
 double MyToolbox::user_velocity = 0;
 MyToolbox::MyTime MyToolbox::user_update_time = 0;
 
-MyToolbox::MyTime MyToolbox::mean_processing_time = 0;
-MyToolbox::MyTime MyToolbox::std_dev_processing_time = 0;
+MyToolbox::MyTime MyToolbox::processing_time = 0;
 
 MyToolbox::MyTime MyToolbox::max_tx_offset = 0;
-MyToolbox::MyTime MyToolbox::max_tx_offset_ping = 0;
 
 MyToolbox::MyTime MyToolbox::user_observation_time = 0;
 
@@ -62,9 +56,9 @@ default_random_engine MyToolbox::generator;
 
 
 // TODO remove everything hereafter
-vector<SensorNode*> MyToolbox::sensor_nodes_;
-vector<StorageNode*> MyToolbox::storage_nodes_;
-vector<User*> MyToolbox::users_;
+//vector<SensorNode*> MyToolbox::sensor_nodes_;
+//vector<StorageNode*> MyToolbox::storage_nodes_;
+//vector<User*> MyToolbox::users_;
   
 /*
 int MyToolbox::n_ = 0;
@@ -160,17 +154,17 @@ void MyToolbox::set_square_size(int square_size){
 }
 /**/
 
-void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor) {
-  sensor_nodes_ = sensor;
-}
-
-void MyToolbox::set_storage_nodes(vector<StorageNode*> storage) {
-  storage_nodes_ = storage;
-}
-
-void MyToolbox::set_users(vector<User*> user) {
-  users_ = user;
-}
+//void MyToolbox::set_sensor_nodes(vector<SensorNode*> sensor) {
+//  sensor_nodes_ = sensor;
+//}
+//
+//void MyToolbox::set_storage_nodes(vector<StorageNode*> storage) {
+//  storage_nodes_ = storage;
+//}
+//
+//void MyToolbox::set_users(vector<User*> user) {
+//  users_ = user;
+//}
 
 void MyToolbox::set_close_nodes(User* user) {
   user->near_storage_nodes_->clear();
@@ -274,12 +268,13 @@ unsigned int MyToolbox::get_node_id() {
   return node_id_++;
 }
 
+// TODO define this
 User* MyToolbox::new_user(){
     double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
     double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-    User* new_user = new User(users_.size(),y_coord,x_coord);
-    users_.push_back (new_user);
-    return new_user;
+//    User* new_user = new User(users_.size(),y_coord,x_coord);
+//    users_.push_back (new_user);
+    return new User();
 }
 
 int MyToolbox::get_ideal_soliton_distribution_degree() {
@@ -360,12 +355,7 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {
-  // normal_distribution<double> distribution(mean_processing_time, std_dev_processing_time);
-  normal_distribution<long double> distribution(mean_processing_time, std_dev_processing_time);
-  MyTime rnd_proc_time = (MyTime)(distribution(generator));
-  //return rnd_proc_time;
-
-  return mean_processing_time;
+  return processing_time;
 }
 
 // MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
@@ -378,16 +368,16 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
 // }
 
 MyToolbox::MyTime MyToolbox::get_tx_offset() {
-  uniform_int_distribution<int> distribution(max_tx_offset_ping / 1000, max_tx_offset / 1000);	// between 5ms and 10ms
+  uniform_int_distribution<int> distribution(max_tx_offset / 2000, max_tx_offset / 1000);	// between 5ms and 10ms
   int offset = distribution(generator);
   return (MyTime)(offset * 1000);
 }
 
-MyToolbox::MyTime MyToolbox::get_tx_offset_ping() {
-  uniform_int_distribution<int> distribution(1, (max_tx_offset_ping / 1000) - 1);	// between 1 and 4999us
-  int offset = distribution(generator);
-  return (MyTime)(offset * 1000);
-}
+//MyToolbox::MyTime MyToolbox::get_tx_offset_ping() {
+//  uniform_int_distribution<int> distribution(1, (max_tx_offset_ping / 1000) - 1);	// between 1 and 4999us
+//  int offset = distribution(generator);
+//  return (MyTime)(offset * 1000);
+//}
 
 string MyToolbox::int2nodetype(unsigned int num) {
 	string res = "unknown";
@@ -459,7 +449,7 @@ int MyToolbox::show_clouds() {
 	}
   }
 
-  show_c(&clouds, color + 1);
+//  show_c(&clouds, color + 1);
   return color + 1;
 }
 
