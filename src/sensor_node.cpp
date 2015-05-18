@@ -70,7 +70,7 @@ vector<Event> SensorNode::generate_measure() {
 	  generate_another_measure = false;
   }
   uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay / 2000, MyToolbox::max_measure_generation_delay / 1000);	// between 5ms and 10ms
-  MyTime rndm_time = unif_distrib(generator) * 1000;
+  MyTime rndm_time = MyToolbox::max_measure_generation_delay;
   MyTime time_next_measure_or_failure = MyToolbox::get_current_time() + rndm_time;
   cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::get_current_time() << " + " << rndm_time << endl;
   if (generate_another_measure) {
