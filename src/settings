@@ -15,7 +15,7 @@ tx_range=7 in m
 ping_frequency=1000 1000000000
 check_sensors_frequency=3000 5000000000  
 
-C1=10
+C1=11
 
 square_size=5 in m 
 space_precision=1000 how many units in a meter
