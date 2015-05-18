@@ -26,8 +26,8 @@ user_update_time=2000000000 ns
 mean_processing_time=1000 ns
 std_dev_processing_time=1000 ns
 
-max_tx_offset=1000000 ns
-max_tx_offset_ping=5000000 ns
+max_tx_offset=1000000000 ns
+max_tx_offset_ping=500000000 ns
 
 user_observation_time=1000000000 ns (= 1s)
 

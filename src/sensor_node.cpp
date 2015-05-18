@@ -188,11 +188,13 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+			MyTime off = MyToolbox::get_tx_offset();
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
-			cout << " other node not available. Try at " << new_schedule_time << endl;
+			cout << " other node not available. Try at " << new_schedule_time << ": " << next_node_available_time << " + " << off << endl;
+			cout << "sum = " << next_node_available_time << " + " << off << " = " << off + next_node_available_time << endl;
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else {  // sender and receiver both idle, can send the message

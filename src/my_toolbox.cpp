@@ -428,9 +428,9 @@ int MyToolbox::show_clouds() {
   for (map<unsigned int, Node*>::iterator it_cache = storage_nodes_map_ptr->begin(); it_cache != storage_nodes_map_ptr->end(); it_cache++) {
     allnodes.insert(pair<unsigned int, Node*>(it_cache->first, it_cache->second));
   }
-  for (map<unsigned int, Node*>::iterator it_sns = sensors_map_ptr->begin(); it_sns != sensors_map_ptr->end(); it_sns++) {
-	allnodes.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
-  }
+//  for (map<unsigned int, Node*>::iterator it_sns = sensors_map_ptr->begin(); it_sns != sensors_map_ptr->end(); it_sns++) {
+//	allnodes.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
+//  }
 
   clouds.push_back(pair<int, Node*>(color, allnodes.begin()->second));	// insert in the cloud the seed, the first node
   allnodes.erase(allnodes.begin());	// erase the element
