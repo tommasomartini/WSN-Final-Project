@@ -269,13 +269,13 @@ unsigned int MyToolbox::get_node_id() {
 }
 
 // TODO define this
-User* MyToolbox::new_user(){
-    double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-    double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-//    User* new_user = new User(users_.size(),y_coord,x_coord);
-//    users_.push_back (new_user);
-    return new User();
-}
+//User* MyToolbox::new_user(){
+//    double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+//    double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
+////    User* new_user = new User(users_.size(),y_coord,x_coord);
+////    users_.push_back (new_user);
+//    return new User();
+//}
 
 int MyToolbox::get_ideal_soliton_distribution_degree() {
   uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -358,26 +358,11 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
   return processing_time;
 }
 
-// MyToolbox::MyTime MyToolbox::get_retransmission_offset() {
-//   int rand1 = rand();
-//   int rand2 = rand();
-//   unsigned long long_rand = rand1 * rand2;
-//   MyTime offset = long_rand % (max_tx_offset - 1) + 1;
-//   // cout << "offset: " << offset << endl;
-//   return offset;
-// }
-
 MyToolbox::MyTime MyToolbox::get_tx_offset() {
   uniform_int_distribution<int> distribution(max_tx_offset / 2000, max_tx_offset / 1000);	// between 5ms and 10ms
   int offset = distribution(generator);
   return (MyTime)(offset * 1000);
 }
-
-//MyToolbox::MyTime MyToolbox::get_tx_offset_ping() {
-//  uniform_int_distribution<int> distribution(1, (max_tx_offset_ping / 1000) - 1);	// between 1 and 4999us
-//  int offset = distribution(generator);
-//  return (MyTime)(offset * 1000);
-//}
 
 string MyToolbox::int2nodetype(unsigned int num) {
 	string res = "unknown";

@@ -129,7 +129,7 @@ vector<Event> User::user_receive_data(UserMessage* message){
 
   if (message_passing()){	// if message passing works
     // the user succeeds message passing, now delete this user and create a new user
-    User *new_user = MyToolbox::new_user();
+    User *new_user = new User();
     Event new_event(MyToolbox::get_current_time() + MyToolbox::user_update_time, Event::move_user);
     new_event.set_agent(new_user);
     new_events.push_back(new_event);
