@@ -35,7 +35,7 @@ SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : N
 */
 vector<Event> SensorNode::generate_measure() {
 
-	cout << "Going to generate a new one..." << MyToolbox::get_current_time() << endl;
+	cout << "Going to generate a new one..." << MyToolbox::current_time_ << endl;
 
   vector<Event> new_events; // create the new events
 
@@ -61,18 +61,18 @@ vector<Event> SensorNode::generate_measure() {
   */
   new_events = send2(next_node_id, &measure_);
   bool generate_another_measure = true;
-  default_random_engine generator = MyToolbox::get_random_generator();
-  bernoulli_distribution distribution(MyToolbox::sensor_failure_prob);
+  default_random_engine generator = MyToolbox::generator_;
+  bernoulli_distribution distribution(MyToolbox::sensor_failure_prob_);
   if (distribution(generator)) {
 	  generate_another_measure = false;
   }
   if (how_many_measures_ > 1) {
 	  generate_another_measure = false;
   }
-  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay / 2000, MyToolbox::max_measure_generation_delay / 1000);	// between 5ms and 10ms
-  MyTime rndm_time = MyToolbox::max_measure_generation_delay;
-  MyTime time_next_measure_or_failure = MyToolbox::get_current_time() + rndm_time;
-  cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::get_current_time() << " + " << rndm_time << endl;
+  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
+  MyTime rndm_time = MyToolbox::max_measure_generation_delay_;
+  MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
+  cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::current_time_ << " + " << rndm_time << endl;
   if (generate_another_measure) {
 	  cout << "another measure" << endl;
     Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
@@ -107,38 +107,11 @@ vector<Event> SensorNode::sensor_ping2() {
 	cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
 	((StorageNode*)supervisor_it->second)->receive_hello(node_id_);	// send the hello ping
 //	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
-	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::broken_sensor);	// FIXME for debug only
+	Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::broken_sensor);	// FIXME for debug only
 	new_event.set_agent(this);
 	new_events.push_back(new_event);
 	return new_events;
 }
-
-//vector<Event> SensorNode::sensor_ping() {
-//  vector<Event> new_events;
-//  map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-//  MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-//  MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
-//  MyTime next_node_available_time = timetable.find(my_supervisor_id_)->second;  // time next_node gets free
-//  if (my_available_time > current_time) { // node already involved in a communication or surrounded by another communication
-//    MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset_ping();
-//    Event try_again_event(new_schedule_time, Event::sensor_ping);
-//    try_again_event.set_agent(this);
-//    new_events.push_back(try_again_event);
-//  } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-//    MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset_ping();
-//    Event try_again_event(new_schedule_time, Event::sensor_ping);
-//    try_again_event.set_agent(this);
-//    new_events.push_back(try_again_event);
-//  } else {  // sender and receiver both idle, can send the message
-//	StorageNode *supervisior_node = (StorageNode*)near_storage_nodes_->at(my_supervisor_id_);
-//	supervisior_node->set_supervision_map_(node_id_, MyToolbox::get_current_time());
-//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::broken_sensor);	// FIXME for debug only
-////	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);
-//	new_event.set_agent(this);
-//	new_events.push_back(new_event);
-//  }
-//  return new_events;
-//}
 
 void SensorNode::set_supervisor() {
   // choose my supervisor as the first node in my list (does not matter how I choose it)
@@ -175,10 +148,10 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 //		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
 		cout << " queue empty" << endl;
-		map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-		MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
-		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+		map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+		MyTime current_time = MyToolbox::current_time_;  // current time of the system
+		MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
+		MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
@@ -202,7 +175,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			// Compute the message time
 			MyTime processing_time = MyToolbox::get_random_processing_time();
 			unsigned int num_total_bits = message->get_message_size();
-			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
 			MyTime new_schedule_time = current_time + processing_time + transfer_time;
 			// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
 			// Just in case I want to give priority to some particular message...
@@ -230,11 +203,11 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			cout << "  current time " << current_time << endl;
 
 			// Update the timetable
-			timetable.find(node_id_)->second = new_schedule_time; // update my available time
+			timetable->find(node_id_)->second = new_schedule_time; // update my available time
 			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-				timetable.find(node_it->first)->second = new_schedule_time;
+				timetable->find(node_it->first)->second = new_schedule_time;
 			}
-			MyToolbox::set_timetable(timetable);  // upload the updated timetable
+			MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
 		}
@@ -294,10 +267,10 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 	// If I arrive here I have a neighbour to whom I can try to send
 
-	map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-	MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
-	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+	map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+	MyTime current_time = MyToolbox::current_time_;  // current time of the system
+	MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
+	MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 		cout << " me not available" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
@@ -319,7 +292,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();
-		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
 		MyTime new_schedule_time = current_time + processing_time + transfer_time;
 		// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
 		Event::EventTypes this_event_type;
@@ -344,11 +317,11 @@ vector<Event> SensorNode::re_send(Message* message) {
 		cout << "  current time " << current_time << endl;
 
 		// Update the timetable
-		timetable.find(node_id_)->second = new_schedule_time; // update my available time
+		timetable->find(node_id_)->second = new_schedule_time; // update my available time
 		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-			timetable.find(node_it->first)->second = new_schedule_time;
+			timetable->find(node_it->first)->second = new_schedule_time;
 		}
-		MyToolbox::set_timetable(timetable);  // upload the updated timetable
+		MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 		// Update the event_queue_
 		event_queue_.pop();	// remove the current send event, now successful

@@ -16,10 +16,6 @@ class StorageNode;
 class User;
 class Node;
 
-//class DataCollector;
-
-using namespace std;
-
 class MyToolbox {
  public:
   struct MeasureKey {
@@ -60,70 +56,49 @@ class MyToolbox {
 
   typedef unsigned long MyTime;
 
-  static constexpr double kLightSpeed = 299792458; // meter / seconds
-
-//  static DataCollector* dc;
-
   //  Global values
-  static int num_storage_nodes;
-  static int num_sensors;
-  static int num_users;
+  static int num_storage_nodes_;
+  static int num_sensors_;
+  static int num_users_;
 
-  static int num_bits_for_measure;
+  static int num_bits_for_measure_;
 
-  static double bitrate;
-  static double bit_error_prob;
-  static double tx_range;
+  static double bitrate_;
+  static double bit_error_prob_;
+  static double tx_range_;
 
-  static MyTime ping_frequency;
-  static MyTime check_sensors_frequency;
+  static MyTime ping_frequency_;
+  static MyTime check_sensors_frequency_;
 
-  static double C1;
-  static int max_num_hops;
+  static double C1_;
+  static int max_num_hops_;
 
-  static int square_size;
-  static int space_precision;
+  static int square_size_;
+  static int space_precision_;
 
-  static double user_velocity;
-  static MyTime user_update_time;
+  static double user_velocity_;
+  static MyTime user_update_time_;
 
-  static MyTime processing_time;
+  static MyTime processing_time_;
 
-  static MyTime max_tx_offset;
+  static MyTime max_tx_offset_;
 
-  static MyTime user_observation_time;
+  static MyTime user_observation_time_;
 
-  static MyTime max_measure_generation_delay;
-  static double sensor_failure_prob;
+  static MyTime max_measure_generation_delay_;
+  static double sensor_failure_prob_;
 
   // Maps <node_id, node_reference>
-  static map<unsigned int, Node*>* sensors_map_ptr;
-  static map<unsigned int, Node*>* storage_nodes_map_ptr; 
-  static map<unsigned int, Node*>* users_map_ptr; 
+  static std::map<unsigned int, Node*>* sensors_map_ptr_;
+  static std::map<unsigned int, Node*>* storage_nodes_map_ptr_;
+  static std::map<unsigned int, Node*>* users_map_ptr_;
 
-  // TODO all of these variables are public
-  // getters
-  static MyTime get_current_time() {return current_time_;}
-  static map<unsigned int, MyTime> get_timetable() {return timetable_;}
-  static default_random_engine get_random_generator() {return generator;}
-  static int get_bits_for_measure() {return num_bits_for_measure;}
-  static int get_space_precision() {return space_precision;}
+  static std::map<unsigned int, MyTime>* timetable_;  // says when a node gets free
 
-  // setters
-  static void set_current_time(MyTime);
-  static void set_timetable(map<unsigned int, MyTime>);
+  static MyTime current_time_; // to keep track of the time
 
-  static void set_user_update_time();
-  static void set_sensor_nodes(vector<SensorNode*>);
-  static void set_storage_nodes(vector<StorageNode*>);
-  static void set_users(vector<User*>);
-  static void set_near_storage_node(Node*);
-  static void set_near_user(Node*);
-  
-  static void remove_near_storage_node(Node*, StorageNode*);    //remove a StorageNode from the near_storage_node of Node
-  static void remove_near_user(Node*, User*);   //remove a User from the near_suser of Node
-//  static User* new_user();
-  
+  static std::default_random_engine generator_;
+
   // functions
   static void initialize_toolbox(); // TODO
   static bool is_node_active(unsigned int /*node_id*/);
@@ -132,24 +107,14 @@ class MyToolbox {
   static int get_robust_soliton_distribution_degree();  // still to implement!
   static MyTime get_random_processing_time();
   static void set_close_nodes(User* user);
-  // Return a uniform random offset a node must wait when it finds the channel busy.
-  // The value is uniformly distributed between 1ns and MAX_OFFSET ns
-  // static MyTime get_retransmission_offset();  // TODO remove
   static MyTime get_tx_offset();
   static void remove_sensor(unsigned int /*sensor_id*/);
 
-  static string int2nodetype(unsigned int);	// TODO just for debug
+  static std::string int2nodetype(unsigned int);	// TODO just for debug
   static int show_clouds();	// TODO just for debugging
 
  private:
-  /*  This timetable contains pairs of the type:
-        - key = node_id
-        - value = time at which the node is going to be "left free"
-  */
-  static map<unsigned int, MyTime> timetable_;  // says when a node gets free
-  static MyTime current_time_; // to keep track of the time
   static unsigned int node_id_; 
-  static default_random_engine generator;
 };
 
 #endif

@@ -37,5 +37,5 @@ NodeInfoMessage::NodeInfoMessage(unsigned int node_id,
 }
 
 unsigned int NodeInfoMessage::get_message_size() {
-	return MyToolbox::get_bits_for_measure();
+	return MyToolbox::num_bits_for_measure_;
 }

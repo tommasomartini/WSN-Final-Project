@@ -83,7 +83,7 @@ void User::collect_data(Message xored_message) {
 vector<Event> User::move() {
   vector<Event> new_events;
 
-  default_random_engine generator = MyToolbox::get_random_generator();
+  default_random_engine generator = MyToolbox::generator_;
   uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
   int deviation = distribution(generator);
   direction_ += deviation;	// change a bit my direction
@@ -94,7 +94,7 @@ vector<Event> User::move() {
   // I could also let the user go out! Just comment the following block of code!
   bool inside_area = false;
   while (!inside_area) {	// if I am going outside the area...
-    if (new_x < 0 || new_x > MyToolbox::square_size || new_y < 0 || new_y > MyToolbox::square_size) { // I am going out from the area
+    if (new_x < 0 || new_x > MyToolbox::square_size_ || new_y < 0 || new_y > MyToolbox::square_size_) { // I am going out from the area
       direction_ += 30; // rotate of 30 degree in clockwise sense
       new_x = x_coord_ + speed_ * sin(direction_);
       new_y = y_coord_ + speed_ * cos(direction_);
@@ -130,7 +130,7 @@ vector<Event> User::user_receive_data(UserMessage* message){
   if (message_passing()){	// if message passing works
     // the user succeeds message passing, now delete this user and create a new user
     User *new_user = new User();
-    Event new_event(MyToolbox::get_current_time() + MyToolbox::user_update_time, Event::move_user);
+    Event new_event(MyToolbox::current_time_ + MyToolbox::user_update_time_, Event::move_user);
     new_event.set_agent(new_user);
     new_events.push_back(new_event);
     
@@ -236,7 +236,7 @@ vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
 
   IntraUserMessage intra_user_msg;  // msg to send to another user
   intra_user_msg.messages_ = output_symbols2_;
-  Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
+  Node* next_node = MyToolbox::users_map_ptr_->find(sender_user_id)->second;
   intra_user_msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
   new_events = send(next_node, &intra_user_msg);
 
@@ -546,18 +546,18 @@ void User::add_symbols(vector<StorageNodeMessage> symbols, User* user){	// FIXME
 }
 
 vector<Event> User::try_retx(Message* message, int next_node_id) {
-  map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr;
+  map<unsigned int, Node*>* nodes_map = MyToolbox::storage_nodes_map_ptr_;
   StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
   return send(next_node, message);
 }
 
 vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
-  map<unsigned int, Node*>* users_map = MyToolbox::users_map_ptr;
+  map<unsigned int, Node*>* users_map = MyToolbox::users_map_ptr_;
   User* next_user = (User*)users_map->find(next_node_id)->second;
   double rx_user_x = next_user->get_x_coord();
   double rx_user_y = next_user->get_y_coord();
   double dist = sqrt(pow(x_coord_ - rx_user_x, 2) + pow(y_coord_ - rx_user_y, 2));  // compute the distance between the two users
-  if (dist < MyToolbox::tx_range) { // the users are still able to communicate
+  if (dist < MyToolbox::tx_range_) { // the users are still able to communicate
     return send(next_user, message);
   } else {
     return vector<Event>();
@@ -567,12 +567,11 @@ vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
 vector<Event> User::send(Node* next_node, Message* message) {
   vector<Event> new_events;
 
-  MyTime processing_time = MyToolbox::processing_time;  
+  MyTime processing_time = MyToolbox::processing_time_;  
   unsigned int num_total_bits = message->get_message_size();
-  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
   MyTime message_time = processing_time + transfer_time;
   
-  // Update the timetable
   if (!event_queue_.empty()) {  // already some pending event
     // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
     // I will unfold it and I will build up a brand new event with its pieces and then I will set
@@ -584,10 +583,10 @@ vector<Event> User::send(Node* next_node, Message* message) {
 
     // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
   } else {  // no pending events
-    map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-    MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-    MyTime my_available_time = timetable.find(node_id_)->second; // time this sensor gets free
-    MyTime next_node_available_time = timetable.find(next_node->get_node_id())->second;  // time next_node gets free
+    map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+    MyTime current_time = MyToolbox::current_time_;  // current time of the system
+    MyTime my_available_time = timetable->find(node_id_)->second; // time this sensor gets free
+    MyTime next_node_available_time = timetable->find(next_node->get_node_id())->second;  // time next_node gets free
     if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
       MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
       Event try_again_event(0); // create an event with a fake schedule time
@@ -633,12 +632,12 @@ vector<Event> User::send(Node* next_node, Message* message) {
       new_events.push_back(receive_message_event);
 
       // Update the timetable
-      timetable.find(node_id_)->second = current_time + message_time; // update my available time
+      timetable->find(node_id_)->second = current_time + message_time; // update my available time
       // TODO devo aggiornre la mappa, non il vettore!!!
       for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-      				timetable.find(node_it->first)->second = new_schedule_time;
+      				timetable->find(node_it->first)->second = new_schedule_time;
       			}
-      MyToolbox::set_timetable(timetable);  // upload the updated timetable
+      MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
       // Update the event_queue_
       if (!event_queue_.empty()) {  // if there are other events in the queue

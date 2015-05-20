@@ -7,5 +7,5 @@ ReinitResponse::ReinitResponse() {
 }
 
 unsigned int ReinitResponse::get_message_size() {
-	return MyToolbox::get_bits_for_measure();
+	return MyToolbox::num_bits_for_measure_;
 }

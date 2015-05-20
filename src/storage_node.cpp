@@ -31,9 +31,9 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 				ignore_new_list.push_back(source_id);	// I shoud process a new measure for each sensor just once
 				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
 //					data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 1);
-					int k = MyToolbox::num_sensors;
+					int k = MyToolbox::num_sensors_;
 					int d = LT_degree_;
-					default_random_engine gen = MyToolbox::get_random_generator();
+					default_random_engine gen = MyToolbox::generator_;
 					bernoulli_distribution bernoulli_distrib(d * 1. / k);
 					if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
 //						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... KEEP!" << endl;
@@ -69,7 +69,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	}
 
 	measure->increase_hop_counter();	// increase the hop-counter
-	int hop_limit = MyToolbox::max_num_hops;
+	int hop_limit = MyToolbox::max_num_hops_;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		new_events = send2(get_random_neighbor(), measure);	// propagate it!
 	} else {	// the message must not be forwarded again
@@ -126,10 +126,10 @@ void StorageNode::receive_hello(unsigned int sensor_id) {
 	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << endl;
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
-		supervisioned_map_.insert(std::pair<int, int>(sensor_id, MyToolbox::get_current_time()));
+		supervisioned_map_.insert(std::pair<int, int>(sensor_id, MyToolbox::current_time_));
 	}
 	else {
-		supervisioned_map_.find(sensor_id)->second = MyToolbox::get_current_time();
+		supervisioned_map_.find(sensor_id)->second = MyToolbox::current_time_;
 	}
 }
 
@@ -144,7 +144,7 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 //		}
 		map<unsigned int, unsigned int> msrs_info = last_measures_;
 		StorageNodeMessage msg(xored_measure_, msrs_info);
-		Node* next_node = MyToolbox::users_map_ptr->find(sender_user_id)->second;
+		Node* next_node = MyToolbox::users_map_ptr_->find(sender_user_id)->second;
 //		msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
 		new_events = send2(sender_user_id, &msg);
 	}
@@ -158,7 +158,7 @@ vector<Event> StorageNode::check_sensors() {
 	vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
 
 	for (auto& x : supervisioned_map_){	// for each sensor in my supervised list...
-		if(x.second + (3 * MyToolbox::ping_frequency) < MyToolbox::get_current_time()){  // ...if it didn't answer for 3 times...
+		if(x.second + (3 * MyToolbox::ping_frequency_) < MyToolbox::current_time_){  // ...if it didn't answer for 3 times...
 			cout << "Sensor " << x.first << " dead" << endl;
 			my_blacklist_.push_back(x.first);	// ...put it in my blacklist...
 			expired_sensors.push_back(x.first);	// ...and in a list I use to update the structures
@@ -177,7 +177,7 @@ vector<Event> StorageNode::check_sensors() {
 	}
 
 	if (supervisioned_map_.size() > 0) {	// if I have some supervisioned sensor check it in a while
-		Event new_event(MyToolbox::get_current_time() + MyToolbox::check_sensors_frequency, Event::check_sensors);
+		Event new_event(MyToolbox::current_time_ + MyToolbox::check_sensors_frequency_, Event::check_sensors);
 		new_event.set_agent(this);
 		new_events.push_back(new_event);
 	}
@@ -202,7 +202,7 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 			}
 		}
 	}
-	int hop_limit = MyToolbox::max_num_hops;
+	int hop_limit = MyToolbox::max_num_hops_;
 	if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		list->increase_hop_counter();
 		unsigned int next_node_index = get_random_neighbor();
@@ -234,7 +234,7 @@ vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
 			}
 		}
 	}
-	int hop_limit = MyToolbox::max_num_hops;
+	int hop_limit = MyToolbox::max_num_hops_;
 	if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		message_to_remove->increase_hop_counter();
 //		unsigned int next_node_index = rand() % near_storage_nodes_->size();
@@ -293,10 +293,10 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
-		map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-		MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
-		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+		map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+		MyTime current_time = MyToolbox::current_time_;  // current time of the system
+		MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
+		MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
@@ -315,7 +315,7 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 			// Compute the message time
 			MyTime processing_time = MyToolbox::get_random_processing_time();
 			unsigned int num_total_bits = message->get_message_size();
-			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
 			if (message->message_type_ == Message::message_type_reinit_query) {
 				processing_time = 0;
 			}
@@ -357,11 +357,11 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 			new_events.push_back(receive_message_event);
 
 			// Update the timetable
-			timetable.find(node_id_)->second = new_schedule_time; // update my available time
+			timetable->find(node_id_)->second = new_schedule_time; // update my available time
 			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-				timetable.find(node_it->first)->second = new_schedule_time;
+				timetable->find(node_it->first)->second = new_schedule_time;
 			}
-			MyToolbox::set_timetable(timetable);  // upload the updated timetable
+			MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
 		}
@@ -432,10 +432,10 @@ vector<Event> StorageNode::re_send(Message* message) {
 
 	// If I arrive here I have a neighbour to whom I can try to send
 
-	map<unsigned int, MyTime> timetable = MyToolbox::get_timetable();  // download the timetable (I have to upload the updated version later!)
-	MyTime current_time = MyToolbox::get_current_time();  // current time of the system
-	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
-	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+	map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+	MyTime current_time = MyToolbox::current_time_;  // current time of the system
+	MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
+	MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
@@ -454,7 +454,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();
-		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate); // in nano-seconds
+		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
 		if (message->message_type_ == Message::message_type_reinit_query) {
 			processing_time = 0;
 		}
@@ -491,11 +491,11 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(receive_message_event);
 
 		// Update the timetable
-		timetable.find(node_id_)->second = new_schedule_time; // update my available time
+		timetable->find(node_id_)->second = new_schedule_time; // update my available time
 		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-			timetable.find(node_it->first)->second = new_schedule_time;
+			timetable->find(node_it->first)->second = new_schedule_time;
 		}
-		MyToolbox::set_timetable(timetable);  // upload the updated timetable
+		MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 		// Update the event_queue_
 		event_queue_.pop();	// remove the current send event, now successful

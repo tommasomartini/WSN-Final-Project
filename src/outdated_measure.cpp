@@ -16,6 +16,6 @@ int OutdatedMeasure::increase_hop_counter() {
 }
 
 unsigned int OutdatedMeasure::get_message_size() {
-  unsigned int message_size = symbols_to_remove_.size() * MyToolbox::num_bits_for_measure;
+  unsigned int message_size = symbols_to_remove_.size() * MyToolbox::num_bits_for_measure_;
   return message_size;
 }

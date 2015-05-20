@@ -112,7 +112,7 @@ vector<Event> Event::execute_action() {
 //  unsigned int gh_id = ((Node*)agent_)->get_node_id();
 //  cout << "EXECUTION: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
 
-  MyToolbox::set_current_time(time_); // keep track of the time flowing by. I must know what time it is in every moment
+  MyToolbox::current_time_ = time_; // keep track of the time flowing by. I must know what time it is in every moment
   vector<Event> new_events;
 
   // check whether the agent supposed to execute this action is still existing
@@ -202,7 +202,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case broken_sensor: {
-    	cout << "Sensor " << ((Node*)agent_)->get_node_id() << " broken, time " << MyToolbox::get_current_time() << endl;
+    	cout << "Sensor " << ((Node*)agent_)->get_node_id() << " broken, time " << MyToolbox::current_time_ << endl;
 //      MyToolbox::remove_sensor(((Node*)agent_)->get_node_id());
       break;
     }

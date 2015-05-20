@@ -48,43 +48,43 @@ void import_settings() {
         value = line.substr(pos + 1);
         double num = stod(value);
         if (value_name == "num_storage_nodes") {
-          MyToolbox::num_storage_nodes = (int)num;
+          MyToolbox::num_storage_nodes_ = (int)num;
         } else if (value_name == "num_sensors") {
-          MyToolbox::num_sensors = (int)num;
+          MyToolbox::num_sensors_ = (int)num;
         } else if (value_name == "num_users") {
-          MyToolbox::num_users = (int)num;
+          MyToolbox::num_users_ = (int)num;
         } else if (value_name == "num_bits_for_measure") {
-          MyToolbox::num_bits_for_measure = (int)num;
+          MyToolbox::num_bits_for_measure_ = (int)num;
         } else if (value_name == "bitrate") {
-          MyToolbox::bitrate = (double)num;
+          MyToolbox::bitrate_ = (double)num;
         } else if (value_name == "bit_error_prob") {
-          MyToolbox::bit_error_prob = (double)num;
+          MyToolbox::bit_error_prob_ = (double)num;
         } else if (value_name == "tx_range") {
-          MyToolbox::tx_range = (double)num;
+          MyToolbox::tx_range_ = (double)num;
         } else if (value_name == "ping_frequency") {
-          MyToolbox::ping_frequency = (MyTime)num;
+          MyToolbox::ping_frequency_ = (MyTime)num;
         } else if (value_name == "check_sensors_frequency") {
-          MyToolbox::check_sensors_frequency = (MyTime)num;
+          MyToolbox::check_sensors_frequency_ = (MyTime)num;
         } else if (value_name == "C1") {
-          MyToolbox::C1 = (double)num;
+          MyToolbox::C1_ = (double)num;
         } else if (value_name == "square_size") {
-          MyToolbox::square_size = (int)num;
+          MyToolbox::square_size_ = (int)num;
         } else if (value_name == "space_precision") {
-          MyToolbox::space_precision = (int)num;
+          MyToolbox::space_precision_ = (int)num;
         } else if (value_name == "user_velocity") {
-          MyToolbox::user_velocity = (double)num;
+          MyToolbox::user_velocity_ = (double)num;
         } else if (value_name == "user_update_time") {
-          MyToolbox::user_update_time = (MyTime)num;
+          MyToolbox::user_update_time_ = (MyTime)num;
         } else if (value_name == "processing_time") {
-          MyToolbox::processing_time = (MyTime)num;
+          MyToolbox::processing_time_ = (MyTime)num;
         } else if (value_name == "max_tx_offset") {
-          MyToolbox::max_tx_offset = (MyTime)num;
+          MyToolbox::max_tx_offset_ = (MyTime)num;
         } else if (value_name == "user_observation_time") {
-          MyToolbox::user_observation_time = (MyTime)num;
+          MyToolbox::user_observation_time_ = (MyTime)num;
         } else if (value_name == "max_measure_generation_delay") {
-          MyToolbox::max_measure_generation_delay = (MyTime)num;
+          MyToolbox::max_measure_generation_delay_ = (MyTime)num;
         } else if (value_name == "sensor_failure_prob") {
-          MyToolbox::sensor_failure_prob = (double)num;
+          MyToolbox::sensor_failure_prob_ = (double)num;
         }
       }
     }
@@ -114,52 +114,52 @@ int main() {
   *
   ************************************************************************************************/
 
-  map<unsigned int, Node*> sensors_map;
-  map<unsigned int, Node*> storage_nodes_map;
-  map<unsigned int, Node*> users_map;
+  map<unsigned int, Node*>* sensors_map = new map<unsigned int, Node*>();
+  map<unsigned int, Node*>* storage_nodes_map = new map<unsigned int, Node*>();
+  map<unsigned int, Node*>* users_map = new map<unsigned int, Node*>();
 
-  map<unsigned int, MyToolbox::MyTime> timetable;
+  map<unsigned int, MyToolbox::MyTime>* timetable = new map<unsigned int, MyToolbox::MyTime>();
 
   double y_coord;
   double x_coord;
-  default_random_engine generator = MyToolbox::get_random_generator();
-  uniform_real_distribution<double> distribution(0.0, MyToolbox::square_size * 1.0);
+  default_random_engine generator = MyToolbox::generator_;
+  uniform_real_distribution<double> distribution(0.0, MyToolbox::square_size_ * 1.0);
 
   // Create the sensors
-  for (int i = 1; i <= MyToolbox::num_sensors; i++) {
+  for (int i = 1; i <= MyToolbox::num_sensors_; i++) {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     SensorNode* node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
     node->data_collector = &data_coll;
-    sensors_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
-    timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
+    sensors_map->insert(pair<unsigned int, Node*>(node->get_node_id(), node));
+    timetable->insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
 
   // Create the storage nodes
-  for (int i = 1; i <= MyToolbox::num_storage_nodes; i++) {
+  for (int i = 1; i <= MyToolbox::num_storage_nodes_; i++) {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     StorageNode* node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
     node->data_collector = &data_coll;
-    storage_nodes_map.insert(pair<unsigned int, Node*>(node->get_node_id(), node));
-    timetable.insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
+    storage_nodes_map->insert(pair<unsigned int, Node*>(node->get_node_id(), node));
+    timetable->insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
 
   // Create the users
-  for (int i = 1; i <= MyToolbox::num_users; i++) {
+  for (int i = 1; i <= MyToolbox::num_users_; i++) {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     User* user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
     user->data_collector = &data_coll;
-    users_map.insert(pair<unsigned int, Node*>(user->get_node_id(), user));
-    timetable.insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
+    users_map->insert(pair<unsigned int, Node*>(user->get_node_id(), user));
+    timetable->insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
 
   // I want Toolbox to store all the maps of all the nodes
-  MyToolbox::sensors_map_ptr = &sensors_map;
-  MyToolbox::storage_nodes_map_ptr = &storage_nodes_map;
-  MyToolbox::users_map_ptr = &users_map;
-  MyToolbox::set_timetable(timetable);
+  MyToolbox::sensors_map_ptr_ = sensors_map;
+  MyToolbox::storage_nodes_map_ptr_ = storage_nodes_map;
+  MyToolbox::users_map_ptr_ = users_map;
+  MyToolbox::timetable_= timetable;
 
   // Create the neighborhoods
 //  SensorNode *sensor1;
@@ -172,51 +172,51 @@ int main() {
   double x2;
   double distance;
   // ...for the sensors
-  for (auto& sensor1_pair : sensors_map) {
+  for (auto& sensor1_pair : *sensors_map) {
     SensorNode* sensor1 = (SensorNode*)sensor1_pair.second;
     y1 = sensor1->get_y_coord();
     x1 = sensor1->get_x_coord();
-    for (auto& sensor2_pair : sensors_map) {
+    for (auto& sensor2_pair : *sensors_map) {
       SensorNode* sensor2 = (SensorNode*)sensor2_pair.second;
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range) {
+      if (sensor1->get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range_) {
 //    	pair<map<unsigned int, Node*>::iterator, bool> res;
 //        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
     	  sensor1->near_sensors_->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
-    for (auto& storage_node2_pair : storage_nodes_map) {
+    for (auto& storage_node2_pair : *storage_nodes_map) {
       StorageNode* storage_node2 = (StorageNode*)storage_node2_pair.second;
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::tx_range) {
+      if (distance <= MyToolbox::tx_range_) {
         sensor1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
   }
   // ...for the storage nodes
-  for (auto& storage_node1_pair : storage_nodes_map) {
+  for (auto& storage_node1_pair : *storage_nodes_map) {
     StorageNode* storage_node1 = (StorageNode*)storage_node1_pair.second;
     y1 = storage_node1->get_y_coord();
     x1 = storage_node1->get_x_coord();
-    for (auto& sensor2_pair : sensors_map) {
+    for (auto& sensor2_pair : *sensors_map) {
       SensorNode* sensor2 = (SensorNode*)sensor2_pair.second;
       y2 = sensor2->get_y_coord();
       x2 = sensor2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (distance <= MyToolbox::tx_range) {
+      if (distance <= MyToolbox::tx_range_) {
         storage_node1->near_sensors_->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
       }
     }
-    for (auto& storage_node2_pair : storage_nodes_map) {
+    for (auto& storage_node2_pair : *storage_nodes_map) {
       StorageNode* storage_node2 = (StorageNode*)storage_node2_pair.second;
       y2 = storage_node2->get_y_coord();
       x2 = storage_node2->get_x_coord();
       distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::tx_range) {
+      if (storage_node1->get_node_id() != storage_node2->get_node_id() && distance <= MyToolbox::tx_range_) {
         storage_node1->near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2->get_node_id(), storage_node2));
       }
     }
@@ -253,7 +253,7 @@ int main() {
     return 0;
 
   // Set sensors' supervisors
-  for (auto& sensor_pair : sensors_map) {
+  for (auto& sensor_pair : *sensors_map) {
 	((SensorNode*)sensor_pair.second)->set_supervisor();
     cout << "Sensor " << sensor_pair.second->get_node_id() << " sup " << ((SensorNode*)sensor_pair.second)->get_my_supervisor_id()
     		<< " #neighbours: " << sensor_pair.second->near_storage_nodes_->size() << endl;
@@ -268,9 +268,9 @@ int main() {
 
   // Sensors: activate measure generation and ping generation
   vector<Event> event_list;
-  uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay * 1.0);
-  uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency / 2, MyToolbox::ping_frequency);
-  for (auto& sensor_pair : sensors_map) {
+  uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
+  uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
+  for (auto& sensor_pair : *sensors_map) {
 	  // Activate measure generation
 	  Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
 //	  Event first_measure(first_measure_distrib(MyToolbox::get_random_generator()), Event::sensor_generate_measure);

@@ -60,7 +60,7 @@ unsigned int Measure::get_message_size() {
 //  unsigned int message_size = 0;
 //  message_size += MyToolbox::get_bits_for_measure(); // * num_measures;
 //  return message_size;
-  return MyToolbox::get_bits_for_measure();
+  return MyToolbox::num_bits_for_measure_;
 }
   
 unsigned int Measure::increase_hop_counter() {
