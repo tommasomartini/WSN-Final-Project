@@ -104,9 +104,10 @@ int main() {
 
   MyToolbox::initialize_toolbox();
 
-
-  DataCollector data_coll = DataCollector();
+  DataCollector* data_coll = new DataCollector();
 //  MyToolbox::dc = &data_coll;
+
+  vector<Event>* event_list = new vector<Event>;
 
   /************************************************************************************************
   *
@@ -130,7 +131,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     SensorNode* node = new SensorNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    node->data_collector = &data_coll;
+    node->data_collector = data_coll;
     sensors_map->insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable->insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
@@ -140,7 +141,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     StorageNode* node = new StorageNode(MyToolbox::get_node_id(), y_coord, x_coord);
-    node->data_collector = &data_coll;
+    node->data_collector = data_coll;
     storage_nodes_map->insert(pair<unsigned int, Node*>(node->get_node_id(), node));
     timetable->insert(pair<unsigned int, MyTime>(node->get_node_id(), 0));
   }
@@ -150,7 +151,7 @@ int main() {
     y_coord = distribution(generator);
     x_coord = distribution(generator);
     User* user = new User(MyToolbox::get_node_id(), y_coord, x_coord);
-    user->data_collector = &data_coll;
+    user->data_collector = data_coll;
     users_map->insert(pair<unsigned int, Node*>(user->get_node_id(), user));
     timetable->insert(pair<unsigned int, MyTime>(user->get_node_id(), 0));
   }
@@ -162,10 +163,6 @@ int main() {
   MyToolbox::timetable_= timetable;
 
   // Create the neighborhoods
-//  SensorNode *sensor1;
-//  SensorNode *sensor2;
-//  StorageNode *storage_node1;
-//  StorageNode *storage_node2;
   double y1;
   double x1;
   double y2;
@@ -267,7 +264,6 @@ int main() {
    ************************************************************************************************/
 
   // Sensors: activate measure generation and ping generation
-  vector<Event> event_list;
   uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
   uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
   for (auto& sensor_pair : *sensors_map) {
@@ -276,13 +272,13 @@ int main() {
 //	  Event first_measure(first_measure_distrib(MyToolbox::get_random_generator()), Event::sensor_generate_measure);
 	  cout << "first measure time " << first_measure.get_time() << endl;
 	  first_measure.set_agent(sensor_pair.second);
-	  vector<Event>::iterator event_iterator = event_list.begin();
-	  for (; event_iterator != event_list.end(); event_iterator++) {	// scan the event list and insert the new event in the right place
+	  vector<Event>::iterator event_iterator = event_list->begin();
+	  for (; event_iterator != event_list->end(); event_iterator++) {	// scan the event list and insert the new event in the right place
 		  if (first_measure < *event_iterator) {
 			  break;
 		  }
 	  }
-	  event_list.insert(event_iterator, first_measure);
+	  event_list->insert(event_iterator, first_measure);
 
 	  // Activate ping
 //	  Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
@@ -316,23 +312,23 @@ int main() {
    *
    ************************************************************************************************/
 
-  while (!event_list.empty()) {
+  while (!event_list->empty()) {
 
     // TODO: verify next event has a different schedule time than this
       
-    Event next_event = *(event_list.begin());
-    event_list.erase(event_list.begin());
+    Event next_event = *(event_list->begin());
+    event_list->erase(event_list->begin());
     vector<Event> new_events = next_event.execute_action();
 
     vector<Event>::iterator new_event_iterator = new_events.begin();
     for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-      vector<Event>::iterator old_event_iterator = event_list.begin();
-      for (; old_event_iterator != event_list.end(); old_event_iterator++) {
+      vector<Event>::iterator old_event_iterator = event_list->begin();
+      for (; old_event_iterator != event_list->end(); old_event_iterator++) {
         if (*old_event_iterator > *new_event_iterator) {
           break;
         }
       }
-      event_list.insert(old_event_iterator, *new_event_iterator);
+      event_list->insert(old_event_iterator, *new_event_iterator);
     }
 
 //    show the list of the events
