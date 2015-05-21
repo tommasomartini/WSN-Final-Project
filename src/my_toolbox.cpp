@@ -5,7 +5,6 @@
 // #include <random>   // generation of random variables -> require -std=c++11
 
 #include "my_toolbox.h"
-#include "node.h"
 #include "storage_node.h"
 #include "sensor_node.h"
 #include "user.h"
@@ -69,7 +68,7 @@ void MyToolbox::set_close_nodes(User* user) {
     if (dist < MyToolbox::tx_range_) { // the users are able to communicate
       pair<unsigned int, Node*> pp(st_node.get_node_id(), &st_node);
       user->near_storage_nodes_.insert(pp);
-    } 
+    }
   }
 
   for (auto& us_node_elem : users_map_ptr_) {
@@ -82,9 +81,9 @@ void MyToolbox::set_close_nodes(User* user) {
       double my_y = user->get_y_coord();
       double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
       if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-        pair<unsigned int, Node*> pp(us_node.get_node_id(), &us_node);
+        pair<unsigned int, User> pp(us_node.get_node_id(), us_node);
         user->near_users_.insert(pp);
-      } 
+      }
     }
   }
 }

@@ -14,16 +14,11 @@ class User;
 
 class Node : public Agent {
  public:
-  // TODO: sostituire con una mappa <id, riferimento al nodo> ?
-//  vector<Node*> near_storage_nodes;
-//  vector<Node*> near_sensor_nodes;
-//  vector<Node*> near_users;
-
   DataCollector* data_collector;
 
   std::map<unsigned int, Node*> near_sensors_;
   std::map<unsigned int, Node*> near_storage_nodes_;
-  std::map<unsigned int, Node*> near_users_;  // creata domenica 8 marzo. Davvero necessario?
+  std::map<unsigned int, User> near_users_;  // creata domenica 8 marzo. Davvero necessario?
 
   Node();
   Node(unsigned int /*node_id*/);
@@ -38,10 +33,10 @@ class Node : public Agent {
   void set_position(double /*y_coord*/, double /*x_coord*/);
   
   // TODO remove?
-  void add_near_storage_node(Node*);
-  void add_near_sensor_node(Node*);
-  void add_near_user(Node*);
-  static bool are_nodes_near(Node*, Node*); // TODO: non ha senso mettere questa funzione in node!
+//  void add_near_storage_node(Node*);
+//  void add_near_sensor_node(Node*);
+//  void add_near_user(Node*);
+//  static bool are_nodes_near(Node*, Node*); // TODO: non ha senso mettere questa funzione in node!
 
  protected:
   unsigned int node_id_;

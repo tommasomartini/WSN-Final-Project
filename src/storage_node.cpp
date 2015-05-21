@@ -6,6 +6,7 @@
 
 #include "storage_node.h"
 #include "my_toolbox.h"
+#include "user.h"
 #include "measure.h"
 #include "blacklist_message.h"
 #include "outdated_measure.h"

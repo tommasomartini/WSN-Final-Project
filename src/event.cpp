@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-#include "event.h"
+//#include "event.h"
 #include "sensor_node.h"
 #include "measure.h"
 #include "storage_node.h"
