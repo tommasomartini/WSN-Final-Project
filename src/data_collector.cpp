@@ -33,19 +33,20 @@ void DataCollector::print_data() {
 //	cout << data << endl;
 }
 
+// commentd to debug mytoolbos, forward class storagenode
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
-	MeasureKey key(sns_id, msr_id);	// create the key
-	MeasureInfo measureInfo;
-	map<unsigned int, StorageNode*> cache_map = MyToolbox::storage_nodes_map_ptr_;	// take the map of the storage nodes
-	map<unsigned int, int> node_map;	// create the node map to associate to this key
-	measureInfo.born_time_ = MyToolbox::current_time_;
-	measureInfo.node_map_ = node_map;
-//	for (map<unsigned int, Node*>::iterator node_it = cache_map.begin(); node_it != cache_map.end(); node_it++) { 	// fill the map with each cache id and set the value to 0 by default
-//		unsigned int curr_node_id = node_it->first;
-//		node_map.insert(pair<unsigned int, int>(curr_node_id, 0));
-//	}
-	measures_register.insert(pair<MeasureKey, MeasureInfo>(key, measureInfo));	// store this measure entry
-	cout << "Measure (s" << sns_id << ", " << msr_id << ") added" << endl;
+//	MeasureKey key(sns_id, msr_id);	// create the key
+//	MeasureInfo measureInfo;
+//	map<unsigned int, StorageNode*> cache_map = MyToolbox::storage_nodes_map_ptr_;	// take the map of the storage nodes
+//	map<unsigned int, int> node_map;	// create the node map to associate to this key
+//	measureInfo.born_time_ = MyToolbox::current_time_;
+//	measureInfo.node_map_ = node_map;
+////	for (map<unsigned int, Node*>::iterator node_it = cache_map.begin(); node_it != cache_map.end(); node_it++) { 	// fill the map with each cache id and set the value to 0 by default
+////		unsigned int curr_node_id = node_it->first;
+////		node_map.insert(pair<unsigned int, int>(curr_node_id, 0));
+////	}
+//	measures_register.insert(pair<MeasureKey, MeasureInfo>(key, measureInfo));	// store this measure entry
+//	cout << "Measure (s" << sns_id << ", " << msr_id << ") added" << endl;
 }
 
 void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned int sym) {

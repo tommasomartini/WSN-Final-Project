@@ -7,7 +7,6 @@
 #include "node.h"
 
 class Message;
-class UserMessage;
 class NodeInfoMessage;
 
 class User: public Node {
@@ -28,7 +27,6 @@ class User: public Node {
   User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
 
   std::map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of corresponding sensor	// TODO to remove
-//  std::vector<StorageNodeMessage> output_symbols2_; // list of the xored messages retrieved from the storage nodes	// TODO to remove
   
   std::vector<Event> move(); // different implementation of the random walk
   std::vector<Event> user_send_to_user(unsigned int /*sender user*/);  // Tom

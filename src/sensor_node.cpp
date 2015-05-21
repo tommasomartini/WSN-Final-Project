@@ -91,13 +91,13 @@ vector<Event> SensorNode::try_retx(Message* message) {
 
 vector<Event> SensorNode::sensor_ping2() {
 	vector<Event> new_events;
-	map<unsigned int, Node*>::iterator supervisor_it = near_storage_nodes_->find(my_supervisor_id_);
-	while (supervisor_it == near_storage_nodes_->end()) {	// until I don't find a valid neighbour...
+	map<unsigned int, Node*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
+	while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
 		my_supervisor_id_ = get_random_neighbor();	// ...try a new one
 		if (my_supervisor_id_ == 0) {	// this sensor has no more neighbours
 			return new_events;	// return now and do not schedule another ping!
 		}
-		supervisor_it = near_storage_nodes_->find(my_supervisor_id_);
+		supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 	}
 	cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
 	((StorageNode*)supervisor_it->second)->receive_hello(node_id_);	// send the hello ping
@@ -138,10 +138,10 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 //		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
 		cout << " queue empty" << endl;
-		map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+		map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
 		MyTime current_time = MyToolbox::current_time_;  // current time of the system
-		MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
-		MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
+		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
@@ -183,7 +183,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
-			receive_message_event.set_agent(near_storage_nodes_->find(next_node_id)->second);
+			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -193,9 +193,9 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			cout << "  current time " << current_time << endl;
 
 			// Update the timetable
-			timetable->find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-				timetable->find(node_it->first)->second = new_schedule_time;
+			timetable.find(node_id_)->second = new_schedule_time; // update my available time
+			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
@@ -211,7 +211,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 	cout << " going to resend" << endl;
 
 	unsigned int next_node_id = message->get_receiver_node_id();
-	if (near_storage_nodes_->find(next_node_id) == near_storage_nodes_->end()) {	// my neighbor there is no longer
+	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end()) {	// my neighbor there is no longer
 		cout << " don't have my neighour" << endl;
 		bool give_up = false;	// I could give up transmitting: it depends on the message type!
 		switch (message->message_type_) {
@@ -257,10 +257,10 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 	// If I arrive here I have a neighbour to whom I can try to send
 
-	map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+	map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
 	MyTime current_time = MyToolbox::current_time_;  // current time of the system
-	MyTime my_available_time = timetable->find(node_id_)->second; // time this node gets free (ME)
-	MyTime next_node_available_time = timetable->find(next_node_id)->second;  // time next_node gets free
+	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 		cout << " me not available" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
@@ -297,7 +297,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			break;
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
-		receive_message_event.set_agent(near_storage_nodes_->find(next_node_id)->second);
+		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -307,9 +307,9 @@ vector<Event> SensorNode::re_send(Message* message) {
 		cout << "  current time " << current_time << endl;
 
 		// Update the timetable
-		timetable->find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-			timetable->find(node_it->first)->second = new_schedule_time;
+		timetable.find(node_id_)->second = new_schedule_time; // update my available time
+		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+			timetable.find(node_it->first)->second = new_schedule_time;
 		}
 		MyToolbox::timetable_ = timetable;  // upload the updated timetable
 

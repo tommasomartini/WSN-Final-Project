@@ -19,9 +19,9 @@ Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   node_id_ = node_id;
   y_coord_ = y_coord;
   x_coord_ = x_coord;
-  near_sensors_ = new map<unsigned int, Node*>();
-  near_storage_nodes_ = new map<unsigned int, Node*>();
-  near_users_ = new map<unsigned int, Node*>();
+  near_sensors_ = map<unsigned int, Node*>();
+  near_storage_nodes_ = map<unsigned int, Node*>();
+  near_users_ = map<unsigned int, Node*>();
 }
 
 /**************************************
@@ -56,15 +56,14 @@ bool Node::are_nodes_near(Node* n1, Node* n2) {
 }
 
 unsigned int Node::get_random_neighbor() {
-	if (near_storage_nodes_->size() == 0) {	// I don't have neighbors
+	if (near_storage_nodes_.size() == 0) {	// I don't have neighbors
 		return 0;
 	} else {
-		int next_node_index = rand() % near_storage_nodes_->size();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
+		int next_node_index = rand() % near_storage_nodes_.size();
+		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_.begin();
 		for (int i = 0; i < next_node_index; i++) {
 			node_iter++;
 		}
-		Node *next_node = node_iter->second;
-		return next_node->get_node_id();
+		return node_iter->first;
 	}
 }

@@ -13,7 +13,7 @@
 using namespace std;
 
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
-map<unsigned int, MyToolbox::MyTime>* MyToolbox::timetable_;
+map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
 unsigned int MyToolbox::node_id_ = 10;	// the first 10 ids are reserved
 
 //  Global values
@@ -49,17 +49,18 @@ MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
 
 map<unsigned int, SensorNode> MyToolbox::sensors_map_ptr_;
-map<unsigned int, StorageNode*> MyToolbox::storage_nodes_map_ptr_;
-map<unsigned int, User*> MyToolbox::users_map_ptr_;
+map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_ptr_;
+map<unsigned int, User> MyToolbox::users_map_ptr_;
 
 default_random_engine MyToolbox::generator_;
 
 void MyToolbox::set_close_nodes(User* user) {
-  user->near_storage_nodes_->clear();
-  user->near_users_->clear();
+  user->near_storage_nodes_.clear();
+  user->near_users_.clear();
 
   for (auto& st_node_elem : storage_nodes_map_ptr_) {
-    StorageNode st_node = *(st_node_elem.second);
+    StorageNode st_node = st_node_elem.second;
+//    StorageNode st_node = *(st_node_elem.second);
     double his_x = st_node.get_x_coord();
     double his_y = st_node.get_y_coord();
     double my_x = user->get_x_coord();
@@ -67,12 +68,13 @@ void MyToolbox::set_close_nodes(User* user) {
     double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
     if (dist < MyToolbox::tx_range_) { // the users are able to communicate
       pair<unsigned int, Node*> pp(st_node.get_node_id(), &st_node);
-      user->near_storage_nodes_->insert(pp);
+      user->near_storage_nodes_.insert(pp);
     } 
   }
 
   for (auto& us_node_elem : users_map_ptr_) {
-  User us_node = *(us_node_elem.second);
+  User us_node = us_node_elem.second;
+//  User us_node = *(us_node_elem.second);
     if (&us_node != user) {  // does not make sense to include myself among my neighbours
       double his_x = us_node.get_x_coord();
       double his_y = us_node.get_y_coord();
@@ -81,7 +83,7 @@ void MyToolbox::set_close_nodes(User* user) {
       double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
       if (dist < MyToolbox::tx_range_) { // the users are able to communicate
         pair<unsigned int, Node*> pp(us_node.get_node_id(), &us_node);
-        user->near_users_->insert(pp);
+        user->near_users_.insert(pp);
       } 
     }
   }
@@ -119,7 +121,7 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
 
 // Made by Tom
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
-  timetable_->erase(sensor_id);
+  timetable_.erase(sensor_id);
   sensors_map_ptr_.erase(sensor_id);
   cout << "TB: eliminato sensore " << sensor_id << endl;
 }
@@ -260,8 +262,8 @@ int MyToolbox::check_clouds() {
   vector<pair<int, Node*>> clouds;	// cloud_id - node
   map<unsigned int, Node*> allnodes;
   // copy all the nodes into the allnodes map
-  for (map<unsigned int, StorageNode*>::iterator it_cache = storage_nodes_map_ptr_.begin(); it_cache != storage_nodes_map_ptr_.end(); it_cache++) {
-    allnodes.insert(pair<unsigned int, Node*>(it_cache->first, it_cache->second));
+  for (map<unsigned int, StorageNode>::iterator it_cache = storage_nodes_map_ptr_.begin(); it_cache != storage_nodes_map_ptr_.end(); it_cache++) {
+    allnodes.insert(pair<unsigned int, Node*>(it_cache->first, &(it_cache->second)));
   }
 
   clouds.push_back(pair<int, Node*>(color, allnodes.begin()->second));	// insert in the cloud the seed, the first node
@@ -297,7 +299,7 @@ int MyToolbox::check_clouds() {
 
 bool MyToolbox::sensor_connected() {
 	for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map_ptr_.begin(); sns_it != sensors_map_ptr_.end(); sns_it++) {	// for each sensor...
-		if (sns_it->second.near_storage_nodes_->empty()) {	// ...check if it has at least one neighbour. If it has not...
+		if (sns_it->second.near_storage_nodes_.empty()) {	// ...check if it has at least one neighbour. If it has not...
 			return false;	// ...break and return false.
 		}
 	}

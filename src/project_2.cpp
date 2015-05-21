@@ -170,12 +170,11 @@ bool network_setup() {
 		timetable.insert(pair<unsigned int, MyTime>(user.get_node_id(), 0));
 	}
 
-	// TODO activate this
 	// I want Toolbox to store all the maps of all the nodes
-//	MyToolbox::sensors_map_ptr_ = sensors_map;
-//	MyToolbox::storage_nodes_map_ptr_ = storage_nodes_map;
-//	MyToolbox::users_map_ptr_ = users_map;
-//	MyToolbox::timetable_= timetable;
+	MyToolbox::sensors_map_ptr_ = sensors_map;
+	MyToolbox::storage_nodes_map_ptr_ = storage_nodes_map;
+	MyToolbox::users_map_ptr_ = users_map;
+	MyToolbox::timetable_= timetable;
 
 	// Create the neighborhoods
 	double y1;
@@ -198,7 +197,7 @@ bool network_setup() {
 			if (sensor1.get_node_id() != sensor2.get_node_id() && distance <= MyToolbox::tx_range_) {
 				//    	pair<map<unsigned int, Node*>::iterator, bool> res;
 				//        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
-				sensor1.near_sensors_->insert(pair<unsigned int, Node*>(sensor2.get_node_id(), &sensor2));
+				sensor1.near_sensors_.insert(pair<unsigned int, Node*>(sensor2.get_node_id(), &sensor2));
 			}
 		}
 		for (map<unsigned int, StorageNode>::iterator cache_it = storage_nodes_map.begin(); cache_it != storage_nodes_map.end(); cache_it++) {
@@ -207,7 +206,7 @@ bool network_setup() {
 			x2 = storage_node2.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (distance <= MyToolbox::tx_range_) {
-				sensor1.near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
+				sensor1.near_storage_nodes_.insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
 			}
 		}
 	}
@@ -222,7 +221,7 @@ bool network_setup() {
 			x2 = sensor2.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (distance <= MyToolbox::tx_range_) {
-				storage_node1.near_sensors_->insert(pair<unsigned int, Node*>(sensor2.get_node_id(), &sensor2));
+				storage_node1.near_sensors_.insert(pair<unsigned int, Node*>(sensor2.get_node_id(), &sensor2));
 			}
 		}
 		for (map<unsigned int, StorageNode>::iterator cache_it2 = storage_nodes_map.begin(); cache_it2 != storage_nodes_map.end(); cache_it2++) {
@@ -231,7 +230,7 @@ bool network_setup() {
 			x2 = storage_node2.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (storage_node1.get_node_id() != storage_node2.get_node_id() && distance <= MyToolbox::tx_range_) {
-				storage_node1.near_storage_nodes_->insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
+				storage_node1.near_storage_nodes_.insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
 			}
 		}
 	}
@@ -272,7 +271,7 @@ bool network_setup() {
 	for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map.begin(); sns_it != sensors_map.end(); sns_it++) {
 		(sns_it->second).set_supervisor();
 		cout << "Sensor " << sns_it->second.get_node_id() << " sup " << sns_it->second.get_my_supervisor_id()
-		    										<< " #neighbours: " << sns_it->second.near_storage_nodes_->size() << endl;
+		    										<< " #neighbours: " << sns_it->second.near_storage_nodes_.size() << endl;
 	}
 
 	return true;

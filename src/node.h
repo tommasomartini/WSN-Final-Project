@@ -9,6 +9,8 @@
 #include "data_collector.h"
 
 class SensorNode;
+class StorageNode;
+class User;
 
 class Node : public Agent {
  public:
@@ -19,9 +21,9 @@ class Node : public Agent {
 
   DataCollector* data_collector;
 
-  std::map<unsigned int, Node*>* near_sensors_;
-  std::map<unsigned int, Node*>* near_storage_nodes_;
-  std::map<unsigned int, Node*>* near_users_;  // creata domenica 8 marzo. Davvero necessario?
+  std::map<unsigned int, Node*> near_sensors_;
+  std::map<unsigned int, Node*> near_storage_nodes_;
+  std::map<unsigned int, Node*> near_users_;  // creata domenica 8 marzo. Davvero necessario?
 
   Node();
   Node(unsigned int /*node_id*/);

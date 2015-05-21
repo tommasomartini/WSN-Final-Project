@@ -90,10 +90,10 @@ class MyToolbox {
 
   // Maps <node_id, node_reference>
   static std::map<unsigned int, SensorNode> sensors_map_ptr_;
-  static std::map<unsigned int, StorageNode*> storage_nodes_map_ptr_;
-  static std::map<unsigned int, User*> users_map_ptr_;
+  static std::map<unsigned int, StorageNode> storage_nodes_map_ptr_;
+  static std::map<unsigned int, User> users_map_ptr_;
 
-  static std::map<unsigned int, MyTime>* timetable_;  // says when a node gets free
+  static std::map<unsigned int, MyTime> timetable_;  // says when a node gets free
 
   static MyTime current_time_; // to keep track of the time
 

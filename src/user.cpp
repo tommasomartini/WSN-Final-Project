@@ -434,22 +434,25 @@ vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
 */      //metodo user_send_to_user diventato obsoleto!
 
 vector<Event> User::try_retx(Message* message, int next_node_id) {
-  map<unsigned int, StorageNode*>* nodes_map = &(MyToolbox::storage_nodes_map_ptr_);
-  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
-  return send(next_node, message);
+//  map<unsigned int, StorageNode*>* nodes_map = &(MyToolbox::storage_nodes_map_ptr_);
+//  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
+//  return send(next_node, message);
+	return vector<Event>();
 }
 
 vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
-  map<unsigned int, User*>* users_map = &(MyToolbox::users_map_ptr_);
-  User* next_user = (User*)users_map->find(next_node_id)->second;
-  double rx_user_x = next_user->get_x_coord();
-  double rx_user_y = next_user->get_y_coord();
-  double dist = sqrt(pow(x_coord_ - rx_user_x, 2) + pow(y_coord_ - rx_user_y, 2));  // compute the distance between the two users
-  if (dist < MyToolbox::tx_range_) { // the users are still able to communicate
-    return send(next_user, message);
-  } else {
-    return vector<Event>();
-  }
+//  map<unsigned int, User>* users_map = &(MyToolbox::users_map_ptr_);
+////  map<unsigned int, User*>* users_map = &(MyToolbox::users_map_ptr_);
+//  User* next_user = (User*)users_map->find(next_node_id)->second;
+//  double rx_user_x = next_user->get_x_coord();
+//  double rx_user_y = next_user->get_y_coord();
+//  double dist = sqrt(pow(x_coord_ - rx_user_x, 2) + pow(y_coord_ - rx_user_y, 2));  // compute the distance between the two users
+//  if (dist < MyToolbox::tx_range_) { // the users are still able to communicate
+//    return send(next_user, message);
+//  } else {
+//    return vector<Event>();
+//  }
+	return vector<Event>();
 }
 
 vector<Event> User::send(Node* next_node, Message* message) {
