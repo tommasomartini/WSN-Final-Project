@@ -4,6 +4,7 @@
 #include <algorithm>    // std::find, to check whether an element is in a vector
 
 #include "user.h"
+#include "sensor_node.h"
 #include "intra_user_message.h"
 #include "my_toolbox.h"
 #include "storage_node.h"

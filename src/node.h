@@ -16,7 +16,7 @@ class Node : public Agent {
  public:
   DataCollector* data_collector;
 
-  std::map<unsigned int, Node*> near_sensors_;
+  std::map<unsigned int, SensorNode> near_sensors_;
   std::map<unsigned int, Node*> near_storage_nodes_;
   std::map<unsigned int, User> near_users_;  // creata domenica 8 marzo. Davvero necessario?
 

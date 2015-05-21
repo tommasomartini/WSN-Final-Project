@@ -3,6 +3,7 @@
 #include "node.h"
 #include "my_toolbox.h"
 #include "user.h"
+#include "sensor_node.h"
 
 
 /**************************************
@@ -20,7 +21,7 @@ Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   node_id_ = node_id;
   y_coord_ = y_coord;
   x_coord_ = x_coord;
-  near_sensors_ = map<unsigned int, Node*>();
+  near_sensors_ = map<unsigned int, SensorNode>();
   near_storage_nodes_ = map<unsigned int, Node*>();
   near_users_ = map<unsigned int, User>();
 }
