@@ -9,7 +9,7 @@
 #include "event.h"
 #include "data_collector.h"
 
-using namespace std;
+class SensorNode;
 
 class Node : public Agent {
  public:
@@ -20,9 +20,9 @@ class Node : public Agent {
 
   DataCollector* data_collector;
 
-  map<unsigned int, Node*>* near_sensors_;
-  map<unsigned int, Node*>* near_storage_nodes_;
-  map<unsigned int, Node*>* near_users_;  // creata domenica 8 marzo. Davvero necessario?
+  std::map<unsigned int, Node*>* near_sensors_;
+  std::map<unsigned int, Node*>* near_storage_nodes_;
+  std::map<unsigned int, Node*>* near_users_;  // creata domenica 8 marzo. Davvero necessario?
 
   Node();
   Node(unsigned int /*node_id*/);

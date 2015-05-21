@@ -255,7 +255,7 @@ void show_c(vector<pair<int, Node*>>* clouds_, int num_clouds) {
   cout << endl;
 }
 
-int MyToolbox::show_clouds() {
+int MyToolbox::check_clouds() {
   int color = 0;
   vector<pair<int, Node*>> clouds;	// cloud_id - node
   map<unsigned int, Node*> allnodes;
@@ -296,5 +296,14 @@ int MyToolbox::show_clouds() {
 
 //  show_c(&clouds, color + 1);
   return color + 1;
+}
+
+bool MyToolbox::sensor_connected() {
+	for (map<unsigned int, Node*>::iterator sensor_it = sensors_map_ptr_->begin(); sensor_it != sensors_map_ptr_->end(); sensor_it++) {	// for each sensor...
+		if (sensor_it->second->near_storage_nodes_->empty()) {	// ...check if it has at least one neighbour. If it has not...
+			return false;	// ...break and return false.
+		}
+	}
+	return true;
 }
 

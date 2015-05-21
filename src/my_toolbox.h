@@ -111,7 +111,8 @@ class MyToolbox {
   static void remove_sensor(unsigned int /*sensor_id*/);
 
   static std::string int2nodetype(unsigned int);	// TODO just for debug
-  static int show_clouds();	// TODO just for debugging
+  static int check_clouds();
+  static bool sensor_connected();
 
  private:
   static unsigned int node_id_; 
