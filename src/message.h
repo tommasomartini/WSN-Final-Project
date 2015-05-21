@@ -3,8 +3,6 @@
 
 #include <string>
 
-using namespace std;
-
 class Message {
  public:
   enum MessageTypes {
@@ -23,7 +21,7 @@ class Message {
 
   // Message() {message_type_ = message_type_ping;};
 
-  static string int2msgtype(int);	// TODO just for debug
+  static std::string int2msgtype(int);	// TODO just for debug
 
   // getters
   unsigned int get_receiver_node_id() {return receiver_node_id_;}

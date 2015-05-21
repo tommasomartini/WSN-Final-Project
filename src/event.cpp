@@ -9,6 +9,7 @@
 #include "measure.h"
 #include "user.h"
 #include "outdated_measure.h"
+#include "node_info_message.h"
 
 
 Event::Event(MyTime event_time) {
@@ -178,7 +179,7 @@ vector<Event> Event::execute_action() {
       break;
     }
     case user_receive_data: {
-         new_events = ((User*)agent_)->user_receive_data((UserMessage*)message_);
+//         new_events = ((User*)agent_)->receive_data((NodeInfoMessage)*(message_));
       break;
     }
     case sensor_ping: {

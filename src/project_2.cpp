@@ -21,7 +21,6 @@ g++ project_2.cpp event.cpp node.cpp measure.cpp my_toolbox.cpp sensor_node.cpp 
 #include "my_toolbox.h"
 #include "event.h"
 #include "user.h"
-#include "storage_node_message.h"
 #include "data_collector.h"
 
 using namespace std;
@@ -135,7 +134,6 @@ bool network_setup() {
 	sensors_map = map<unsigned int, SensorNode>();
 	storage_nodes_map = map<unsigned int, StorageNode>();
 	users_map = map<unsigned int, User>();
-
 	timetable = map<unsigned int, MyToolbox::MyTime>();
 
 	double y_coord;

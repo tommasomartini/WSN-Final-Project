@@ -9,7 +9,6 @@
 #include "measure.h"
 #include "blacklist_message.h"
 #include "outdated_measure.h"
-#include "storage_node_message.h"
 #include "reinit_query.h"
 #include "reinit_response.h"
 
@@ -137,17 +136,17 @@ void StorageNode::receive_hello(unsigned int sensor_id) {
  */
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 	vector<Event> new_events;
-	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
-//		vector<unsigned int> my_sensor_ids;
-//		for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
-//			my_sensor_ids.push_back(it->first);
-//		}
-		map<unsigned int, unsigned int> msrs_info = last_measures_;
-		StorageNodeMessage msg(xored_measure_, msrs_info);
-		Node* next_node = MyToolbox::users_map_ptr_->find(sender_user_id)->second;
-//		msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
-		new_events = send2(sender_user_id, &msg);
-	}
+//	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
+////		vector<unsigned int> my_sensor_ids;
+////		for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
+////			my_sensor_ids.push_back(it->first);
+////		}
+//		map<unsigned int, unsigned int> msrs_info = last_measures_;
+//		StorageNodeMessage msg(xored_measure_, msrs_info);
+////		Node* next_node = MyToolbox::users_map_ptr_.find(sender_user_id)->second;
+////		msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
+//		new_events = send2(sender_user_id, &msg);
+//	}
 	return new_events;
 }
 

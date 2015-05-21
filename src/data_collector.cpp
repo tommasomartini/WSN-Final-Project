@@ -36,7 +36,7 @@ void DataCollector::print_data() {
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
 	MeasureKey key(sns_id, msr_id);	// create the key
 	MeasureInfo measureInfo;
-	map<unsigned int, Node*> cache_map = *(MyToolbox::storage_nodes_map_ptr_);	// take the map of the storage nodes
+	map<unsigned int, StorageNode*> cache_map = MyToolbox::storage_nodes_map_ptr_;	// take the map of the storage nodes
 	map<unsigned int, int> node_map;	// create the node map to associate to this key
 	measureInfo.born_time_ = MyToolbox::current_time_;
 	measureInfo.node_map_ = node_map;

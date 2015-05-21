@@ -7,6 +7,7 @@
 #include "my_toolbox.h"
 #include "node.h"
 #include "storage_node.h"
+#include "sensor_node.h"
 #include "user.h"
 
 using namespace std;
@@ -14,7 +15,6 @@ using namespace std;
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 map<unsigned int, MyToolbox::MyTime>* MyToolbox::timetable_;
 unsigned int MyToolbox::node_id_ = 10;	// the first 10 ids are reserved
-//DataCollector* MyToolbox::dc;
 
 //  Global values
 int MyToolbox::num_storage_nodes_ = 0;
@@ -48,9 +48,9 @@ MyToolbox::MyTime MyToolbox::user_observation_time_ = 0;
 MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
 
-map<unsigned int, Node*>* MyToolbox::sensors_map_ptr_;
-map<unsigned int, Node*>* MyToolbox::storage_nodes_map_ptr_; 
-map<unsigned int, Node*>* MyToolbox::users_map_ptr_; 
+map<unsigned int, SensorNode> MyToolbox::sensors_map_ptr_;
+map<unsigned int, StorageNode*> MyToolbox::storage_nodes_map_ptr_;
+map<unsigned int, User*> MyToolbox::users_map_ptr_;
 
 default_random_engine MyToolbox::generator_;
 
@@ -58,29 +58,29 @@ void MyToolbox::set_close_nodes(User* user) {
   user->near_storage_nodes_->clear();
   user->near_users_->clear();
 
-  for (auto& st_node_elem : *storage_nodes_map_ptr_) {
-    StorageNode* st_node = (StorageNode*)st_node_elem.second;
-    double his_x = st_node->get_x_coord();
-    double his_y = st_node->get_y_coord();
+  for (auto& st_node_elem : storage_nodes_map_ptr_) {
+    StorageNode st_node = *(st_node_elem.second);
+    double his_x = st_node.get_x_coord();
+    double his_y = st_node.get_y_coord();
     double my_x = user->get_x_coord();
     double my_y = user->get_y_coord();
     double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
     if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-      pair<unsigned int, Node*> pp(st_node->get_node_id(), st_node);
+      pair<unsigned int, Node*> pp(st_node.get_node_id(), &st_node);
       user->near_storage_nodes_->insert(pp);
     } 
   }
 
-  for (auto& us_node_elem : *users_map_ptr_) {
-  User* us_node = (User*)us_node_elem.second;
-    if (us_node != user) {  // does not make sense to include myself among my neighbours
-      double his_x = us_node->get_x_coord();
-      double his_y = us_node->get_y_coord();
+  for (auto& us_node_elem : users_map_ptr_) {
+  User us_node = *(us_node_elem.second);
+    if (&us_node != user) {  // does not make sense to include myself among my neighbours
+      double his_x = us_node.get_x_coord();
+      double his_y = us_node.get_y_coord();
       double my_x = user->get_x_coord();
       double my_y = user->get_y_coord();
       double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
       if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-        pair<unsigned int, Node*> pp(us_node->get_node_id(), us_node);
+        pair<unsigned int, Node*> pp(us_node.get_node_id(), &us_node);
         user->near_users_->insert(pp);
       } 
     }
@@ -102,15 +102,15 @@ void MyToolbox::initialize_toolbox() {
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
 
-  if (sensors_map_ptr_->find(node_id) != sensors_map_ptr_->end()) {
+  if (sensors_map_ptr_.find(node_id) != sensors_map_ptr_.end()) {
     return true;
   }
 
-  if (storage_nodes_map_ptr_->find(node_id) != storage_nodes_map_ptr_->end()) {
+  if (storage_nodes_map_ptr_.find(node_id) != storage_nodes_map_ptr_.end()) {
     return true;
   }
 
-  if (users_map_ptr_->find(node_id) != users_map_ptr_->end()) {
+  if (users_map_ptr_.find(node_id) != users_map_ptr_.end()) {
     return true;
   }
 
@@ -120,7 +120,7 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
 // Made by Tom
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
   timetable_->erase(sensor_id);
-  sensors_map_ptr_->erase(sensor_id);
+  sensors_map_ptr_.erase(sensor_id);
   cout << "TB: eliminato sensore " << sensor_id << endl;
 }
 
@@ -226,11 +226,11 @@ MyToolbox::MyTime MyToolbox::get_tx_offset() {
 
 string MyToolbox::int2nodetype(unsigned int num) {
 	string res = "unknown";
-	if (sensors_map_ptr_->find(num) != sensors_map_ptr_->end()) {
+	if (sensors_map_ptr_.find(num) != sensors_map_ptr_.end()) {
 		res = "sensor";
-	} else if (storage_nodes_map_ptr_->find(num) != storage_nodes_map_ptr_->end()) {
+	} else if (storage_nodes_map_ptr_.find(num) != storage_nodes_map_ptr_.end()) {
 		res = "cache";
-	} else if (users_map_ptr_->find(num) != users_map_ptr_->end()) {
+	} else if (users_map_ptr_.find(num) != users_map_ptr_.end()) {
 		res = "user";
 	} else {
 		res = "unknown";
@@ -260,12 +260,9 @@ int MyToolbox::check_clouds() {
   vector<pair<int, Node*>> clouds;	// cloud_id - node
   map<unsigned int, Node*> allnodes;
   // copy all the nodes into the allnodes map
-  for (map<unsigned int, Node*>::iterator it_cache = storage_nodes_map_ptr_->begin(); it_cache != storage_nodes_map_ptr_->end(); it_cache++) {
+  for (map<unsigned int, StorageNode*>::iterator it_cache = storage_nodes_map_ptr_.begin(); it_cache != storage_nodes_map_ptr_.end(); it_cache++) {
     allnodes.insert(pair<unsigned int, Node*>(it_cache->first, it_cache->second));
   }
-//  for (map<unsigned int, Node*>::iterator it_sns = sensors_map_ptr->begin(); it_sns != sensors_map_ptr->end(); it_sns++) {
-//	allnodes.insert(pair<unsigned int, Node*>(it_sns->first, it_sns->second));
-//  }
 
   clouds.push_back(pair<int, Node*>(color, allnodes.begin()->second));	// insert in the cloud the seed, the first node
   allnodes.erase(allnodes.begin());	// erase the element
@@ -299,8 +296,8 @@ int MyToolbox::check_clouds() {
 }
 
 bool MyToolbox::sensor_connected() {
-	for (map<unsigned int, Node*>::iterator sensor_it = sensors_map_ptr_->begin(); sensor_it != sensors_map_ptr_->end(); sensor_it++) {	// for each sensor...
-		if (sensor_it->second->near_storage_nodes_->empty()) {	// ...check if it has at least one neighbour. If it has not...
+	for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map_ptr_.begin(); sns_it != sensors_map_ptr_.end(); sns_it++) {	// for each sensor...
+		if (sns_it->second.near_storage_nodes_->empty()) {	// ...check if it has at least one neighbour. If it has not...
 			return false;	// ...break and return false.
 		}
 	}

@@ -5,7 +5,6 @@
 #include <map>
 #include <queue>
 
-#include "agent.h"
 #include "event.h"
 #include "data_collector.h"
 

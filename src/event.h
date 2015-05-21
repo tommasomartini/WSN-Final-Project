@@ -3,9 +3,7 @@
 
 #include <vector>
 
-#include "agent.h"
 #include "my_toolbox.h"
-#include "blacklist_message.h"
 
 class Message;
 

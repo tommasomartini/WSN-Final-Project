@@ -1,6 +1,8 @@
 #include "outdated_measure.h"
 #include "my_toolbox.h"
 
+using namespace std;
+
 OutdatedMeasure::OutdatedMeasure() {
     symbols_to_remove_ = map<unsigned int, unsigned char>();
     hop_counter_ = 0;

@@ -8,5 +8,5 @@ IntraUserMessage::IntraUserMessage() {
 }
 
 unsigned int IntraUserMessage::get_message_size() {
-  return messages_.size() * MyToolbox::num_bits_for_measure_;
+  return 0;// messages_.size() * MyToolbox::num_bits_for_measure_;
 }

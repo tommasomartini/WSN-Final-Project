@@ -17,7 +17,6 @@
 SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
   measure_id_ = 0;
   first_generated_measure_ = true;
-  measure_ = Measure();
   my_supervisor_id_ = -1;
 }
 
@@ -39,18 +38,12 @@ vector<Event> SensorNode::generate_measure() {
 
   vector<Event> new_events; // create the new events
 
-  new_measure_data = get_measure_data();  // generate a random measure
-//  // XOR the new measure with the old one. If this is the first measure, the old one is all-zero and the result of the XOR
-//  // will be the new measure itself. Otherwise I am ready to send the xored_measure in order to update the XOR measures
-//  // in the storage nodes containing a measure from me
-//  unsigned char xored_measure_value = new_measure_value ^ measure_.get_measure();
-//  // choose the first storage_node randomly
-  unsigned int next_node_id = get_random_neighbor();
-
-  // Create a measure object with a void measure, I'll fill it later on
-  measure_ = Measure(0, new_measure_id(), node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
-  first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
   how_many_measures_++;
+
+  old_measure_data = new_measure_data;
+  new_measure_data = get_measure_data();  // generate a random measure
+  measure_id_++;
+  first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
 
    /*
     2 events:
@@ -59,6 +52,8 @@ vector<Event> SensorNode::generate_measure() {
     - with probability p I generate another measure (another sensor_generate_measure event), with probability 1-p the sensor
         breaks up and I genenerate a broken_sensor event.
   */
+  Measure measure_ = Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
+  unsigned int next_node_id = get_random_neighbor();
   new_events = send2(next_node_id, &measure_);
   bool generate_another_measure = true;
   default_random_engine generator = MyToolbox::generator_;
@@ -124,11 +119,6 @@ void SensorNode::set_supervisor() {
     Private methods
 **************************************/
 
-int SensorNode::new_measure_id() {
-//  return measure_id_++ % MyToolbox::num_bits_for_measure_id;
-	return measure_id_++;
-}
-
 // this method is only for the first send!
 vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 	vector<Event> new_events;
@@ -186,7 +176,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 				((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 				old_measure_data = new_measure_data;	// update the old measure value
 				// TODO debug
-				data_collector->add_msr(measure_.measure_id_, node_id_);
+				data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
 				break;
 			}
 			default:

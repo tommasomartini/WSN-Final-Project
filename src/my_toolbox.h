@@ -11,10 +11,10 @@
 
 #include "agent.h"
 
+//class Node;
 class SensorNode;
 class StorageNode;
 class User;
-class Node;
 
 class MyToolbox {
  public:
@@ -89,9 +89,9 @@ class MyToolbox {
   static double sensor_failure_prob_;
 
   // Maps <node_id, node_reference>
-  static std::map<unsigned int, Node*>* sensors_map_ptr_;
-  static std::map<unsigned int, Node*>* storage_nodes_map_ptr_;
-  static std::map<unsigned int, Node*>* users_map_ptr_;
+  static std::map<unsigned int, SensorNode> sensors_map_ptr_;
+  static std::map<unsigned int, StorageNode*> storage_nodes_map_ptr_;
+  static std::map<unsigned int, User*> users_map_ptr_;
 
   static std::map<unsigned int, MyTime>* timetable_;  // says when a node gets free
 

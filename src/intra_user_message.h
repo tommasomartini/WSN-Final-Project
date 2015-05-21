@@ -3,14 +3,12 @@
 
 #include <vector>
 #include "message.h"
-#include "storage_node_message.h"
 
 using namespace std;
   
 class IntraUserMessage : public Message {
 
  public:
-  vector<StorageNodeMessage> messages_;
   
   IntraUserMessage();
 

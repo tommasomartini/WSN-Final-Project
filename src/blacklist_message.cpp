@@ -1,6 +1,8 @@
 #include "blacklist_message.h"
 #include "my_toolbox.h"
 
+using namespace std;
+
 BlacklistMessage::BlacklistMessage() {
 //    sensor_id_ = nullptr;
   hop_counter_ = 0;

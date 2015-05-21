@@ -1,10 +1,3 @@
-/*
- * node_info_message.h
- *
- *  Created on: 08/mag/2015
- *      Author: tommaso
- */
-
 #ifndef NODE_INFO_MESSAGE_H_
 #define NODE_INFO_MESSAGE_H_
 

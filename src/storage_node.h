@@ -5,7 +5,6 @@
 #include <map>
 
 #include "node.h"
-#include "my_toolbox.h"
 
 class Event;
 class Message;

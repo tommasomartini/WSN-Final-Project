@@ -20,8 +20,8 @@ class BlacklistMessage : public Message {
   BlacklistMessage();
 //  BlacklistMessage(unsigned int*);
 //  BlacklistMessage(unsigned int*, int /*length*/);	// TODO remove
-  BlacklistMessage(vector<unsigned int>*);	// TODO to remove
-  BlacklistMessage(vector<unsigned int>);
+  BlacklistMessage(std::vector<unsigned int>*);	// TODO to remove
+  BlacklistMessage(std::vector<unsigned int>);
 //  void set_id_list(unsigned int*);
 //  void set_length(int);
   
