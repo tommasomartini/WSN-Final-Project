@@ -33,7 +33,7 @@ typedef MyToolbox::MyTime MyTime;
 class EventComparator {
 public:
 	bool operator() (Event& lhs, Event& rhs) const {
-		if (rhs > lhs) {
+		if (rhs < lhs) {
 			return true;
 		}
 		return false;
@@ -59,6 +59,7 @@ public:
 
 DataCollector* data_coll;
 vector<Event> event_list;
+priority_queue<Event, vector<Event>, EventComparator> main_event_queue;
 map<unsigned int, SensorNode> sensors_map;
 map<unsigned int, StorageNode> storage_nodes_map;
 map<unsigned int, User> users_map;
@@ -336,6 +337,7 @@ int main() {
 
 	data_coll = new DataCollector();
 	event_list = vector<Event>();
+	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
 
 	bool setup_succeeded = network_setup();
@@ -344,47 +346,23 @@ int main() {
 //		return 0;
 //	}
 
-	cout << sensors_map.begin()->second.near_storage_nodes_.begin()->first << endl;
-	cout << MyToolbox::sensors_map_ptr_.begin()->second.near_storage_nodes_.begin()->first << endl;
 
-//	if (sensors_map == MyToolbox::sensors_map_ptr_) {
-//		cout << "yess" << endl;
-//	}
+//	return 0;
+//
+//	activate_measure_generation();
+//	activate_ping_generation();
+//	activate_ping_check();
 
-	cout << sizeof(sensors_map) << endl;
-	cout << sizeof(MyToolbox::sensors_map_ptr_) << endl;
-	return 0;
-
-	activate_measure_generation();
-	activate_ping_generation();
-	activate_ping_check();
-
-	while (!event_list.empty()) {
+	while (!main_event_queue.empty()) {
 
 		// TODO: verify next event has a different schedule time than this
 
-		Event next_event = *(event_list.begin());
-		event_list.erase(event_list.begin());
+		Event next_event = main_event_queue.top();
+		main_event_queue.pop();
 		vector<Event> new_events = next_event.execute_action();
-
-		vector<Event>::iterator new_event_iterator = new_events.begin();
-		for (; new_event_iterator != new_events.end(); new_event_iterator++) {
-			vector<Event>::iterator old_event_iterator = event_list.begin();
-			for (; old_event_iterator != event_list.end(); old_event_iterator++) {
-				if (*old_event_iterator > *new_event_iterator) {
-					break;
-				}
-			}
-			event_list.insert(old_event_iterator, *new_event_iterator);
+		for (vector<Event>::iterator event_it = new_events.begin(); event_it != new_events.end(); event_it++) {
+			main_event_queue.push(*event_it);
 		}
-
-		//    show the list of the events
-		//    cout << "**event list: " << endl;
-		//    for (vector<Event>::iterator ii = event_list.begin(); ii != event_list.end(); ii++) {
-		//    	unsigned int tt_id = ((Node*)ii->get_agent())->get_node_id();
-		//    	cout << ii->get_time() << ", event type: " << Event::int2type(ii->get_event_type()) << ", del " << MyToolbox::int2nodetype(tt_id) << ": " << tt_id << endl;
-		//    }
-		//    cout << "**" << endl;
 	}
 
 	return 0;

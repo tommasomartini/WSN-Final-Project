@@ -543,17 +543,3 @@ vector<Event> StorageNode::reinitialize() {
 
 	return new_events;
 }
-
-//unsigned int StorageNode::get_random_neighbor() {
-//	if (near_storage_nodes_->size() == 0) {	// I don't hve neighbours
-//		return 0;
-//	} else {
-//		int next_node_index = rand() % near_storage_nodes_->size();
-//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-//		for (int i = 0; i < next_node_index; i++) {
-//			node_iter++;
-//		}
-//		StorageNode *next_node = (StorageNode*)node_iter->second;
-//		return next_node->get_node_id();
-//	}
-//}

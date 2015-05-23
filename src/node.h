@@ -31,12 +31,6 @@ class Node : public Agent {
 
   // setters
   void set_position(double /*y_coord*/, double /*x_coord*/);
-  
-  // TODO remove?
-//  void add_near_storage_node(Node*);
-//  void add_near_sensor_node(Node*);
-//  void add_near_user(Node*);
-//  static bool are_nodes_near(Node*, Node*); // TODO: non ha senso mettere questa funzione in node!
 
  protected:
   unsigned int node_id_;
