@@ -24,42 +24,31 @@ using namespace std;
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
 	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
-//	bool out_of_order_msr = false;
+//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
 		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
 			if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
-				ignore_new_list.push_back(source_id);	// I shoud process a new measure for each sensor just once
+				ignore_new_list.push_back(source_id);	// I should process a new measure for each sensor just once
 				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
-//					data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 1);
 					int k = MyToolbox::num_sensors_;
 					int d = LT_degree_;
 					default_random_engine gen = MyToolbox::generator_;
 					bernoulli_distribution bernoulli_distrib(d * 1. / k);
 					if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
-//						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... KEEP!" << endl;
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
-//						data_collector->record_msr(measure->get_measure_id(), measure->get_source_sensor_id(), node_id_, 2);
-					} else {
-//						cout << node_id_ << " misura nuova <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << "> ... IGNORE!" << endl;
-//						ignore_new_list.push_back(measure->get_source_sensor_id());
 					}
-					//      last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
 				}
 			} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-//				cout << node_id_ << " misura update <" << measure->get_measure_id() << ", s" << measure->get_source_sensor_id() << ">" << endl;
 				if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
 					// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
 					if (measure->get_measure_id() == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
-//						cout << "Update measure from sensor " << measure->get_source_sensor_id() << "(msr id = " << measure->get_measure_id() << ")" << endl;
 					} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
 						// do nothing
 					} else {	// out of order update measure
-//						out_of_order_msr = true;	// after propagating I will have to reinitialize or stopping following the node
-
 						MeasureKey outdated_measure_key(source_id, last_measures_.find(source_id)->second);	// create the key of the outdatet measure I have
 						outdated_measure_keys_.push_back(outdated_measure_key);	// store it in the list of the outdated measures
 						last_measures_.erase(source_id);	// I don't follow this sensor anymore
@@ -74,18 +63,10 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		new_events = send2(get_random_neighbor(), measure);	// propagate it!
 	} else {	// the message must not be forwarded again
+//		cout << "Nodo " << node_id_ << " sta per cancellare misure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ")" << endl;
 		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
-//		cout << "measure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ") stops" << endl;
-//		data_collector->print_data();
+		delete measure;	// this measure will be no more used
 	}
-//	if (out_of_order_msr) {	// after propagating I have to reinitialize
-////		// Policy 1: reinitialize
-////		vector<Event> other_events = reinitialize();	// reinitialize and get some new events
-////		new_events.insert(new_events.end(), other_events.begin(), other_events.end());	// append the new events
-//
-//		// Policy 2: quit following this sensor
-//
-//	}
 
 	return new_events;
 } 
@@ -352,11 +333,10 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 			new_events.push_back(receive_message_event);
 
 			// Update the timetable
-			timetable.find(node_id_)->second = new_schedule_time; // update my available time
+			MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
 			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-				timetable.find(node_it->first)->second = new_schedule_time;
+				MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
 			}
-			MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
 		}
@@ -486,11 +466,10 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(receive_message_event);
 
 		// Update the timetable
-		timetable.find(node_id_)->second = new_schedule_time; // update my available time
+		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
 		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			timetable.find(node_it->first)->second = new_schedule_time;
+			MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
 		}
-		MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 		// Update the event_queue_
 		event_queue_.pop();	// remove the current send event, now successful

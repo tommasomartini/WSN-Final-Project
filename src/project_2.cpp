@@ -42,12 +42,7 @@ public:
 };
 
 DataCollector* data_coll;
-vector<Event> event_list;
 priority_queue<Event, vector<Event>, EventComparator> main_event_queue;
-//map<unsigned int, SensorNode> sensors_map;
-//map<unsigned int, StorageNode> storage_nodes_map;
-//map<unsigned int, User> users_map;
-//map<unsigned int, MyToolbox::MyTime> timetable;
 default_random_engine generator;
 
 void import_settings() {
@@ -116,17 +111,11 @@ void import_settings() {
 }
 
 bool network_setup() {
-//	sensors_map = map<unsigned int, SensorNode>();
-//	storage_nodes_map = map<unsigned int, StorageNode>();
-//	users_map = map<unsigned int, User>();
-//	timetable = map<unsigned int, MyToolbox::MyTime>();
-
 	double y_coord;
 	double x_coord;
 	uniform_real_distribution<double> distribution(0.0, MyToolbox::square_size_ * 1.0);
 
 	// Create the sensors
-	cout << "Creating sensors..." << endl;
 	for (int i = 1; i <= MyToolbox::num_sensors_; i++) {
 		y_coord = distribution(generator);
 		x_coord = distribution(generator);
@@ -137,7 +126,6 @@ bool network_setup() {
 	}
 
 	// Create the storage nodes
-	cout << "Creating storage nodes..." << endl;
 	for (int i = 1; i <= MyToolbox::num_storage_nodes_; i++) {
 		y_coord = distribution(generator);
 		x_coord = distribution(generator);
@@ -148,7 +136,6 @@ bool network_setup() {
 	}
 
 	// Create the users
-	cout << "Creating users..." << endl;
 	for (int i = 1; i <= MyToolbox::num_users_; i++) {
 		y_coord = distribution(generator);
 		x_coord = distribution(generator);
@@ -158,12 +145,6 @@ bool network_setup() {
 		MyToolbox::timetable_.insert(pair<unsigned int, MyTime>(user.get_node_id(), 0));
 	}
 
-	// I want Toolbox to store all the maps of all the nodes
-//	MyToolbox::sensors_map_ = sensors_map;
-//	MyToolbox::storage_nodes_map_ = storage_nodes_map;
-//	MyToolbox::users_map_ = users_map;
-//	MyToolbox::timetable_= timetable;
-
 	// Create the neighborhoods
 	double y1;
 	double x1;
@@ -172,26 +153,25 @@ bool network_setup() {
 	double distance;
 
 	// ...for the sensors
-	cout << "Sensors' neighborhood..." << endl;
-//	for (auto& sensor1_pair : *sensors_map) {
+	//	for (auto& sensor1_pair : *sensors_map) {
 	for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
-//		SensorNode sensor1 = sns_it->second;
+		//		SensorNode sensor1 = sns_it->second;
 		y1 = sns_it->second.get_y_coord();
 		x1 = sns_it->second.get_x_coord();
-//		for (map<unsigned int, SensorNode>::iterator sns_it2 = MyToolbox::sensors_map_.begin(); sns_it2 != MyToolbox::sensors_map_.end(); sns_it2++) {
-////			SensorNode* sensor2 = &(sns_it2->second);
-//			y2 = sns_it2->second.get_y_coord();
-//			x2 = sns_it2->second.get_x_coord();
-//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-//			if (sensor1.get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range_) {
-//				//    	pair<map<unsigned int, Node*>::iterator, bool> res;
-//				//        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
-//				sns_it->second.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2->get_node_id(), *sensor2));
-//			}
-//		}
+		//		for (map<unsigned int, SensorNode>::iterator sns_it2 = MyToolbox::sensors_map_.begin(); sns_it2 != MyToolbox::sensors_map_.end(); sns_it2++) {
+		////			SensorNode* sensor2 = &(sns_it2->second);
+		//			y2 = sns_it2->second.get_y_coord();
+		//			x2 = sns_it2->second.get_x_coord();
+		//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+		//			if (sensor1.get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range_) {
+		//				//    	pair<map<unsigned int, Node*>::iterator, bool> res;
+		//				//        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
+		//				sns_it->second.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2->get_node_id(), *sensor2));
+		//			}
+		//		}
 		for (map<unsigned int, StorageNode>::iterator cache_it = MyToolbox::storage_nodes_map_.begin(); cache_it != MyToolbox::storage_nodes_map_.end(); cache_it++) {
-//			StorageNode* storage_node2 = &(cache_it->second);
- 			y2 = cache_it->second.get_y_coord();
+			//			StorageNode* storage_node2 = &(cache_it->second);
+			y2 = cache_it->second.get_y_coord();
 			x2 = cache_it->second.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (distance <= MyToolbox::tx_range_) {
@@ -200,22 +180,21 @@ bool network_setup() {
 		}
 	}
 	// ...for the storage nodes
-	cout << "Storage nodes' neighborhood..." << endl;
 	for (map<unsigned int, StorageNode>::iterator cache_it = MyToolbox::storage_nodes_map_.begin(); cache_it != MyToolbox::storage_nodes_map_.end(); cache_it++) {
-//		StorageNode storage_node1 = cache_it->second;
+		//		StorageNode storage_node1 = cache_it->second;
 		y1 = cache_it->second.get_y_coord();
 		x1 = cache_it->second.get_x_coord();
-//		for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map.begin(); sns_it != sensors_map.end(); sns_it++) {
-//			SensorNode sensor2 = sns_it->second;
-//			y2 = sensor2.get_y_coord();
-//			x2 = sensor2.get_x_coord();
-//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-//			if (distance <= MyToolbox::tx_range_) {
-//				storage_node1.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2.get_node_id(), sensor2));
-//			}
-//		}
+		//		for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map.begin(); sns_it != sensors_map.end(); sns_it++) {
+		//			SensorNode sensor2 = sns_it->second;
+		//			y2 = sensor2.get_y_coord();
+		//			x2 = sensor2.get_x_coord();
+		//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+		//			if (distance <= MyToolbox::tx_range_) {
+		//				storage_node1.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2.get_node_id(), sensor2));
+		//			}
+		//		}
 		for (map<unsigned int, StorageNode>::iterator cache_it2 = MyToolbox::storage_nodes_map_.begin(); cache_it2 != MyToolbox::storage_nodes_map_.end(); cache_it2++) {
-//			StorageNode* storage_node2 = &(cache_it2->second);
+			//			StorageNode* storage_node2 = &(cache_it2->second);
 			y2 = cache_it2->second.get_y_coord();
 			x2 = cache_it2->second.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
@@ -247,25 +226,22 @@ bool network_setup() {
 	//  }
 	// end debug
 
-	cout << "Checking cloud sparsity..." << endl;
 	int num_clouds = MyToolbox::check_clouds2();	// for debug only: to see if all the nodes can communicate
 	if (num_clouds > 1) {
 		cout << "> Sparse net! <" << endl;
 		return false;
 	}
 
-	cout << "Checking sensors' connections..." << endl;
 	if (!MyToolbox::sensor_connected()) {
 		cout << "> Isolated sensors! <" << endl;
 		return false;
 	}
 
 	// Set sensors' supervisors
-	cout << "Setting sensors' supervisors..." << endl;
 	for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
 		(sns_it->second).set_supervisor();
-		cout << "Sensor " << sns_it->second.get_node_id() << " sup " << sns_it->second.get_my_supervisor_id()
-		    										<< " #neighbours: " << sns_it->second.near_storage_nodes_.size() << endl;
+//		cout << "Sensor " << sns_it->second.get_node_id() << " sup " << sns_it->second.get_my_supervisor_id()
+//		    												<< " #neighbours: " << sns_it->second.near_storage_nodes_.size() << endl;
 	}
 
 	return true;
@@ -286,7 +262,6 @@ void activate_ping_generation() {
 	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
 	uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
-		vector<Event>::iterator event_iterator = event_list.begin();
 		Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
 		first_ping.set_agent(&(sensor_pair.second));
 		main_event_queue.push(first_ping);
@@ -304,14 +279,11 @@ void activate_ping_check() {
 
 int main() {
 
-	//	srand(time(NULL));  // generate a random seed to generate random numbers later on
-
 	import_settings();
 
 	MyToolbox::initialize_toolbox();
 
 	data_coll = new DataCollector();
-	event_list = vector<Event>();
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
 
@@ -320,18 +292,15 @@ int main() {
 		cout << "Network setup failed. Quit program!" << endl;
 		return 0;
 	}
+	cout << "Network correctly set-up!" << endl;
 
+		activate_measure_generation();
+//		activate_ping_generation();
+//		activate_ping_check();
 
-	return 0;
-//
-//	activate_measure_generation();
-//	activate_ping_generation();
-//	activate_ping_check();
+//	return 0;
 
 	while (!main_event_queue.empty()) {
-
-		// TODO: verify next event has a different schedule time than this
-
 		Event next_event = main_event_queue.top();
 		main_event_queue.pop();
 		vector<Event> new_events = next_event.execute_action();
@@ -339,6 +308,10 @@ int main() {
 			main_event_queue.push(*event_it);
 		}
 	}
+
+	data_coll->report();
+
+	cout << "Bye!" << endl;
 
 	return 0;
 }

@@ -5,9 +5,6 @@
 #include <map>
 
 #include "my_toolbox.h"
-//class MyToolbox;
-
-//using namespace std;
 
 class DataCollector {
  private:
@@ -16,9 +13,11 @@ class DataCollector {
 
   struct MeasureInfo {
 	  std::map<unsigned int, int> node_map_;
-	  MyTime born_time_;
-	  MyTime spreading_time_;
-	  MyTime death_time_;
+	  MyTime born_time_ = 0;	// instants the message was started spreading
+	  MyTime spreading_time_ = 0;	// instant the message crossed for the first time all the nodes
+	  MyTime death_time_ = 0;	// instant its hop counter went over
+	  MyTime spreading_duration_ = 0;	// interval the message took to reach every node (spreading_time_ - born_time_)
+	  MyTime travel_duration_ = 0;	// interval the message was around (death_time_ - born_time_)
 	  bool crossed_the_network_ = false;
   };
 
@@ -33,12 +32,12 @@ class DataCollector {
   std::map<MeasureKey, MeasureInfo> measures_register;
 
   void print_data();
+  void report();
   void add_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
   void record_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned int /*cache id*/, unsigned int /*sym*/);
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
 
  private:
-  long double avg_user_tx_delay;
 };
 
 #endif

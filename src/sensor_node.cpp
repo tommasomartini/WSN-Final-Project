@@ -22,20 +22,13 @@ SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : N
 }
 
 /**************************************
-    Setters
-**************************************/
-// void SensorNode::set_measure(Measure measure) {
-// 	measure_ = measure;
-// }
-
-/**************************************
     Event execution methods
 **************************************/
 /*  Return two events: a new measure generation from the same node and the reception of the measure by a storage node
 */
 vector<Event> SensorNode::generate_measure() {
 
-	cout << "Going to generate a new one..." << MyToolbox::current_time_ << endl;
+//	cout << "Going to generate a new one..." << MyToolbox::current_time_ << endl;
 
   vector<Event> new_events; // create the new events
 
@@ -53,29 +46,28 @@ vector<Event> SensorNode::generate_measure() {
     - with probability p I generate another measure (another sensor_generate_measure event), with probability 1-p the sensor
         breaks up and I genenerate a broken_sensor event.
   */
-  Measure measure_ = Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
+  Measure* measure = new Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   unsigned int next_node_id = get_random_neighbor();
-  new_events = send2(next_node_id, &measure_);
+  new_events = send2(next_node_id, measure);
   bool generate_another_measure = true;
   default_random_engine generator = MyToolbox::generator_;
   bernoulli_distribution distribution(MyToolbox::sensor_failure_prob_);
   if (distribution(generator)) {
 	  generate_another_measure = false;
   }
-  if (how_many_measures_ > 1) {
+  // FIXME remove, just for debug
+  if (how_many_measures_ > 3) {
 	  generate_another_measure = false;
   }
   uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
   MyTime rndm_time = MyToolbox::max_measure_generation_delay_;
   MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
-  cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::current_time_ << " + " << rndm_time << endl;
+//  cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::current_time_ << " + " << rndm_time << endl;
   if (generate_another_measure) {
-	  cout << "another measure" << endl;
     Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
     next_measure_event.set_agent(this);
     new_events.push_back(next_measure_event);
   } else {
-	  cout << "enough measures" << endl;
     Event failure_event(time_next_measure_or_failure, Event::broken_sensor);
     failure_event.set_agent(this);
     new_events.push_back(failure_event);
@@ -129,7 +121,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 	message->set_sender_node_id(node_id_);
 
 	if (!event_queue_.empty()) {  // already some pending event -> it is for sure a previous measure!
-		cout << " queue not empty" << endl;
+//		cout << " queue not empty" << endl;
 
 		// do not add it! I will use this event to send the actual measure!
 
@@ -138,7 +130,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 //		event_to_enqueue.set_message(message);
 //		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
-		cout << " queue empty" << endl;
+//		cout << " queue empty" << endl;
 		map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
 		MyTime current_time = MyToolbox::current_time_;  // current time of the system
 		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
@@ -148,7 +140,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
-			cout << " me not available. Try at " << new_schedule_time << endl;
+//			cout << " me not available. Try at " << new_schedule_time << endl;
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
@@ -157,12 +149,12 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
-			cout << " other node not available. Try at " << new_schedule_time << ": " << next_node_available_time << " + " << off << endl;
-			cout << "sum = " << next_node_available_time << " + " << off << " = " << off + next_node_available_time << endl;
+//			cout << " other node not available. Try at " << new_schedule_time << ": " << next_node_available_time << " + " << off << endl;
+//			cout << "sum = " << next_node_available_time << " + " << off << " = " << off + next_node_available_time << endl;
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else {  // sender and receiver both idle, can send the message
-			cout << " everybody available" << endl;
+//			cout << " everybody available" << endl;
 			// Compute the message time
 			MyTime processing_time = MyToolbox::get_random_processing_time();
 			unsigned int num_total_bits = message->get_message_size();
@@ -176,7 +168,6 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 				this_event_type = Event::storage_node_receive_measure;
 				((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 				old_measure_data = new_measure_data;	// update the old measure value
-				// TODO debug
 				data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
 				break;
 			}
@@ -188,17 +179,16 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
-			cout << " send the message. It'll arive at " << new_schedule_time << endl;
-			cout << "  proc time " << processing_time << endl;
-			cout << "  transfer time " << transfer_time << endl;
-			cout << "  current time " << current_time << endl;
+//			cout << " send the message. It'll arive at " << new_schedule_time << endl;
+//			cout << "  proc time " << processing_time << endl;
+//			cout << "  transfer time " << transfer_time << endl;
+//			cout << "  current time " << current_time << endl;
 
 			// Update the timetable
-			timetable.find(node_id_)->second = new_schedule_time; // update my available time
+			MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
 			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-				timetable.find(node_it->first)->second = new_schedule_time;
+				MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
 			}
-			MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
 		}
@@ -209,11 +199,11 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 vector<Event> SensorNode::re_send(Message* message) {
 	vector<Event> new_events;
 
-	cout << " going to resend" << endl;
+//	cout << " going to resend" << endl;
 
 	unsigned int next_node_id = message->get_receiver_node_id();
 	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end()) {	// my neighbor there is no longer
-		cout << " don't have my neighour" << endl;
+//		cout << " don't have my neighour" << endl;
 		bool give_up = false;	// I could give up transmitting: it depends on the message type!
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
@@ -225,21 +215,21 @@ vector<Event> SensorNode::re_send(Message* message) {
 			break;
 		}
 		if (give_up) {	// do not try to tx this message, pass to the following one
-			cout << " I give up" << endl;
+//			cout << " I give up" << endl;
 			event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
 			if (event_queue_.empty()) {	// if the queue is now empty...
-				cout << " empty queue, do nothing" << endl;
+//				cout << " empty queue, do nothing" << endl;
 				return new_events;	// return an empty vector, I don't have new events to schedule
 			} else {
-				cout << " not empty queue, next message..." << endl;
+//				cout << " not empty queue, next message..." << endl;
 				Message* new_message = event_queue_.front().get_message();
 				return re_send(new_message);
 			}
 		} else {	// I cannot give up! Find another node to spread the message
-			cout << " I don't give up" << endl;
+//			cout << " I don't give up" << endl;
 			next_node_id = get_random_neighbor();	// find another neighbour
 			if (next_node_id == 0) {	// no more neighbours, I'm isolated. Postpone my delivery
-				cout << " I'm alone, finish here" << endl;
+//				cout << " I'm alone, finish here" << endl;
 				MyTime schedule_time = MyToolbox::get_random_processing_time() + MyToolbox::get_tx_offset();
 				event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
 
@@ -252,7 +242,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			}
 			// if next_node_id is a valid id...
 			message->set_receiver_node_id(next_node_id);	// set the new node id and go on
-			cout << " there's someone else, send to him" << endl;
+//			cout << " there's someone else, send to him" << endl;
 		}
 	}
 
@@ -263,7 +253,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
-		cout << " me not available" << endl;
+//		cout << " me not available" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
 		try_again_event.set_agent(this);
@@ -271,7 +261,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-		cout << " next node not available" << endl;
+//		cout << " next node not available" << endl;
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
 		try_again_event.set_agent(this);
@@ -279,7 +269,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else {  // sender and receiver both idle, can send the message
-		cout << " everyone available" << endl;
+//		cout << " everyone available" << endl;
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();
@@ -292,6 +282,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			this_event_type = Event::storage_node_receive_measure;
 			((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 			old_measure_data = new_measure_data;	// update the old measure value
+			data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
 			break;
 		}
 		default:
@@ -302,22 +293,21 @@ vector<Event> SensorNode::re_send(Message* message) {
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
-		cout << " send the message. It'll arive at " << new_schedule_time << endl;
-		cout << "  proc time " << processing_time << endl;
-		cout << "  transfer time " << transfer_time << endl;
-		cout << "  current time " << current_time << endl;
+//		cout << " send the message. It'll arive at " << new_schedule_time << endl;
+//		cout << "  proc time " << processing_time << endl;
+//		cout << "  transfer time " << transfer_time << endl;
+//		cout << "  current time " << current_time << endl;
 
 		// Update the timetable
-		timetable.find(node_id_)->second = new_schedule_time; // update my available time
+		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
 		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			timetable.find(node_it->first)->second = new_schedule_time;
+			MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
 		}
-		MyToolbox::timetable_ = timetable;  // upload the updated timetable
 
 		// Update the event_queue_
 		event_queue_.pop();	// remove the current send event, now successful
 		if (!event_queue_.empty()) {  // if there are other events in the queue -> for  sensor this should never occur!
-			cout << " queue not empty, schedule next message" << endl;
+//			cout << " queue not empty, schedule next message" << endl;
 			// I will be available, in the best case scenario, after new_schedule_time
 			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();
 			Event next_send_event(sched_time, event_queue_.front().get_event_type());
