@@ -20,7 +20,7 @@ class Node : public Agent {
 
   std::map<unsigned int, SensorNode> near_sensors_;
   std::map<unsigned int, StorageNode*> near_storage_nodes_;
-  std::map<unsigned int, User> near_users_;  // creata domenica 8 marzo. Davvero necessario?
+  std::map<unsigned int, User*> near_users_;  // creata domenica 8 marzo. Davvero necessario?
 
   Node();
   Node(unsigned int /*node_id*/);

@@ -52,6 +52,7 @@ class User: public Node {
   std::vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 
   std::vector<Event> send(Node*, Message*);
+  std::vector<Event> send2(unsigned int /*next node id*/, Message*);
   bool message_passing3(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
 };

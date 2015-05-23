@@ -15,12 +15,12 @@ class Message {
     message_type_intra_user,
 	message_type_reinit_query,
 	message_type_reinit_response,
+	message_type_user_hello,
     message_type_new_node,	// FIXME ancora necessario?
     message_type_user_to_user,  // TODO: per cosa lo uso?
   } message_type_;
 
-  virtual ~ Message() {}
-  // Message() {message_type_ = message_type_ping;};
+  virtual ~Message() {}
 
   static std::string int2msgtype(int);	// TODO just for debug
 

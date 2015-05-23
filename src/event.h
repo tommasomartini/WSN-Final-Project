@@ -24,6 +24,8 @@ class Event {
     user_try_to_send_to_user,
 	storage_get_reinit_query,
 	storage_get_reinit_response,
+	storage_get_user_hello,
+	user_get_user_hello,
 
     // Arianna
     blacklist_sensor,

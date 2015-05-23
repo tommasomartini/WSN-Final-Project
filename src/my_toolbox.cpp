@@ -81,7 +81,7 @@ void MyToolbox::set_close_nodes(User* user) {
       double my_y = user->get_y_coord();
       double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
       if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-        pair<unsigned int, User> pp(us_node.get_node_id(), us_node);
+        pair<unsigned int, User*> pp(us_node.get_node_id(), us_node);
         user->near_users_.insert(pp);
       }
     }
