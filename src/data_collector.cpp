@@ -26,32 +26,8 @@ void DataCollector::report() {
 	avg_time = avg_time / counter;
 
 	cout << " > Report <" << endl;
-	cout << "avg spreding time: " << avg_time * 1. / pow(10, 9) << endl;
-	cout << not_crossed << " messages (" << not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
-}
-
-void DataCollector::print_data() {
-//	string data = "no data";
-//	for (map<pair<unsigned int, unsigned int>, vector<unsigned int>>::iterator it = msr_register.begin(); it != msr_register.end(); it++) {
-//	  pair<unsigned int, unsigned int> p = it->first;
-//	  vector<unsigned int> v = it->second;
-//	  cout << "(msr " << p.first << ", sns " << p.second;
-//	  int counter_seen = 0;
-//	  int counter_held = 0;
-//	  int counter_tot = 0;
-//	  for (vector<unsigned int>::iterator it_v = v.begin(); it_v != v.end(); it_v++) {
-//	    if (*it_v == 1) {
-//	      counter_seen++;
-//	      counter_tot++;
-//	    } else if (*it_v == 2) {
-//	      counter_held++;
-//	      counter_tot++;
-//	    }
-//	  }
-//	  cout << "): seen " << counter_seen << ", held " << counter_held << " (tot " << counter_tot << ") | ";
-//	}
-//	cout << endl;
-//	cout << data << endl;
+	cout << "- Avg spreding time: " << avg_time * 1. / pow(10, 9) << endl;
+	cout << "- " << not_crossed << " messages (" << not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
 }
 
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
@@ -98,4 +74,16 @@ void DataCollector::erase_msr(unsigned int msr_id, unsigned int sns_id) {
 	} else {	// I cannot find the measure
 		cout << "Error! Measure (s" << sns_id << ", " << msr_id << ") lost!" << endl;
 	}
+}
+
+double DataCollector::graph_density() {
+	double num_outer_edges = 0;
+	map<unsigned int, StorageNode> node_map = MyToolbox::storage_nodes_map_;
+	for (map<unsigned int, StorageNode>::iterator it = node_map.begin(); it != node_map.end(); it++) {
+		double edges = it->second.near_storage_nodes_.size();
+		num_outer_edges += edges;
+	}
+	double E = num_outer_edges / 2;
+	double V = double(MyToolbox::num_storage_nodes_);
+	return 2 * E / (V * (V - 1));
 }

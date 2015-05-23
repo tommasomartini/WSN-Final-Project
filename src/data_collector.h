@@ -31,8 +31,8 @@ class DataCollector {
 //  std::map<unsigned int, int> cache_msr;
   std::map<MeasureKey, MeasureInfo> measures_register;
 
-  void print_data();
   void report();
+  double graph_density();
   void add_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
   void record_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned int /*cache id*/, unsigned int /*sym*/);
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);

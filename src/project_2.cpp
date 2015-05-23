@@ -226,6 +226,9 @@ bool network_setup() {
 	//  }
 	// end debug
 
+	double density = data_coll->graph_density();
+	cout << "Graph density = " << density << endl;
+
 	int num_clouds = MyToolbox::check_clouds2();	// for debug only: to see if all the nodes can communicate
 	if (num_clouds > 1) {
 		cout << "> Sparse net! <" << endl;
@@ -297,8 +300,6 @@ int main() {
 		activate_measure_generation();
 //		activate_ping_generation();
 //		activate_ping_check();
-
-//	return 0;
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();

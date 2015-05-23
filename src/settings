@@ -1,5 +1,5 @@
 num_storage_nodes=180 180
-num_sensors=50 50
+num_sensors=0 50
 num_users=3
 
 num_bits_for_measure=80000
@@ -13,7 +13,7 @@ check_sensors_frequency=3000 5000000000
 
 C1=10
 
-square_size=100 in m 
+square_size=100 100 in m 
 space_precision=1000 how many units in a meter
 
 user_velocity=0.8 m/s
