@@ -47,9 +47,9 @@ MyToolbox::MyTime MyToolbox::user_observation_time_ = 0;
 MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
 
-map<unsigned int, SensorNode> MyToolbox::sensors_map_ptr_;
-map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_ptr_;
-map<unsigned int, User> MyToolbox::users_map_ptr_;
+map<unsigned int, SensorNode> MyToolbox::sensors_map_;
+map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_;
+map<unsigned int, User> MyToolbox::users_map_;
 
 default_random_engine MyToolbox::generator_;
 
@@ -57,21 +57,21 @@ void MyToolbox::set_close_nodes(User* user) {
   user->near_storage_nodes_.clear();
   user->near_users_.clear();
 
-  for (auto& st_node_elem : storage_nodes_map_ptr_) {
-    StorageNode st_node = st_node_elem.second;
+  for (auto& st_node_elem : storage_nodes_map_) {
+    StorageNode* st_node = &(st_node_elem.second);
 //    StorageNode st_node = *(st_node_elem.second);
-    double his_x = st_node.get_x_coord();
-    double his_y = st_node.get_y_coord();
+    double his_x = st_node->get_x_coord();
+    double his_y = st_node->get_y_coord();
     double my_x = user->get_x_coord();
     double my_y = user->get_y_coord();
     double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
     if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-      pair<unsigned int, StorageNode> pp(st_node.get_node_id(), st_node);
+      pair<unsigned int, StorageNode*> pp(st_node->get_node_id(), st_node);
       user->near_storage_nodes_.insert(pp);
     }
   }
 
-  for (auto& us_node_elem : users_map_ptr_) {
+  for (auto& us_node_elem : users_map_) {
   User us_node = us_node_elem.second;
 //  User us_node = *(us_node_elem.second);
     if (&us_node != user) {  // does not make sense to include myself among my neighbours
@@ -103,15 +103,15 @@ void MyToolbox::initialize_toolbox() {
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
 
-  if (sensors_map_ptr_.find(node_id) != sensors_map_ptr_.end()) {
+  if (sensors_map_.find(node_id) != sensors_map_.end()) {
     return true;
   }
 
-  if (storage_nodes_map_ptr_.find(node_id) != storage_nodes_map_ptr_.end()) {
+  if (storage_nodes_map_.find(node_id) != storage_nodes_map_.end()) {
     return true;
   }
 
-  if (users_map_ptr_.find(node_id) != users_map_ptr_.end()) {
+  if (users_map_.find(node_id) != users_map_.end()) {
     return true;
   }
 
@@ -121,7 +121,7 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
 // Made by Tom
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
   timetable_.erase(sensor_id);
-  sensors_map_ptr_.erase(sensor_id);
+  sensors_map_.erase(sensor_id);
   cout << "TB: eliminato sensore " << sensor_id << endl;
 }
 
@@ -227,11 +227,11 @@ MyToolbox::MyTime MyToolbox::get_tx_offset() {
 
 string MyToolbox::int2nodetype(unsigned int num) {
 	string res = "unknown";
-	if (sensors_map_ptr_.find(num) != sensors_map_ptr_.end()) {
+	if (sensors_map_.find(num) != sensors_map_.end()) {
 		res = "sensor";
-	} else if (storage_nodes_map_ptr_.find(num) != storage_nodes_map_ptr_.end()) {
+	} else if (storage_nodes_map_.find(num) != storage_nodes_map_.end()) {
 		res = "cache";
-	} else if (users_map_ptr_.find(num) != users_map_ptr_.end()) {
+	} else if (users_map_.find(num) != users_map_.end()) {
 		res = "user";
 	} else {
 		res = "unknown";
@@ -256,12 +256,78 @@ void show_c(vector<pair<int, Node*>>* clouds_, int num_clouds) {
   cout << endl;
 }
 
+int MyToolbox::check_clouds2() {
+  int color = 0;
+  vector<pair<int, StorageNode*>> clouds;	// cloud_id - node
+  map<unsigned int, StorageNode*> allnodes;
+  // copy all the nodes into the allnodes map
+  for (map<unsigned int, StorageNode>::iterator it_cache = storage_nodes_map_.begin(); it_cache != storage_nodes_map_.end(); it_cache++) {
+    allnodes.insert(pair<unsigned int, StorageNode*>(it_cache->first, &(it_cache->second)));
+  }
+
+//  cout << "Allnodes contiene " << allnodes.size() << " elementi" << endl;
+//  cout << "#ALLNODES" << endl;
+//  for (map<unsigned int, StorageNode*>::iterator it = allnodes.begin(); it != allnodes.end(); it++) {
+//	  cout << "Node " << it->second->get_node_id() << endl;
+//  }
+
+  clouds.push_back(pair<int, StorageNode*>(color, allnodes.begin()->second));	// insert in the cloud the seed, the first node
+  allnodes.erase(allnodes.begin());	// erase the element
+//  cout << "Allnodes contiene " << allnodes.size() << " elementi" << endl;
+//  cout << "#ALLNODES" << endl;
+//    for (map<unsigned int, StorageNode*>::iterator it = allnodes.begin(); it != allnodes.end(); it++) {
+//  	  cout << "-Node " << it->second->get_node_id() << endl;
+//    }
+  int cloud_index = 0;	// pointing to the first (and only!) element in the cloud vector
+//  cout << "Primo nodo di cloud " << clouds.begin()->second->get_node_id() << ". Ora allnodes ha " << allnodes.size() << " elementi" << endl;
+  while (!allnodes.empty()) {	// in allnodes there are the not-yet-classified nodes
+//	  cout << "Cloud index: " << cloud_index << endl;
+	  StorageNode* curr_node = clouds.at(cloud_index).second;	// current node, at position pointed by cloud_index
+//	  cout << " curr node " << curr_node->get_node_id() << endl;
+//	  bool neighbours_in_allnodes = false;	// are there any of my neighbours in allnodes?
+	  for (map<unsigned int, StorageNode*>::iterator neigh_it = curr_node->near_storage_nodes_.begin(); neigh_it != curr_node->near_storage_nodes_.end(); neigh_it++) {	// for each neighbour of the current node
+		  unsigned int curr_neigh_id = neigh_it->first;	// id of this neighbour
+//		  cout << " Vicino " << curr_neigh_id;
+		  if (allnodes.find(curr_neigh_id) != allnodes.end()) {	// if in allnodes there is this neighbour
+			  clouds.push_back(pair<int, StorageNode*>(color, neigh_it->second));	// put this neighbour into the cloud
+			  allnodes.erase(neigh_it->first);	// erase the neighbour from the map of non-classified neighbours
+//			  cout << " presente! Messo in clouds (" << clouds.size() << ") con colore " << color << ". Allnodes ha " << allnodes.size() << " elems" << endl;
+//			  cout << " Allnodes contiene " << allnodes.size() << " elementi" << endl;
+//			  cout << " #ALLNODES" << endl;
+//			  for (map<unsigned int, StorageNode*>::iterator it = allnodes.begin(); it != allnodes.end(); it++) {
+//			  	  cout << " -Node " << it->second->get_node_id() << endl;
+//			    }
+			  //			  neighbours_in_allnodes = true;
+		  } else {
+//			  cout << " non presente" << endl;
+		  }
+	  }
+	  cloud_index++;
+	  if (cloud_index == clouds.size()) {	// new cloud
+		  color++;
+		  clouds.push_back(pair<int, StorageNode*>(color, allnodes.begin()->second));
+		  allnodes.erase(allnodes.begin());
+
+//		  			  cout << " Allnodes contiene " << allnodes.size() << " elementi" << endl;
+//		  			cout << " #ALLNODES" << endl;
+//		  			  for (map<unsigned int, StorageNode*>::iterator it = allnodes.begin(); it != allnodes.end(); it++) {
+//		  			  	  cout << " -Node " << it->second->get_node_id() << endl;
+//		  			    }
+		  cloud_index = clouds.size() - 1;
+//		  cout << " No piu' nodi in cloud. Nuovo colore " << color << endl;
+	  }
+  }
+
+  //  show_c(&clouds, color + 1);
+  return color + 1;
+}
+
 int MyToolbox::check_clouds() {
   int color = 0;
   vector<pair<int, Node*>> clouds;	// cloud_id - node
   map<unsigned int, Node*> allnodes;
   // copy all the nodes into the allnodes map
-  for (map<unsigned int, StorageNode>::iterator it_cache = storage_nodes_map_ptr_.begin(); it_cache != storage_nodes_map_ptr_.end(); it_cache++) {
+  for (map<unsigned int, StorageNode>::iterator it_cache = storage_nodes_map_.begin(); it_cache != storage_nodes_map_.end(); it_cache++) {
     allnodes.insert(pair<unsigned int, Node*>(it_cache->first, &(it_cache->second)));
   }
 
@@ -297,7 +363,7 @@ int MyToolbox::check_clouds() {
 }
 
 bool MyToolbox::sensor_connected() {
-	for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map_ptr_.begin(); sns_it != sensors_map_ptr_.end(); sns_it++) {	// for each sensor...
+	for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map_.begin(); sns_it != sensors_map_.end(); sns_it++) {	// for each sensor...
 		if (sns_it->second.near_storage_nodes_.empty()) {	// ...check if it has at least one neighbour. If it has not...
 			return false;	// ...break and return false.
 		}

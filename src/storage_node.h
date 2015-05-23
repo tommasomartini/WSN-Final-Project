@@ -21,16 +21,16 @@ class StorageNode : public Node {
   StorageNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
 
   // getters
-  unsigned char get_xored_measure() {return xored_measure_;}
-  std::vector<unsigned int> get_ids () {
-    std::vector<unsigned int> ids;
-    for (auto& i : last_measures_)
-      ids.push_back(i.first);
-    return ids;
-  }
+//  unsigned char get_xored_measure() {return xored_measure_;}
+//  std::vector<unsigned int> get_ids () {
+//    std::vector<unsigned int> ids;
+//    for (auto& i : last_measures_)
+//      ids.push_back(i.first);
+//    return ids;
+//  }
 
   // setters
-  void set_supervision_map_(int, int);	// TODO to be deprecated
+//  void set_supervision_map_(int, int);	// TODO to be deprecated
 
   // Event execution methods
   std::vector<Event> receive_measure(Measure*); // Tom

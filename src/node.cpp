@@ -23,7 +23,7 @@ Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   y_coord_ = y_coord;
   x_coord_ = x_coord;
   near_sensors_ = map<unsigned int, SensorNode>();
-  near_storage_nodes_ = map<unsigned int, StorageNode>();
+  near_storage_nodes_ = map<unsigned int, StorageNode*>();
   near_users_ = map<unsigned int, User>();
 }
 
@@ -63,7 +63,7 @@ unsigned int Node::get_random_neighbor() {
 		return 0;
 	} else {
 		int next_node_index = rand() % near_storage_nodes_.size();
-		map<unsigned int, StorageNode>::iterator node_iter = near_storage_nodes_.begin();
+		map<unsigned int, StorageNode*>::iterator node_iter = near_storage_nodes_.begin();
 		for (int i = 0; i < next_node_index; i++) {
 			node_iter++;
 		}

@@ -55,6 +55,7 @@ class MyToolbox {
   };
 
   typedef unsigned long MyTime;
+  typedef unsigned int IdType;
 
   //  Global values
   static int num_storage_nodes_;
@@ -89,9 +90,9 @@ class MyToolbox {
   static double sensor_failure_prob_;
 
   // Maps <node_id, node_reference>
-  static std::map<unsigned int, SensorNode> sensors_map_ptr_;
-  static std::map<unsigned int, StorageNode> storage_nodes_map_ptr_;
-  static std::map<unsigned int, User> users_map_ptr_;
+  static std::map<unsigned int, SensorNode> sensors_map_;
+  static std::map<unsigned int, StorageNode> storage_nodes_map_;
+  static std::map<unsigned int, User> users_map_;
 
   static std::map<unsigned int, MyTime> timetable_;  // says when a node gets free
 
@@ -112,6 +113,7 @@ class MyToolbox {
 
   static std::string int2nodetype(unsigned int);	// TODO just for debug
   static int check_clouds();
+  static int check_clouds2();
   static bool sensor_connected();
 
  private:

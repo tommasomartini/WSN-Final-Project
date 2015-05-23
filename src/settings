@@ -1,12 +1,12 @@
-num_storage_nodes=180
-num_sensors=50
+num_storage_nodes=180 180
+num_sensors=1
 num_users=3
 
 num_bits_for_measure=80000
 
 bitrate=10 in MBit/s
 bit_error_prob=0.01
-tx_range=1500 in m
+tx_range=15 15 in m
 
 ping_frequency=1000 1000000000
 check_sensors_frequency=3000 5000000000  

@@ -110,15 +110,15 @@ vector<Event> StorageNode::try_retx(Message* message) {
 /*  A sensor is telling me it is alive
  */
 // TODO to be deprecated
-void StorageNode::set_supervision_map_(int sensor_id, int new_time){
-	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
-	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
-		supervisioned_map_.insert(std::pair<int, int>(sensor_id, new_time));
-	}
-	else {
-		supervisioned_map_.find(sensor_id)->second = new_time;
-	}
-}
+//void StorageNode::set_supervision_map_(int sensor_id, int new_time){
+//	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
+//	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
+//		supervisioned_map_.insert(std::pair<int, int>(sensor_id, new_time));
+//	}
+//	else {
+//		supervisioned_map_.find(sensor_id)->second = new_time;
+//	}
+//}
 
 
 /*  A sensor is telling me it is alive
@@ -347,13 +347,13 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
-			receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
+			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
 			// Update the timetable
 			timetable.find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::timetable_ = timetable;  // upload the updated timetable
@@ -481,13 +481,13 @@ vector<Event> StorageNode::re_send(Message* message) {
 			break;
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
-		receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
+		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
 		// Update the timetable
 		timetable.find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 			timetable.find(node_it->first)->second = new_schedule_time;
 		}
 		MyToolbox::timetable_ = timetable;  // upload the updated timetable
@@ -535,7 +535,7 @@ vector<Event> StorageNode::reinitialize() {
 
 	ReinitQuery reinit_query;
 	vector<Event> partial_event_list;	// events returned by the communication with each neighbour
-	for (map<unsigned int, StorageNode>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {	// for each neighbour...
+	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {	// for each neighbour...
 		partial_event_list = send2(it->first, &reinit_query);	// ...send him the reinit request, or at least schedule it...
 		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());	// ...add the events to the list of events...
 		partial_event_list.clear();	// ...and set the list for the next round and neighbour
