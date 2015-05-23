@@ -207,14 +207,8 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 	if (list->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
 		list->increase_hop_counter();
 		unsigned int next_node_index = get_random_neighbor();
-		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_.begin();
-		for (int i = 0; i < next_node_index; i++) {
-			node_iter++;
-		}
-		StorageNode *next_node = (StorageNode*)node_iter->second;
-//		list->set_receiver_node_id(next_node->get_node_id());
 		list->message_type_ = Message::message_type_blacklist;
-		new_events = send2(next_node->get_node_id(), list);
+		new_events = send2(next_node_index, list);
 	}
 	return new_events;
 }
@@ -353,13 +347,13 @@ vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
-			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+			receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
 			// Update the timetable
 			timetable.find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+			for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::timetable_ = timetable;  // upload the updated timetable
@@ -487,13 +481,13 @@ vector<Event> StorageNode::re_send(Message* message) {
 			break;
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
-		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+		receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
 		// Update the timetable
 		timetable.find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+		for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 			timetable.find(node_it->first)->second = new_schedule_time;
 		}
 		MyToolbox::timetable_ = timetable;  // upload the updated timetable
@@ -541,7 +535,7 @@ vector<Event> StorageNode::reinitialize() {
 
 	ReinitQuery reinit_query;
 	vector<Event> partial_event_list;	// events returned by the communication with each neighbour
-	for (map<unsigned int, Node*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {	// for each neighbour...
+	for (map<unsigned int, StorageNode>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {	// for each neighbour...
 		partial_event_list = send2(it->first, &reinit_query);	// ...send him the reinit request, or at least schedule it...
 		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());	// ...add the events to the list of events...
 		partial_event_list.clear();	// ...and set the list for the next round and neighbour

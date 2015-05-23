@@ -92,7 +92,7 @@ vector<Event> SensorNode::try_retx(Message* message) {
 
 vector<Event> SensorNode::sensor_ping2() {
 	vector<Event> new_events;
-	map<unsigned int, Node*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
+	map<unsigned int, StorageNode>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 	while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
 		my_supervisor_id_ = get_random_neighbor();	// ...try a new one
 		if (my_supervisor_id_ == 0) {	// this sensor has no more neighbours
@@ -101,7 +101,7 @@ vector<Event> SensorNode::sensor_ping2() {
 		supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 	}
 	cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
-	((StorageNode*)supervisor_it->second)->receive_hello(node_id_);	// send the hello ping
+	((StorageNode)supervisor_it->second).receive_hello(node_id_);	// send the hello ping
 //	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
 	Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::broken_sensor);	// FIXME for debug only
 	new_event.set_agent(this);
@@ -184,7 +184,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
-			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+			receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -195,7 +195,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 
 			// Update the timetable
 			timetable.find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+			for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 				timetable.find(node_it->first)->second = new_schedule_time;
 			}
 			MyToolbox::timetable_ = timetable;  // upload the updated timetable
@@ -298,7 +298,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			break;
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
-		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+		receive_message_event.set_agent(&(near_storage_nodes_.find(next_node_id)->second));
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -309,7 +309,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 		// Update the timetable
 		timetable.find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+		for (map<unsigned int, StorageNode>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 			timetable.find(node_it->first)->second = new_schedule_time;
 		}
 		MyToolbox::timetable_ = timetable;  // upload the updated timetable

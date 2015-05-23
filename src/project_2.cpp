@@ -206,7 +206,7 @@ bool network_setup() {
 			x2 = storage_node2.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (distance <= MyToolbox::tx_range_) {
-				sensor1.near_storage_nodes_.insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
+				sensor1.near_storage_nodes_.insert(pair<unsigned int, StorageNode>(storage_node2.get_node_id(), storage_node2));
 			}
 		}
 	}
@@ -230,7 +230,7 @@ bool network_setup() {
 			x2 = storage_node2.get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (storage_node1.get_node_id() != storage_node2.get_node_id() && distance <= MyToolbox::tx_range_) {
-				storage_node1.near_storage_nodes_.insert(pair<unsigned int, Node*>(storage_node2.get_node_id(), &storage_node2));
+				storage_node1.near_storage_nodes_.insert(pair<unsigned int, StorageNode>(storage_node2.get_node_id(), storage_node2));
 			}
 		}
 	}
@@ -339,10 +339,21 @@ int main() {
 	generator = MyToolbox::generator_;
 
 	bool setup_succeeded = network_setup();
-	if (!setup_succeeded) {
-		cout << "Network setup failed. Quit program!" << endl;
-		return 0;
-	}
+//	if (!setup_succeeded) {
+//		cout << "Network setup failed. Quit program!" << endl;
+//		return 0;
+//	}
+
+	cout << sensors_map.begin()->second.near_storage_nodes_.begin()->first << endl;
+	cout << MyToolbox::sensors_map_ptr_.begin()->second.near_storage_nodes_.begin()->first << endl;
+
+//	if (sensors_map == MyToolbox::sensors_map_ptr_) {
+//		cout << "yess" << endl;
+//	}
+
+	cout << sizeof(sensors_map) << endl;
+	cout << sizeof(MyToolbox::sensors_map_ptr_) << endl;
+	return 0;
 
 	activate_measure_generation();
 	activate_ping_generation();
