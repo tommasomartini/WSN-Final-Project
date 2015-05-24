@@ -192,20 +192,89 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	vector<Event> new_events;
+
+	if (decoding_succeeded) {	// if I already made the decoding...
+		return new_events;	// ...ignore this message
+	}
+
+	for (vector<unsigned int>::iterator dead_sns_it = user_info_msg->dead_sensors_.begin(); dead_sns_it != user_info_msg->dead_sensors_.end(); dead_sns_it++) {	// for each dead sensor id in this node info message
+		if (find(dead_sensors_.begin(), dead_sensors_.end(), *dead_sns_it) == dead_sensors_.end()) {	// if I don't have this id in my blacklist...
+			dead_sensors_.push_back(*dead_sns_it);	// ...add it!
+		}
+	}
+
+	for (map<unsigned int, OutputSymbol>::iterator sym_it = user_info_msg->symbols_.begin(); sym_it != user_info_msg->symbols_.end(); sym_it++) {	// for each symbol passed by the other user
+		map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(sym_it->first);	// the entry belonging to this cache in my map
+		if (info_it == nodes_info_.end()) {	// if there is NOT an entry related to this cache...
+			OutputSymbol out_sym = sym_it->second;
+			nodes_info_.insert(pair<unsigned int, OutputSymbol>(sym_it->first, out_sym));	// ...insert it into the map
+
+			// Update the measure id
+			for (vector<MeasureKey>::iterator msr_key_it_ = out_sym.sources_.begin(); msr_key_it_ != out_sym.sources_.end(); msr_key_it_++) {	// for each of the measure just received...
+				unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
+				unsigned int current_msr_id = (*msr_key_it_).measure_id_;	// id of the measure
+				if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
+					updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
+				} else {	// already received a measure from this sensor -> update it if the new measure is newer
+					unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
+					if (current_msr_id > current_updated_msr_id) {	// the just received measure is more recent than the one I had
+						updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;	// replace the old measure with the new one, just received
+					}
+				}
+			}
+		}
+	}
+
+	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
+	delete user_info_msg;
+
+	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
+		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols
+	}
+
+	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
+		decoding_succeeded = true;	// from now on do not accept other caches' answers
+		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
+			unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+			int xor_counter = 0;	// ...how many measure I did xor
+			vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
+			vector<MeasureKey> removed;
+			vector<MeasureKey> inserted;
+			for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
+				unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
+				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
+				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+				xor_counter++;	// count how many measure I am xoring
+				removed.push_back(*out_it);
+				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
+					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
+					MeasureKey key(out_sns_id, up_msr_id);	// create a key
+					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+					inserted.push_back(key);
+				}
+			}
+			if (xor_counter > 0) {	// if I have at least one measure to remove or update
+				OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
+				vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
+				for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+					new_events.push_back(*event_it);
+				}
+			}
+		}
+	} else {	// message passing failed: symbols not decoded...
+		// do nothing and wait to try message passing again...
+	}
+
 	return new_events;
 }
 
 /*  This user receives a "beep" from another user, asking him to send him his measures
  */
-vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
+vector<Event> User::receive_user_request(unsigned int next_user_id) {
 	vector<Event> new_events;
-
-	//  IntraUserMessage intra_user_msg;  // msg to send to another user
-	//  intra_user_msg.messages_ = output_symbols2_;
-	//  Node* next_node = MyToolbox::users_map_ptr_->find(sender_user_id)->second;
-	//  intra_user_msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
-	//  new_events = send(next_node, &intra_user_msg);
-
+	UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
+	send(next_user_id, user_info_msg);
 	return new_events;
 }
 
@@ -262,10 +331,10 @@ bool User::message_passing() {
 		} else {  // no symbol released at this round
 			if (info.empty()) {  // if no other symbols, everything is ok
 				decoded_symbols_ = resolved_symbols;	// store the decoded measures...
-//				// ...and update the backlist
-//				for (map<MeasureKey, unsigned char>::iterator bl_it = outdated_measures_.begin(); bl_it != outdated_measures_.end(); bl_it++) {	// for each blacklisted id...
-//					bl_it->second = decoded_symbols_.find(bl_it->first)->second;	// ...store the just decoded measure
-//				}
+				//				// ...and update the backlist
+				//				for (map<MeasureKey, unsigned char>::iterator bl_it = outdated_measures_.begin(); bl_it != outdated_measures_.end(); bl_it++) {	// for each blacklisted id...
+				//					bl_it->second = decoded_symbols_.find(bl_it->first)->second;	// ...store the just decoded measure
+				//				}
 				break;
 			} else {
 				cerr << "Impossible to decode! Message passing failed!" << endl;

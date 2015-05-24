@@ -15,14 +15,17 @@ using namespace std;
 
 
 Event::Event(MyTime event_time) {
+	event_type_ = 0;
 	time_ = event_time;
+	agent_ = nullptr;
+	message_ = nullptr;
 }
 
 Event::Event(MyTime event_time, Event::EventTypes event_type) {
 	time_ = event_time;
 	event_type_ = event_type;
-	agent_ = NULL;
-	message_ = NULL;
+	agent_ = nullptr;
+	message_ = nullptr;
 }
 
 bool Event::operator<(Event event) {
@@ -211,7 +214,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case user_get_user_hello: {
-		new_events = ((User*)agent_)->user_send_to_user(message_->get_sender_node_id());
+		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
 		break;
 	}
 	default:

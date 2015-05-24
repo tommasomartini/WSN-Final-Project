@@ -15,19 +15,20 @@ class User: public Node {
  private:
   typedef MyToolbox::MyTime MyTime;
   typedef MyToolbox::MeasureKey MeasureKey;
-
-  struct OutputSymbol {
-    unsigned char xored_msg_;
-    std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
-    std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
-    OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
-      xored_msg_ = xored_msg;
-      sources_ = sources;
-      outdated_ = outdated;
-    }
-  };
+  typedef MyToolbox::OutputSymbol OutputSymbol;
 
  public:
+//  struct OutputSymbol {
+//    unsigned char xored_msg_;
+//    std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
+//    std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
+//    OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
+//      xored_msg_ = xored_msg;
+//      sources_ = sources;
+//      outdated_ = outdated;
+//    }
+//  };
+
   User() : Node () {}
   User(unsigned int node_id) : Node (node_id) {}
   User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
@@ -35,7 +36,6 @@ class User: public Node {
   std::map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of corresponding sensor	// TODO to remove
   
   std::vector<Event> move(); // different implementation of the random walk
-  std::vector<Event> user_send_to_user(unsigned int /*sender user*/);  // Tom
   std::vector<Event> receive_node_data(NodeInfoMessage*);
   std::vector<Event> receive_user_data(UserInfoMessage*);
   std::vector<Event> receive_user_request(unsigned int);

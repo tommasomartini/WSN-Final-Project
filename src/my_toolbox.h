@@ -46,6 +46,17 @@ class MyToolbox {
 //	}
   };
 
+  struct OutputSymbol {
+	  unsigned char xored_msg_;
+	  std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
+	  std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
+	  OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
+		  xored_msg_ = xored_msg;
+		  sources_ = sources;
+		  outdated_ = outdated;
+	  }
+  };
+
   // TODO replace all the unsigned char with this
   struct MeasureData {
     unsigned int data_;
