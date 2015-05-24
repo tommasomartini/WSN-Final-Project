@@ -200,28 +200,18 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore this message and just pass it forward
-		map<unsigned int, unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
-		for (map<unsigned int, unsigned char>::iterator it = outdated_measure.begin(); it != outdated_measure.end(); ++it) {	// for each measure in the list...
-			if (last_measures_.find(it->first) != last_measures_.end()){	// ...if I have used that measure...
-				xored_measure_ = xored_measure_ ^ it->second;		// ...remove it...
-				last_measures_.erase(last_measures_.find(it->first)); 	// ...and erase the sensor id from my list as well
-			}
-			if (find(my_blacklist_.begin(), my_blacklist_.end(), it->first) != my_blacklist_.end()) {	// if I have the sensor in my blacklist erase it
-				my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
-			}
-		}
-	}
-	int hop_limit = MyToolbox::max_num_hops_;
-	if (message_to_remove->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-		message_to_remove->increase_hop_counter();
-//		unsigned int next_node_index = rand() % near_storage_nodes_->size();
-//		map<unsigned int, Node*>::iterator node_iter = near_storage_nodes_->begin();
-//		for (int i = 0; i < next_node_index; i++) {
-//			node_iter++;
+//		map<unsigned int, unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
+//		for (map<unsigned int, unsigned char>::iterator it = outdated_measure.begin(); it != outdated_measure.end(); ++it) {	// for each measure in the list...
+//			if (last_measures_.find(it->first) != last_measures_.end()){	// ...if I have used that measure...
+//				xored_measure_ = xored_measure_ ^ it->second;		// ...remove it...
+//				last_measures_.erase(last_measures_.find(it->first)); 	// ...and erase the sensor id from my list as well
+//			}
+//			if (find(my_blacklist_.begin(), my_blacklist_.end(), it->first) != my_blacklist_.end()) {	// if I have the sensor in my blacklist erase it
+//				my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
+//			}
 //		}
-//		StorageNode *next_node = (StorageNode*)node_iter->second;
-////		    new_events = send2(next_node->get_node_id(), message_to_remove);	// my choice is not to flood the network with heavy messages
 	}
+
 	delete message_to_remove;
 	return new_events;
 }

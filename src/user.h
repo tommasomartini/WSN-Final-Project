@@ -12,6 +12,7 @@ class NodeInfoMessage;
 class User: public Node {
 
  private:
+  typedef MyToolbox::MyTime MyTime;
   typedef MyToolbox::MeasureKey MeasureKey;
 
   struct OutputSymbol {
@@ -43,9 +44,6 @@ class User: public Node {
   typedef std::map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
   
  private:
-  typedef MyToolbox::MyTime MyTime;
-  typedef MyToolbox::MeasureKey MeasureKey;
-
   bool decoding_succeeded = false;	// when message passing succeeds I ignore other messages sent by the cache (I could interrogate 100 caches but decode the measures after 10 answers!)
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree

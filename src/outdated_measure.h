@@ -3,20 +3,22 @@
 
 #include <map>
 #include "message.h"
+#include "my_toolbox.h"
   
 class OutdatedMeasure : public Message {
  private:
-  std::map<unsigned int, unsigned char> symbols_to_remove_; // id of the sensors to remove and their measures
+  typedef MyToolbox::MeasureKey MeasureKey;
+
   int hop_counter_;
 
  public:
-  // Constructors
   OutdatedMeasure();
-  OutdatedMeasure(std::map<unsigned int ,unsigned char>);
+  OutdatedMeasure(unsigned char, std::vector<MeasureKey> /*removed*/, std::vector<MeasureKey> /*inserted*/);
 
-  std::map<unsigned int, unsigned char> get_outdaded_measure() {return symbols_to_remove_;}
-  int get_size() {return symbols_to_remove_.size();}
-  int get_hop_counter() {return hop_counter_;}
+  unsigned char xored_data_; 	// data the node will have to xor to its measure
+  std::vector<MeasureKey> removed_;	// keys of the measures the node will remove
+  std::vector<MeasureKey> inserted_;	// keys of the measures the node will insert
+
   int increase_hop_counter();
   unsigned int get_message_size();
 };

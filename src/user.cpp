@@ -21,6 +21,10 @@ using namespace std;
 vector<Event> User::move() {
 	vector<Event> new_events;
 
+	if (decoding_succeeded) {	// already decoded all the symbols
+		return new_events;	// this user is done! Do not do anything else
+	}
+
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
@@ -84,7 +88,33 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
-		// TODO guarda che misure outdated vuole questo nodo e mandagliele!
+		unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+		int xor_counter = 0;	// ...how many measure I did xor
+		vector<MeasureKey> outdated_tmp = node_info_msg->outdated_measures_;
+		vector<MeasureKey> removed;
+		vector<MeasureKey> inserted;
+		for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
+			unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
+			unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
+			ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+			xor_counter++;	// count how many measure I am xoring
+			removed.push_back(*out_it);
+			if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
+				unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
+				MeasureKey key(out_sns_id, up_msr_id);	// create a key
+				unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+				ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+				inserted.push_back(key);
+			}
+		}
+		if (xor_counter > 0) {	// if I have at least one measure to remove or update
+			OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
+			vector<Event> curr_events = send2(node_info_msg->node_id_, outdated_measure);		// send it
+			for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+				new_events.push_back(*event_it);
+			}
+		}
+		delete node_info_msg;
 		return new_events;
 	}
 
@@ -119,31 +149,40 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
 
-	if (nodes_info_.size() < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
+	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols
 	}
 
 	if (message_passing3()) {	// message passing succeeded: I have decoded all the symbols
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
-		vector<Event> current_events;	// all these events will go into the new_events list to return
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 			unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
 			int xor_counter = 0;	// ...how many measure I did xor
 			vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
+			vector<MeasureKey> removed;
+			vector<MeasureKey> inserted;
 			for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
 				unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
 				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
 				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
 				xor_counter++;	// count how many measure I am xoring
+				removed.push_back(*out_it);
 				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
 					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
 					MeasureKey key(out_sns_id, up_msr_id);	// create a key
 					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
 					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+					inserted.push_back(key);
+				}
+			}
+			if (xor_counter > 0) {	// if I have at least one measure to remove or update
+				OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
+				vector<Event> curr_events = send2(out_sym_it->first, outdated_measure);		// send it
+				for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+					new_events.push_back(*event_it);
 				}
 			}
 		}
-		// TODO when I will have communicated the new info to all the nodes I'll create an event: new_user, in which this user exits and a new one is created
 	} else {	// message passing failed: symbols not decoded...
 		// do nothing and wait to try message passing again...
 	}
