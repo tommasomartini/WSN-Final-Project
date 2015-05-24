@@ -25,13 +25,13 @@ using namespace std;
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
 	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
-//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
+	//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
-		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
-			if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor: accept it wp d/k
+		if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor
+			if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
 				ignore_new_list.push_back(source_id);	// I should process a new measure for each sensor just once
-				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+//				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
 					int k = MyToolbox::num_sensors_;
 					int d = LT_degree_;
 					default_random_engine gen = MyToolbox::generator_;
@@ -40,7 +40,7 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
 						last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
 					}
-				}
+//				}
 			} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
 				if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
 					// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
@@ -62,24 +62,14 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	measure->increase_hop_counter();	// increase the hop-counter
 	int hop_limit = MyToolbox::max_num_hops_;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-		new_events = send2(get_random_neighbor(), measure);	// propagate it!
+		new_events = send(get_random_neighbor(), measure);	// propagate it!
 	} else {	// the message must not be forwarded again
-//		cout << "Nodo " << node_id_ << " sta per cancellare misure (s" << measure->source_sensor_id_ << ", " << measure->measure_id_ << ")" << endl;
 		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
 		delete measure;	// this measure will be no more used
 	}
 
 	return new_events;
 } 
-
-/*  I have already tried to send a message to someone, but I failed. Now I try again!
- */
-// FIXME to deprecate
-//vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
-//	vector<Event> new_events;
-//	new_events = re_send(message);
-//	return new_events;
-//}
 
 /*  I have already tried to send a message to someone, but I failed. Now I try again!
  */
@@ -91,25 +81,11 @@ vector<Event> StorageNode::try_retx(Message* message) {
 
 /*  A sensor is telling me it is alive
  */
-// TODO to be deprecated
-//void StorageNode::set_supervision_map_(int sensor_id, int new_time){
-//	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
-//	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
-//		supervisioned_map_.insert(std::pair<int, int>(sensor_id, new_time));
-//	}
-//	else {
-//		supervisioned_map_.find(sensor_id)->second = new_time;
-//	}
-//}
-
-
-/*  A sensor is telling me it is alive
- */
 void StorageNode::receive_hello(unsigned int sensor_id) {
 	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << endl;
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
-		supervisioned_map_.insert(std::pair<int, int>(sensor_id, MyToolbox::current_time_));
+		supervisioned_map_.insert(std::pair<int, MyTime>(sensor_id, MyToolbox::current_time_));
 	}
 	else {
 		supervisioned_map_.find(sensor_id)->second = MyToolbox::current_time_;
@@ -126,8 +102,8 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 			MeasureKey key(msr_it->first, msr_it->second);
 			keys.push_back(key);
 		}
-		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, outdated_measure_keys_, keys);
-		new_events = send2(sender_user_id, node_info_msg);
+		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, keys, outdated_measure_keys_, my_blacklist_);
+		new_events = send(sender_user_id, node_info_msg);
 	}
 	return new_events;
 }
@@ -148,13 +124,12 @@ vector<Event> StorageNode::check_sensors() {
 	// remove from the supervisioned_map the dead sensors
 	for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
 		supervisioned_map_.erase(*it);
-//		supervisioned_map_.erase(supervisioned_map_.find(*it));
 	}
 
 	if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
 		BlacklistMessage* list = new BlacklistMessage(expired_sensors);
 		list->message_type_= Message::message_type_blacklist;
-		new_events = send2(get_random_neighbor(), list);
+		new_events = send(get_random_neighbor(), list);
 	}
 
 	if (supervisioned_map_.size() > 0) {	// if I have some supervisioned sensor check it in a while
@@ -171,15 +146,16 @@ vector<Event> StorageNode::check_sensors() {
 vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode just spread the blacklist, but don't look at it
-		vector<unsigned int> expired_sensors = list->get_id_list3();
+		vector<unsigned int> expired_sensors = list->sensor_ids_;
 		for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) { 	// for each id in the blacklist...
 			bool msr_from_this_sns = last_measures_.find(*it) != last_measures_.end();	// Do I have a measure from this sensor?
 			bool not_yet_in_my_blacklist = find(my_blacklist_.begin(), my_blacklist_.end(), *it) == my_blacklist_.end();	// Is it NOT already in my blacklist?
 			if (msr_from_this_sns && not_yet_in_my_blacklist) {	// if so...
-				my_blacklist_.push_back(*it);	// ...put its id in my backlist too
+				my_blacklist_.push_back(*it);	// ...put its id in my blacklist too
 				unsigned int msr_id = last_measures_.find(*it)->second;	// then pick the id of the last measure I received from this dead sensor...
 				MeasureKey key(*it, msr_id);	// ...make a key of the pair...
 				outdated_measure_keys_.push_back(key);	// ...and store the pair into my outdated measure key vector
+				last_measures_.erase(*it);	// quit following this sensor
 			}
 		}
 	}
@@ -188,7 +164,7 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 		list->increase_hop_counter();
 		unsigned int next_node_index = get_random_neighbor();
 		list->message_type_ = Message::message_type_blacklist;
-		new_events = send2(next_node_index, list);
+		new_events = send(next_node_index, list);
 	} else {
 		delete list;
 	}
@@ -197,23 +173,36 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 
 /*  A user informs me about what measures are obsolete
  */
-vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
+void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore this message and just pass it forward
-//		map<unsigned int, unsigned char> outdated_measure = message_to_remove->get_outdaded_measure();
-//		for (map<unsigned int, unsigned char>::iterator it = outdated_measure.begin(); it != outdated_measure.end(); ++it) {	// for each measure in the list...
-//			if (last_measures_.find(it->first) != last_measures_.end()){	// ...if I have used that measure...
-//				xored_measure_ = xored_measure_ ^ it->second;		// ...remove it...
-//				last_measures_.erase(last_measures_.find(it->first)); 	// ...and erase the sensor id from my list as well
-//			}
-//			if (find(my_blacklist_.begin(), my_blacklist_.end(), it->first) != my_blacklist_.end()) {	// if I have the sensor in my blacklist erase it
-//				my_blacklist_.erase(find(my_blacklist_.begin(), my_blacklist_.end(), it->first));
-//			}
-//		}
+		vector<MeasureKey> removed = refresh_message->removed_;		// list of the measure I have removed because outdated
+		vector<MeasureKey> inserted = refresh_message->inserted_;		// list of the measure I have inserted
+		bool can_update = true;
+		for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I could erase
+			if (find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it) == outdated_measure_keys_.end()) {	// if it is NOT among the measure I have to erase
+				can_update = false;
+				break;
+			}
+		}
+		for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I could add
+			if (find(my_blacklist_.begin(), my_blacklist_.end(), ins_it->sensor_id_) == my_blacklist_.end()) {	// if this sensor is NOT in my blacklist
+				can_update = false;
+				break;
+			}
+		}
+		if (can_update) {	// if I can perform the xor while preserving consistency
+			xored_measure_ ^= refresh_message->xored_data_;
+			for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I have erased
+				outdated_measure_keys_.erase(find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it));	// remove it from my outdated list: these data are no more outdated
+			}
+			for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I have added
+				last_measures_.insert(pair<unsigned int, unsigned int>(ins_it->sensor_id_, ins_it->measure_id_));	// add this measure to the list of the measure I have in my xor
+			}
+		}
 	}
 
-	delete message_to_remove;
-	return new_events;
+	delete refresh_message;
 }
 
 vector<Event> StorageNode::receive_reinit_query(unsigned int sender_user_id) {
@@ -231,7 +220,7 @@ vector<Event> StorageNode::receive_reinit_query(unsigned int sender_user_id) {
 	reinit_response->last_measures_ = to_pass_last_msrs;
 	reinit_response->blacklist_ = to_pass_blacklist;
 
-	new_events = send2(sender_user_id, reinit_response);
+	new_events = send(sender_user_id, reinit_response);
 
 	return new_events;
 }
@@ -248,7 +237,7 @@ vector<Event> StorageNode::receive_reinit_response() {
  **************************************/
 
 // this method is only for the first send!
-vector<Event> StorageNode::send2(unsigned int next_node_id, Message* message) {
+vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 	vector<Event> new_events;
 
 	// Set sender and receiver
@@ -507,7 +496,7 @@ vector<Event> StorageNode::reinitialize() {
 	ReinitQuery reinit_query;
 	vector<Event> partial_event_list;	// events returned by the communication with each neighbour
 	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {	// for each neighbour...
-		partial_event_list = send2(it->first, &reinit_query);	// ...send him the reinit request, or at least schedule it...
+		partial_event_list = send(it->first, &reinit_query);	// ...send him the reinit request, or at least schedule it...
 		new_events.insert(new_events.end(), partial_event_list.begin(), partial_event_list.end());	// ...add the events to the list of events...
 		partial_event_list.clear();	// ...and set the list for the next round and neighbour
 	}

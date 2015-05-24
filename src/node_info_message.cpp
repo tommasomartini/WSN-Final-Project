@@ -12,18 +12,6 @@ NodeInfoMessage::NodeInfoMessage() {
 
 NodeInfoMessage::NodeInfoMessage(unsigned int node_id,
 		  unsigned char output_message,
-		  std::vector<MeasureKey> outdated_measures,
-		  std::vector<MyToolbox::MeasureKey> sources) {
-	message_type_ = MessageTypes::message_type_node_info_for_user;
-
-	node_id_ = node_id;
-	output_message_ = output_message;
-	outdated_measures_ = outdated_measures;
-	sources_ = sources;
-}
-
-NodeInfoMessage::NodeInfoMessage(unsigned int node_id,
-		  unsigned char output_message,
 		  std::vector<MyToolbox::MeasureKey> sources,
 		  std::vector<MeasureKey> outdated_measures,
 		  std::vector<unsigned int> dead_sensors) {

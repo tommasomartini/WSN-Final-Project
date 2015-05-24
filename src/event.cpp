@@ -153,7 +153,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case remove_measure: {
-		new_events = ((StorageNode*)agent_)->remove_mesure((OutdatedMeasure*)message_);
+		((StorageNode*)agent_)->refresh_xored_data((OutdatedMeasure*)message_);
 		break;
 	}
 	case move_user: {

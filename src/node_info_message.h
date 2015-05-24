@@ -21,10 +21,6 @@ class NodeInfoMessage : public Message {
 
   NodeInfoMessage();
   NodeInfoMessage(unsigned int /*node id*/,
-  		  unsigned char /*output message*/,
-  		  std::vector<MeasureKey> /*outdated measures*/,
-  		  std::vector<MeasureKey> /*sources*/);
-  NodeInfoMessage(unsigned int /*node id*/,
     		  unsigned char /*output message*/,
 			  std::vector<MeasureKey> /*sources*/,
     		  std::vector<MeasureKey> /*outdated measures*/,

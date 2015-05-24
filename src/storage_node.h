@@ -28,8 +28,7 @@ class StorageNode : public Node {
   std::vector<Event> receive_reinit_response(); // Tom
   std::vector<Event> check_sensors(); // Arianna
   std::vector<Event> spread_blacklist(BlacklistMessage*); // Arianna
-  std::vector<Event> remove_mesure(OutdatedMeasure*); // Arianna
-
+  void refresh_xored_data(OutdatedMeasure*); // Arianna
   void receive_hello(unsigned int /*sensor id*/);
 
  private:
@@ -46,7 +45,7 @@ class StorageNode : public Node {
   std::vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
   std::vector<MeasureKey> outdated_measure_keys_;  // list of the measures I have belonging to sensors no longer in the network
 
-  std::vector<Event> send2(unsigned int /*next_node_id*/, Message*);
+  std::vector<Event> send(unsigned int /*next_node_id*/, Message*);
   std::vector<Event> re_send(Message*);
   std::vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
 };

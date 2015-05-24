@@ -21,10 +21,6 @@ using namespace std;
 vector<Event> User::move() {
 	vector<Event> new_events;
 
-	if (decoding_succeeded) {	// already decoded all the symbols
-		return new_events;	// this user is done! Do not do anything else
-	}
-
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
@@ -49,30 +45,32 @@ vector<Event> User::move() {
 	y_coord_ = new_y;
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
-	for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-		MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-		Event hello_event(event_time, Event::storage_get_user_hello);
-		Message* empty_msg = new Message();
-		empty_msg->message_type_ = Message::message_type_user_hello;
-		empty_msg->set_receiver_node_id(node_it->first);
-		empty_msg->set_sender_node_id(node_id_);
-		hello_event.set_agent(node_it->second);
-		hello_event.set_message(empty_msg);
-		new_events.push_back(hello_event);
-	}
-
-	bool interrogate_other_users = false;
-	if (interrogate_other_users) {
-		for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+	if (!decoding_succeeded) {	// not yet decoded all the input symbols
+		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
 			MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-			Event hello_event(event_time, Event::user_get_user_hello);
+			Event hello_event(event_time, Event::storage_get_user_hello);
 			Message* empty_msg = new Message();
 			empty_msg->message_type_ = Message::message_type_user_hello;
-			empty_msg->set_receiver_node_id(user_it->first);
+			empty_msg->set_receiver_node_id(node_it->first);
 			empty_msg->set_sender_node_id(node_id_);
+			hello_event.set_agent(node_it->second);
 			hello_event.set_message(empty_msg);
-			hello_event.set_agent(user_it->second);
 			new_events.push_back(hello_event);
+		}
+
+		bool interrogate_other_users = false;
+		if (interrogate_other_users) {
+			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+				MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
+				Event hello_event(event_time, Event::user_get_user_hello);
+				Message* empty_msg = new Message();
+				empty_msg->message_type_ = Message::message_type_user_hello;
+				empty_msg->set_receiver_node_id(user_it->first);
+				empty_msg->set_sender_node_id(node_id_);
+				hello_event.set_message(empty_msg);
+				hello_event.set_agent(user_it->second);
+				new_events.push_back(hello_event);
+			}
 		}
 	}
 
@@ -88,28 +86,30 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
-		unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
-		int xor_counter = 0;	// ...how many measure I did xor
+		unsigned char ad_hoc_msg = 0;	// xored message I have to send to the node
+		int xor_counter = 0;	// how many measure I did xor
 		vector<MeasureKey> outdated_tmp = node_info_msg->outdated_measures_;
 		vector<MeasureKey> removed;
 		vector<MeasureKey> inserted;
 		for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
 			unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
-			unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
-			ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-			xor_counter++;	// count how many measure I am xoring
-			removed.push_back(*out_it);
-			if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
-				unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
-				MeasureKey key(out_sns_id, up_msr_id);	// create a key
-				unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-				ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-				inserted.push_back(key);
+			if (decoded_symbols_.find(*out_it) != decoded_symbols_.end()) {	// if I have these data
+				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
+				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+				xor_counter++;	// count how many measure I am xoring
+				removed.push_back(*out_it);
+				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to update the measure
+					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
+					MeasureKey key(out_sns_id, up_msr_id);	// create a key
+					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+					inserted.push_back(key);
+				}
 			}
 		}
 		if (xor_counter > 0) {	// if I have at least one measure to remove or update
 			OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-			vector<Event> curr_events = send2(node_info_msg->node_id_, outdated_measure);		// send it
+			vector<Event> curr_events = send(node_info_msg->node_id_, outdated_measure);		// send it
 			for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
 				new_events.push_back(*event_it);
 			}
@@ -153,7 +153,7 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols
 	}
 
-	if (message_passing3()) {	// message passing succeeded: I have decoded all the symbols
+	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 			unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
@@ -177,7 +177,7 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 			}
 			if (xor_counter > 0) {	// if I have at least one measure to remove or update
 				OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-				vector<Event> curr_events = send2(out_sym_it->first, outdated_measure);		// send it
+				vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
 				for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
 					new_events.push_back(*event_it);
 				}
@@ -208,7 +208,7 @@ vector<Event> User::user_send_to_user(unsigned int sender_user_id) {
     Private methods
  **************************************/
 
-bool User::message_passing3() {
+bool User::message_passing() {
 	bool message_passing_succeeded = true;
 
 	// Create a copy of the node info to work with
@@ -272,234 +272,9 @@ bool User::message_passing3() {
 	return message_passing_succeeded;
 }
 
-//bool User::message_passing2() {
-//	bool message_passing_succeeded = true;
-//
-//	// Create a copy of the node info to work with
-//	map<unsigned int, NodeInfoMessage> info = nodes_info_;
-//
-//	map<unsigned int, unsigned char> resolved_symbols;
-//	map<unsigned int, unsigned char> released_symbols;
-//	vector<unsigned int> links_to_remove;
-//	while (true) {
-//		released_symbols.clear();   // released symbols are different at each step
-//		links_to_remove.clear();
-//		//    for (int i = 0; i < nodes_info.size(); i++) {
-//		for (map<unsigned int, NodeInfoMessage>::iterator info_it = info.begin(); info_it != info.end(); info_it++) {	// scan the output symbols...
-//			NodeInfoMessage curr_info_msg = info_it->second;
-//			if (curr_info_msg.msrs_info_.size() == 1) {  // ...to find the ones with output degree 1
-//				// store the resolved symbol
-//				resolved_symbols.insert(pair<unsigned int, unsigned char>(curr_info_msg.msrs_info_.begin()->first, curr_info_msg.output_message_));
-//				released_symbols.insert(pair<unsigned int, unsigned char>(curr_info_msg.msrs_info_.begin()->first, curr_info_msg.output_message_));
-//				links_to_remove.push_back(info_it->first);
-//				// Note that using a map if I try to insert two pairs with the same key, the second insertion does not succeed. In this way
-//				// I am guaranteed to insert only one entry for each sns id in the lists and not to have duplicated symbols.
-//			} else if (curr_info_msg.msrs_info_.empty()) {  // no more links to this node
-//				links_to_remove.push_back(info_it->first); // if an output symbol does not have any output link anymore it is useless, let's remove it!
-//			}
-//		}
-//
-//		// Erase from the (copy of the) info the row relative to the removed links. I don't need that symbol anymore
-//		for (vector<unsigned int>::iterator links_it = links_to_remove.begin(); links_it != links_to_remove.end(); links_it++) {
-//			info.erase(*links_it);
-//		}
-//
-//		// Now we have to XOR the just released output symbols with the output symbols containing them
-//		//vector<unsigned int> curr_output_header;
-//		//vector<unsigned int>::iterator output_link_it;
-//		if (released_symbols.size() > 0) {  // at least one symbol has been released
-//			for(my_iterator released_iterator = released_symbols.begin(); released_iterator != released_symbols.end(); released_iterator++) {  // for each released symbol...
-//				unsigned int current_sns_id = released_iterator->first;	// id of the sensor who produced the released symbol
-//				unsigned char current_value = released_iterator->second;	// xored measure of this sensor
-//				// for each output symbol (use an iterator to use a pointer and modify the actual values!):
-//				for (map<unsigned int, NodeInfoMessage>::iterator out_sym_it = info.begin(); out_sym_it != info.end(); out_sym_it++) {	// ...for each output symbol not yet released (still in the copied buffer)...
-//					if (out_sym_it->second.msrs_info_.find(current_sns_id) != out_sym_it->second.msrs_info_.end()) {	// ...if its xored message is also formed by this released sensor id...
-//						unsigned char new_xor = current_value ^ out_sym_it->second.output_message_;  // ...XOR the released symbol with the current output one...
-//						out_sym_it->second.output_message_ = new_xor; // ...replace it...
-//						out_sym_it->second.msrs_info_.erase(current_sns_id);	// ...and remove the link
-//					}
-//				}
-//			}
-//		} else {  // no symbol released at this round
-//			if (info.empty()) {  // if no other symbols, everything is ok
-//				decoded_symbols_ = resolved_symbols;	// store the decoded measures...
-//				// ...and update the backlist
-//				for (map<unsigned int, unsigned char>::iterator bl_it = blacklist_.begin(); bl_it != blacklist_.end(); bl_it++) {	// for each blacklisted id...
-//					bl_it->second = decoded_symbols_.find(bl_it->first)->second;	// ...store the just decoded measure
-//				}
-//				break;
-//			} else {
-//				cerr << "Impossible to decode! Message passing failed!" << endl;
-//				message_passing_succeeded = false;
-//				break;
-//			}
-//		}
-//	}
-//	return message_passing_succeeded;
-//}
-
-//bool User::message_passing() {
-//    cout<<"sono denstro al message_passing "<<endl;
-//
-//  bool message_passing_succeeded = true;
-//
-//  map<unsigned int, unsigned char> resolved_symbols;
-//  map<unsigned int, unsigned char> released_symbols;
-//  vector<int> links_to_remove;
-//  // for (int counter = 1; counter <= 2; counter++) { // tutto il message passing va qui dentro!
-//  while (true) {
-//    released_symbols.clear();   // released symbols are different at each step
-//    links_to_remove.clear();
-//    // for (Message current_msg : output_symbols_) {  // scan the output symbols...
-//    for (int i = 0; i < output_symbols2_.size(); i++) {  // scan the output symbols...
-//      StorageNodeMessage current_msg = output_symbols2_.at(i);	// (...current symbol...)
-//      if (current_msg.sensor_ids_.size() == 1) {  // ...to find the ones with output degree 1
-//        // store the resolved symbol
-//        resolved_symbols.insert(pair<unsigned int, unsigned char>(current_msg.sensor_ids_.at(0), current_msg.xored_message_));
-//        released_symbols.insert(pair<unsigned int, unsigned char>(current_msg.sensor_ids_.at(0), current_msg.xored_message_));
-//        links_to_remove.push_back(i);
-//      } else if (current_msg.sensor_ids_.empty()) {  // no more links to this node
-//        links_to_remove.push_back(i); // if an output symbol does not have any output link anymore it is useless, let's remove it!
-//      }
-//    }
-//
-//    /*  As we scan the output_symbols_ vector from the first to the last symbol, also the links we want to remove, that is
-//        the rows of the vector, are in the same order we find them INSIDE the vector. So, if we have to remove rows 2 and 4,
-//        we must first remove row 4 and then row 2. Otherwise, after removing row 2, the row which first was row 4 is now row 3
-//        and we remove the current row 4, which is not what we intended to remove!
-//    */
-//
-//    unsigned int index_to_remove;
-//    for (int i = links_to_remove.size() - 1; i >= 0 ; i--) {  // remove the links of the resolved symbols
-//      index_to_remove = links_to_remove.at(i);  // index of output_symbols_ to remove
-//      output_symbols2_.erase(output_symbols2_.begin() + index_to_remove);
-//    }
-//    // Now we have to XOR the just released output symbols with the output symbols containing them
-//    vector<unsigned int> curr_output_header;
-//    vector<unsigned int>::iterator output_link_it;
-//    if (released_symbols.size() > 0) {  // at least one symbol has been released
-//      for(my_iterator released_iterator = released_symbols.begin(); released_iterator != released_symbols.end(); released_iterator++) {  // iterator is a pointer to the pair in that position
-//        unsigned int current_id = released_iterator->first;
-//        unsigned char current_value = released_iterator->second;
-//        // for each output symbol (use an iterator to use a pointer and modify the actual values!):
-//        for(vector<StorageNodeMessage>::iterator output_sym_it = output_symbols2_.begin(); output_sym_it != output_symbols2_.end(); output_sym_it++) {
-//        // for(Message current_msg : output_symbols_) {  // for each output symbol (use an iterator to use a pointer and modify the actual values!):
-//          // Message *curr_msg_ptr = &current_msg;
-//          curr_output_header = output_sym_it->sensor_ids_; // in this vector there are the source ids forming the output symbol
-//          output_link_it = find(output_sym_it->sensor_ids_.begin(), output_sym_it->sensor_ids_.end(), current_id);  // iterator: find the input id in output symbol's header
-//          if (output_link_it != output_sym_it->sensor_ids_.end()) {   // if I find a correspondence...
-//            unsigned char new_message = current_value ^ output_sym_it->xored_message_;  // ...XOR the released symbol with the current output one...
-//            output_sym_it->xored_message_ = new_message; // ...replace it...
-//            output_sym_it->sensor_ids_.erase(output_link_it); // ...and remove the link
-//          }
-//        }
-//      }
-//    } else {  // no symbol released at this round
-//      if (output_symbols2_.empty()) {  // if no other symbols, everything is ok
-//        break;
-//      } else {
-//        cerr << "Impossible to decode! Message passing failed!" << endl;
-//        message_passing_succeeded = false;
-//        break;
-//      }
-//    }
-//
-//    // for debug purpoes only: show the content of output_symbols_
-//    // cout << "\n- - - \nContenuto di output_symbols_:" << endl;
-//    // if (!output_symbols_.empty()) {
-//    //   for (int i = 0; i < output_symbols_.size(); i++) {  // scan the output symbols...
-//    //     StorageNodeMessage msg = output_symbols_.at(i);
-//    //     cout << "Posizione: " << i + 1 << ", messaggio: " << static_cast<int>(msg.xored_message_) << ". Source symbols: ";
-//    //     vector<int> v = msg.sensor_ids_;
-//    //     for (int j = 0; j < v.size(); ++j) {
-//    //       cout << v.at(j) << "  ";
-//    //     }
-//    //     cout << endl;
-//    //   }
-//    // } else {
-//    //   cout << "output_symbols_ e' vuoto!" << endl;
-//    // }
-//    // cout << "- - - \n\n" << endl;
-//
-//  } // END while / for (int counter = 1; ...) fine del ciclo che dice quante iterazioni di msg_passing devo fare.
-//
-//
-//  if (message_passing_succeeded) {
-//    cout << "= = =\nMessage passing succeeded!\n= = =" << endl;
-//  } else {
-//    cout << "= = =\nMessage passing failed!\n= = =" << endl;
-//  }
-//
-//  // // for debug purpoes only: show the content of resolved_symbols_
-//  // cout << "\n- - - \nContenuto di resolved_symbols:" << endl;
-//  // for(my_iterator resolved_it = resolved_symbols.begin(); resolved_it != resolved_symbols.end(); resolved_it++) {
-//  //   int _id = resolved_it->first;
-//  //   unsigned char _val = resolved_it->second;
-//  //   cout << "s" << _id << " = " << static_cast<int>(_val) << endl;
-//  // }
-//  // cout << "- - - \n\n" << endl;
-//  // input_symbols_=resolved_symbols;
-//
-//  return message_passing_succeeded;
-//}
-
 bool User::CRC_check(Message message) {
 	return true;
 }
-
-// vector<Event> User::user_send_to_user(User* user, int event_time){
-//     vector<Event> new_events; 
-//     cout<<"size old "<<user->output_symbols_.size()<<endl;
-//         cout<<"nuove coordinate y="<<y_coord_;
-//         cout<<"quanti nodi ho vicino? "<<near_storage_nodes.size()<<endl;
-//         cout<<"quanti user ho vicino?"<<near_users.size()<<endl;
-
-
-//         // creates event user_node_query with all near nodes
-//         for(int i=0; i<near_storage_nodes.size(); i++){
-//             UserMessage* message;
-//             message->set_user_to_reply(this);
-//             Event new_event(event_time, Event::node_send_to_user); //event time distanziarli
-//             new_event.set_agent(near_storage_nodes.at(i));
-//             new_event.set_message(message);
-//             new_events.push_back(new_event);
-//         }
-//         // creates event user_user_query with all near users
-//         for(int i=0; i<near_users.size(); i++){
-//             UserMessage* message;
-//             message->set_user_to_reply(this);
-//             Event new_event(event_time, Event::user_send_to_user); //event time distanziarli
-//             new_event.set_agent(near_users.at(i));
-//             new_event.set_message(message);
-//             new_events.push_back(new_event);
-//         }
-//         // create next move_user
-//         Event new_event(event_time+MyToolbox::get_user_update_time(),Event::move_user);
-//         new_event.set_agent(this);
-//         new_events.push_back(new_event);
-//         }
-//   return new_events;
-// }
-/*
-vector<Event> User::user_send_to_user(UserMessage* message, int event_time){
-    User* user = message->get_user_to_reply();
-    vector<Event> new_events;
-    cout<<"entrata";
-        cout<<"size old "<<user->output_symbols_.size()<<endl;
-//        cout<<"ci aggiungo "<<user->output_symbols_<<.end();
-    user->output_symbols_.insert(user->output_symbols_.end(), output_symbols_.begin(), output_symbols_.end()); // controlla è tardi!
-    cout<<"size new "<<user->output_symbols_.size()<<endl;
-    //try message passing
-    if (user->message_passing()){ 
-        // the user succeed message passing, now delete this user and create a new user
-        User *new_user = MyToolbox::new_user();
-        Event new_event(event_time+10, Event::move_user); //event time da cambiare
-        new_event.set_agent(new_user);
-        new_events.push_back(new_event);
-    }
-    return new_events;
-}       
- */      //metodo user_send_to_user diventato obsoleto!
 
 vector<Event> User::try_retx(Message* message, int next_node_id) {
 	//  map<unsigned int, StorageNode*>* nodes_map = &(MyToolbox::storage_nodes_map_ptr_);
@@ -523,97 +298,157 @@ vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
 	return vector<Event>();
 }
 
-vector<Event> User::send2(unsigned int next_node_id, Message* message) {
+// this method is only for the first send!
+vector<Event> User::send(unsigned int next_node_id, Message* message) {
 	vector<Event> new_events;
+
+	// Set sender and receiver
+	message->set_receiver_node_id(next_node_id);
+	message->set_sender_node_id(node_id_);
+
+	if (!event_queue_.empty()) {  // already some pending event -> does not generate new events
+		Event event_to_enqueue(0, Event::user_try_to_send);	// execution time does not matter now...
+		event_to_enqueue.set_agent(this);
+		event_to_enqueue.set_message(message);
+		event_queue_.push(event_to_enqueue);
+	} else {  // no pending events
+		map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+		MyTime current_time = MyToolbox::current_time_;  // current time of the system
+		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+			Event try_again_event(new_schedule_time, Event::user_try_to_send);
+			try_again_event.set_agent(this);
+			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
+			new_events.push_back(try_again_event);
+		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+			Event try_again_event(new_schedule_time, Event::user_try_to_send);
+			try_again_event.set_agent(this);
+			try_again_event.set_message(message);
+			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
+			new_events.push_back(try_again_event);
+		} else {  // sender and receiver both idle, can send the message
+			// Compute the message time
+			MyTime processing_time = MyToolbox::get_random_processing_time();
+			unsigned int num_total_bits = message->get_message_size();
+			MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
+			MyTime new_schedule_time = current_time + processing_time + transfer_time;
+			// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+			// Just in case I want to give priority to some particular message...
+			Event::EventTypes this_event_type;
+			Agent* my_agent;
+			switch (message->message_type_) {
+			case Message::message_type_remove_measure: {
+				this_event_type = Event::remove_measure;
+				my_agent = near_storage_nodes_.find(next_node_id)->second;
+				break;
+			}
+			case Message::message_type_intra_user: {
+				this_event_type = Event::user_receive_data;
+				my_agent = near_users_.find(next_node_id)->second;
+				break;
+			}
+			default:
+				break;
+			}
+			Event receive_message_event(new_schedule_time, this_event_type);
+			receive_message_event.set_agent(my_agent);
+			receive_message_event.set_message(message);
+			new_events.push_back(receive_message_event);
+
+			// Update the timetable
+			MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
+			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+				MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+			}
+
+			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
+		}
+	}
 	return new_events;
 }
 
-vector<Event> User::send(Node* next_node, Message* message) {
+vector<Event> User::re_send(Message* message) {
 	vector<Event> new_events;
 
-	//  MyTime processing_time = MyToolbox::processing_time_;
-	//  unsigned int num_total_bits = message->get_message_size();
-	//  MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
-	//  MyTime message_time = processing_time + transfer_time;
-	//
-	//  if (!event_queue_.empty()) {  // already some pending event
-	//    // I set a schedule time for this event, but it has no meaning! Once I will extract it from the queue
-	//    // I will unfold it and I will build up a brand new event with its pieces and then I will set
-	//    // a significant schedule time!
-	//    Event event_to_enqueue(0, Event::storage_node_try_to_send);
-	//    event_to_enqueue.set_agent(this);
-	//    event_to_enqueue.set_message(message);
-	//    event_queue_.push(event_to_enqueue);
-	//
-	//    // do not insert it in the new_events vector! This event is not going to be put in the main event list now!
-	//  } else {  // no pending events
-	//    map<unsigned int, MyTime>* timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
-	//    MyTime current_time = MyToolbox::current_time_;  // current time of the system
-	//    MyTime my_available_time = timetable->find(node_id_)->second; // time this sensor gets free
-	//    MyTime next_node_available_time = timetable->find(next_node->get_node_id())->second;  // time next_node gets free
-	//    if (my_available_time > current_time) { // this node already involved in a communication or surrounded by another communication
-	//      MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-	//      Event try_again_event(0); // create an event with a fake schedule time
-	//      if (message->message_type_ == Message::message_type_intra_user) {
-	//        try_again_event = Event(new_schedule_time, Event::user_try_to_send);
-	//      } else {
-	//        try_again_event = Event(new_schedule_time, Event::user_try_to_send_to_user);
-	//      }
-	//      try_again_event.set_agent(this);
-	//      try_again_event.set_message(message);
-	//      new_events.push_back(try_again_event);
-	//    } else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-	//      MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-	//      Event try_again_event(0); // create an event with a fake schedule time
-	//      if (message->message_type_ == Message::message_type_intra_user) {
-	//        try_again_event = Event(new_schedule_time, Event::user_try_to_send);
-	//      } else {
-	//        try_again_event = Event(new_schedule_time, Event::user_try_to_send_to_user);
-	//      }
-	//      try_again_event.set_agent(this);
-	//      try_again_event.set_message(message);
-	//      new_events.push_back(try_again_event);
-	//    } else {  // sender and receiver both idle, can send the message
-	//      // Schedule the new receive event
-	//      MyTime new_schedule_time = current_time + message_time;
-	//      // Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
-	//      Event::EventTypes this_event_type;
-	//      switch (message->message_type_) {
-	//        case Message::message_type_intra_user: {
-	//          this_event_type = Event::user_receive_data;
-	//          break;
-	//        }
-	//        case Message::message_type_remove_measure: {
-	//          this_event_type = Event::remove_measure;
-	//          break;
-	//        }
-	//        default:
-	//          break;
-	//      }
-	//      Event receive_message_event(new_schedule_time, this_event_type);
-	//      receive_message_event.set_agent(next_node);
-	//      receive_message_event.set_message(message);
-	//      new_events.push_back(receive_message_event);
-	//
-	//      // Update the timetable
-	//      timetable->find(node_id_)->second = current_time + message_time; // update my available time
-	//      // TODO devo aggiornre la mappa, non il vettore!!!
-	//      for (map<unsigned int, Node*>::iterator node_it = near_storage_nodes_->begin(); node_it != near_storage_nodes_->end(); node_it++) {
-	//      				timetable->find(node_it->first)->second = new_schedule_time;
-	//      			}
-	//      MyToolbox::timetable_ = timetable;  // upload the updated timetable
-	//
-	//      // Update the event_queue_
-	//      if (!event_queue_.empty()) {  // if there are other events in the queue
-	//        Event top_queue_event = event_queue_.front(); // the oldest event of the queue (the top one, the first)
-	//        event_queue_.pop(); // remove the oldest event frrm the queue
-	//        Event popped_event(current_time + message_time + MyToolbox::get_tx_offset(), top_queue_event.get_event_type());  // create a brand new event using the popped one, seting now  valid schedule time
-	//        popped_event.set_agent(this);
-	//        popped_event.set_message(top_queue_event.get_message());
-	//        new_events.push_back(popped_event); // schedule the next event
-	//      }
-	//    }
-	//  }
+	unsigned int next_node_id = message->get_receiver_node_id();
+	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end() && near_users_.find(next_node_id) == near_users_.end()) {	// my neighbor there is no longer
+		event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
+		if (event_queue_.empty()) {	// if the queue is now empty...
+			return new_events;	// return an empty vector, I don't have new events to schedule
+		} else {
+			Message* new_message = event_queue_.front().get_message();
+			return re_send(new_message);
+		}
+	}
 
-	return new_events;
+	// If I arrive here I have a neighbour to whom I can try to send
+
+	map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
+	MyTime current_time = MyToolbox::current_time_;  // current time of the system
+	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
+	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
+	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
+		Event try_again_event(new_schedule_time, Event::user_try_to_send);
+		try_again_event.set_agent(this);
+		try_again_event.set_message(message);
+		new_events.push_back(try_again_event);
+		return new_events;
+	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
+		Event try_again_event(new_schedule_time, Event::user_try_to_send);
+		try_again_event.set_agent(this);
+		try_again_event.set_message(message);
+		new_events.push_back(try_again_event);
+		return new_events;
+	} else {  // sender and receiver both idle, can send the message
+		// Compute the message time
+		MyTime processing_time = MyToolbox::get_random_processing_time();
+		unsigned int num_total_bits = message->get_message_size();
+		MyTime transfer_time = (MyTime)(num_total_bits * 1. * pow(10, 3) / MyToolbox::bitrate_); // in nano-seconds
+		MyTime new_schedule_time = current_time + processing_time + transfer_time;
+		// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
+		Event::EventTypes this_event_type;
+		Agent* my_agent;
+		switch (message->message_type_) {
+		case Message::message_type_remove_measure: {
+			this_event_type = Event::remove_measure;
+			my_agent = near_storage_nodes_.find(next_node_id)->second;
+			break;
+		}
+		case Message::message_type_intra_user: {
+			this_event_type = Event::user_receive_data;
+			my_agent = near_users_.find(next_node_id)->second;
+			break;
+		}
+		default:
+			break;
+		}
+		Event receive_message_event(new_schedule_time, this_event_type);
+		receive_message_event.set_agent(my_agent);
+		receive_message_event.set_message(message);
+		new_events.push_back(receive_message_event);
+
+		// Update the timetable
+		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
+		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
+			MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+		}
+
+		// Update the event_queue_
+		event_queue_.pop();	// remove the current send event, now successful
+		if (!event_queue_.empty()) {  // if there are other events in the queue
+			// I will be available, in the best case scenario, after new_schedule_time
+			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();
+			Event next_send_event(sched_time, event_queue_.front().get_event_type());
+			next_send_event.set_agent(this);
+			next_send_event.set_message(event_queue_.front().get_message());
+			new_events.push_back(next_send_event); // schedule the next event
+		}
+		return new_events;
+	}
 }
