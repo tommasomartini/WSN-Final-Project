@@ -15,21 +15,20 @@ class NodeInfoMessage : public Message {
  public:
   unsigned int node_id_;
   unsigned char output_message_;
-  std::vector<unsigned int> blacklist_;	// TODO to remove
-  std::vector<MeasureKey> outdated_measures_;
-  std::map<unsigned int, unsigned int> msrs_info_;	// TODO to remove
   std::vector<MeasureKey> sources_;	// keys of the measures composing this xored measure
+  std::vector<MeasureKey> outdated_measures_;	// keys of the (pure) measures I want to know
+  std::vector<unsigned int> dead_sensors_;	// ids of the dead sensors
 
   NodeInfoMessage();
-  // TODO to remove
-  NodeInfoMessage(unsigned int /*node id*/,
-		  unsigned char /*output message*/,
-		  std::vector<unsigned int> /*blacklist*/,
-		  std::map<unsigned int, unsigned int> /*measures info*/);
   NodeInfoMessage(unsigned int /*node id*/,
   		  unsigned char /*output message*/,
   		  std::vector<MeasureKey> /*outdated measures*/,
   		  std::vector<MeasureKey> /*sources*/);
+  NodeInfoMessage(unsigned int /*node id*/,
+    		  unsigned char /*output message*/,
+			  std::vector<MeasureKey> /*sources*/,
+    		  std::vector<MeasureKey> /*outdated measures*/,
+    		  std::vector<unsigned int> /*dead sensors*/);
 
   unsigned int get_message_size();
 };

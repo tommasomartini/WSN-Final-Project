@@ -7,8 +7,6 @@
 
 class Message;
 
-using namespace std;
-
 class Event {
 
  public:
@@ -45,14 +43,14 @@ class Event {
     network_reset
   };
 
-  static string int2type(int);
+  static std::string int2type(int);
 
  private:
   typedef MyToolbox::MyTime MyTime;
 
   MyTime time_;
-  Agent *agent_;
-  Message *message_;
+  Agent* agent_;
+  Message* message_;
   Event::EventTypes event_type_;
 
  public:
@@ -74,7 +72,7 @@ class Event {
   void set_message(Message*);
   
   // functions
-  vector<Event> execute_action();
+  std::vector<Event> execute_action();
 };
 
 #endif

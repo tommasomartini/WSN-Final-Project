@@ -10,6 +10,7 @@
 #include "user.h"
 #include "measure.h"
 #include "blacklist_message.h"
+#include "node_info_message.h"
 #include "outdated_measure.h"
 #include "reinit_query.h"
 #include "reinit_response.h"
@@ -74,11 +75,11 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 /*  I have already tried to send a message to someone, but I failed. Now I try again!
  */
 // FIXME to deprecate
-vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
-	vector<Event> new_events;
-	new_events = re_send(message);
-	return new_events;
-}
+//vector<Event> StorageNode::try_retx(Message* message, unsigned int next_node_id) {
+//	vector<Event> new_events;
+//	new_events = re_send(message);
+//	return new_events;
+//}
 
 /*  I have already tried to send a message to someone, but I failed. Now I try again!
  */
@@ -119,17 +120,15 @@ void StorageNode::receive_hello(unsigned int sensor_id) {
  */
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 	vector<Event> new_events;
-//	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
-////		vector<unsigned int> my_sensor_ids;
-////		for (map<unsigned int, unsigned int>::iterator it = last_measures_.begin(); it != last_measures_.end(); it++) {
-////			my_sensor_ids.push_back(it->first);
-////		}
-//		map<unsigned int, unsigned int> msrs_info = last_measures_;
-//		StorageNodeMessage msg(xored_measure_, msrs_info);
-////		Node* next_node = MyToolbox::users_map_ptr_.find(sender_user_id)->second;
-////		msg.set_receiver_node_id(next_node->get_node_id()); // should be equal to sender_user_id
-//		new_events = send2(sender_user_id, &msg);
-//	}
+	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
+		vector<MeasureKey> keys;
+		for (map<unsigned int, unsigned int>::iterator msr_it = last_measures_.begin(); msr_it != last_measures_.end(); msr_it++) {
+			MeasureKey key(msr_it->first, msr_it->second);
+			keys.push_back(key);
+		}
+		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, outdated_measure_keys_, keys);
+		new_events = send2(sender_user_id, node_info_msg);
+	}
 	return new_events;
 }
 
@@ -190,6 +189,8 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 		unsigned int next_node_index = get_random_neighbor();
 		list->message_type_ = Message::message_type_blacklist;
 		new_events = send2(next_node_index, list);
+	} else {
+		delete list;
 	}
 	return new_events;
 }
@@ -221,6 +222,7 @@ vector<Event> StorageNode::remove_mesure(OutdatedMeasure* message_to_remove){
 //		StorageNode *next_node = (StorageNode*)node_iter->second;
 ////		    new_events = send2(next_node->get_node_id(), message_to_remove);	// my choice is not to flood the network with heavy messages
 	}
+	delete message_to_remove;
 	return new_events;
 }
 

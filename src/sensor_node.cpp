@@ -9,8 +9,8 @@
 #include "storage_node.h"
 #include "measure.h"
 #include "user.h"
-//#include "data_collector.h"
 
+using namespace std;
 
 /**************************************
     Constructors

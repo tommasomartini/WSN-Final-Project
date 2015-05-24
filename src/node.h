@@ -43,7 +43,7 @@ class Node : public Agent {
 
       The first event is always the one in execution in this moment. Empty queue => no events being executed
   */ 
-  queue<Event> event_queue_; 
+  std::queue<Event> event_queue_;
   
   unsigned int get_random_neighbor();
 };

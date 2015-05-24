@@ -6,6 +6,7 @@
 #include "sensor_node.h"
 #include "storage_node.h"
 
+using namespace std;
 
 /**************************************
     Constructors

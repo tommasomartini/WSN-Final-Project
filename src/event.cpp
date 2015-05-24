@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-//#include "event.h"
+#include "event.h"
 #include "sensor_node.h"
 #include "measure.h"
 #include "storage_node.h"
@@ -10,6 +10,8 @@
 #include "user.h"
 #include "outdated_measure.h"
 #include "node_info_message.h"
+
+using namespace std;
 
 
 Event::Event(MyTime event_time) {
@@ -39,7 +41,7 @@ void Event::set_agent(Agent *agent) {
 	agent_ = agent;
 }
 
-void Event::set_message(Message *message) {
+void Event::set_message(Message* message) {
 	message_ = message;
 }
 

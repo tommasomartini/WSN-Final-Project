@@ -297,9 +297,9 @@ int main() {
 	}
 	cout << "Network correctly set-up!" << endl;
 
-		activate_measure_generation();
-//		activate_ping_generation();
-//		activate_ping_check();
+//	activate_measure_generation();
+//	activate_ping_generation();
+//	activate_ping_check();
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();

@@ -12,12 +12,16 @@ class NodeInfoMessage;
 class User: public Node {
 
  private:
+  typedef MyToolbox::MeasureKey MeasureKey;
+
   struct OutputSymbol {
     unsigned char xored_msg_;
-    std::vector<MyToolbox::MeasureKey> sources_;
-    OutputSymbol(unsigned char xored_msg, std::vector<MyToolbox::MeasureKey> sources) {
+    std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
+    std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
+    OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
       xored_msg_ = xored_msg;
       sources_ = sources;
+      outdated_ = outdated;
     }
   };
 
@@ -42,13 +46,14 @@ class User: public Node {
   typedef MyToolbox::MyTime MyTime;
   typedef MyToolbox::MeasureKey MeasureKey;
 
+  bool decoding_succeeded = false;	// when message passing succeeds I ignore other messages sent by the cache (I could interrogate 100 caches but decode the measures after 10 answers!)
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree
-  std::map<unsigned int, OutputSymbol> nodes_info2_;	// output symbols
-  std::map<MeasureKey, unsigned char> decoded_symbols2_;	// input symbols
+  std::map<unsigned int, OutputSymbol> nodes_info_;	// output symbols <cache id, info about the cache and the output symbol>
+  std::map<MeasureKey, unsigned char> decoded_symbols_;	// input symbols eventually decoded (contains ALL the measures I have received, also the older ones)
   std::map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent
-  std::map<unsigned int, unsigned char> blacklist_;		// dead sensors and relative measures
-  std::map<MeasureKey, unsigned char> outdated_measures_;		// old measures
+  std::vector<unsigned int> dead_sensors_;		// dead sensors ids
+//  std::map<MeasureKey, unsigned char> outdated_measures_;		// old measures
   std::vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
 
   std::vector<Event> send(Node*, Message*);

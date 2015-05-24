@@ -59,32 +59,30 @@ void MyToolbox::set_close_nodes(User* user) {
 
   for (auto& st_node_elem : storage_nodes_map_) {
     StorageNode* st_node = &(st_node_elem.second);
-//    StorageNode st_node = *(st_node_elem.second);
     double his_x = st_node->get_x_coord();
     double his_y = st_node->get_y_coord();
     double my_x = user->get_x_coord();
     double my_y = user->get_y_coord();
     double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
-    if (dist < MyToolbox::tx_range_) { // the users are able to communicate
+    if (dist <= MyToolbox::tx_range_) { // the users are able to communicate
       pair<unsigned int, StorageNode*> pp(st_node->get_node_id(), st_node);
       user->near_storage_nodes_.insert(pp);
     }
   }
 
   for (auto& us_node_elem : users_map_) {
-  User us_node = us_node_elem.second;
-//  User us_node = *(us_node_elem.second);
-    if (&us_node != user) {  // does not make sense to include myself among my neighbours
-      double his_x = us_node.get_x_coord();
-      double his_y = us_node.get_y_coord();
-      double my_x = user->get_x_coord();
-      double my_y = user->get_y_coord();
-      double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
-      if (dist < MyToolbox::tx_range_) { // the users are able to communicate
-        pair<unsigned int, User*> pp(us_node.get_node_id(), us_node);
-        user->near_users_.insert(pp);
-      }
-    }
+	  User* us_node = &(us_node_elem.second);
+	  if (us_node != user) {  // does not make sense to include myself among my neighbours
+		  double his_x = us_node->get_x_coord();
+		  double his_y = us_node->get_y_coord();
+		  double my_x = user->get_x_coord();
+		  double my_y = user->get_y_coord();
+		  double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+		  if (dist <= MyToolbox::tx_range_) { // the users are able to communicate
+			  pair<unsigned int, User*> pp(us_node->get_node_id(), us_node);
+			  user->near_users_.insert(pp);
+		  }
+	  }
   }
 }
 
