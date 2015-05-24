@@ -162,26 +162,23 @@ vector<Event> Event::execute_action() {
 		cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
 		break;
 	}
-	case node_send_to_user: {
+	case node_receive_user_request: {
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
+		delete message_;
 		break;
 	}
-	case user_send_to_user: {
-		new_events = ((User*)agent_)->user_send_to_user(message_->get_sender_node_id());
-		break;
-	}
+	case user_receive_user_data: {
+			new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
+			delete message_;
+			break;
+		}
 	case user_try_to_send: {
 		int next_node_id = message_->get_receiver_node_id();
 		new_events = ((User*)agent_)->try_retx(message_, next_node_id);
 		break;
 	}
-	case user_try_to_send_to_user: {
-		int next_node_id = message_->get_receiver_node_id();
-		new_events = ((User*)agent_)->try_retx_to_user(message_, next_node_id);
-		break;
-	}
-	case user_receive_data: {
-		//         new_events = ((User*)agent_)->receive_data((NodeInfoMessage)*(message_));
+	case user_receive_node_data: {
+//		         new_events = ((User*)agent_)->receive_node_data((NodeInfoMessage)*(message_));
 		break;
 	}
 	case sensor_ping: {

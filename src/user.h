@@ -8,6 +8,7 @@
 
 class Message;
 class NodeInfoMessage;
+class UserInfoMessage;
 
 class User: public Node {
 
@@ -35,7 +36,9 @@ class User: public Node {
   
   std::vector<Event> move(); // different implementation of the random walk
   std::vector<Event> user_send_to_user(unsigned int /*sender user*/);  // Tom
-  std::vector<Event> receive_data(NodeInfoMessage*);	// Tom
+  std::vector<Event> receive_node_data(NodeInfoMessage*);
+  std::vector<Event> receive_user_data(UserInfoMessage*);
+  std::vector<Event> receive_user_request(unsigned int);
   std::vector<Event> user_receive_data_from_user(int, Message*);
   std::vector<Event> try_retx(Message*, int /*next_node_id*/);
   std::vector<Event> try_retx_to_user(Message*, int /*next_node_id*/);

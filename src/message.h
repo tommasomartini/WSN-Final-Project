@@ -15,6 +15,7 @@ class Message {
     message_type_intra_user,
 	message_type_reinit_query,
 	message_type_reinit_response,
+	message_type_user_info_for_user,
 	message_type_user_hello,
     message_type_new_node,	// FIXME ancora necessario?
     message_type_user_to_user,  // TODO: per cosa lo uso?

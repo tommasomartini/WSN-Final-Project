@@ -294,7 +294,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			case Message::message_type_measures_for_user: {
-				this_event_type = Event::user_receive_data;
+				this_event_type = Event::user_receive_node_data;
 				break;
 			}
 			case Message::message_type_reinit_query: {
@@ -431,7 +431,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			break;
 		}
 		case Message::message_type_measures_for_user: {
-			this_event_type = Event::user_receive_data;
+			this_event_type = Event::user_receive_node_data;
 			break;
 		}
 		case Message::message_type_reinit_query: {

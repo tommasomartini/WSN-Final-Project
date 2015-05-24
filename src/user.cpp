@@ -5,10 +5,10 @@
 
 #include "user.h"
 #include "sensor_node.h"
-#include "intra_user_message.h"
 #include "my_toolbox.h"
 #include "storage_node.h"
 #include "node_info_message.h"
+#include "user_info_message.h"
 #include "outdated_measure.h"
 
 using namespace std;
@@ -82,7 +82,7 @@ vector<Event> User::move() {
 	return new_events;
 }
 
-vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
+vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
@@ -187,6 +187,11 @@ vector<Event> User::receive_data(NodeInfoMessage* node_info_msg) {
 		// do nothing and wait to try message passing again...
 	}
 
+	return new_events;
+}
+
+vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
+	vector<Event> new_events;
 	return new_events;
 }
 
@@ -347,7 +352,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 				break;
 			}
 			case Message::message_type_intra_user: {
-				this_event_type = Event::user_receive_data;
+				this_event_type = Event::user_receive_user_data;
 				my_agent = near_users_.find(next_node_id)->second;
 				break;
 			}
@@ -421,7 +426,7 @@ vector<Event> User::re_send(Message* message) {
 			break;
 		}
 		case Message::message_type_intra_user: {
-			this_event_type = Event::user_receive_data;
+			this_event_type = Event::user_receive_user_data;
 			my_agent = near_users_.find(next_node_id)->second;
 			break;
 		}

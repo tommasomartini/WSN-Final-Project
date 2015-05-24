@@ -11,36 +11,24 @@ class Event {
 
  public:
   enum EventTypes {
-    // Tom
     sensor_generate_measure,
     sensor_try_to_send,
     storage_node_try_to_send,
     storage_node_receive_measure,
-    node_send_to_user,
+    node_receive_user_request,
     broken_sensor,
     user_try_to_send,
-    user_try_to_send_to_user,
 	storage_get_reinit_query,
 	storage_get_reinit_response,
 	storage_get_user_hello,
 	user_get_user_hello,
-
-    // Arianna
     blacklist_sensor,
     sensor_ping,
     check_sensors,
     remove_measure,
     move_user,
-    user_send_to_user,
-    user_receive_data,
-
-    // To do
-    new_storage_node,
-    add_sensor,
-    remove_node,
-
-    // Not to do
-    network_reset
+    user_receive_node_data,
+	user_receive_user_data
   };
 
   static std::string int2type(int);
