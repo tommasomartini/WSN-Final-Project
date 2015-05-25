@@ -156,30 +156,32 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
-			unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
-			int xor_counter = 0;	// ...how many measure I did xor
-			vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
-			vector<MeasureKey> removed;
-			vector<MeasureKey> inserted;
-			for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
-				unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
-				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
-				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-				xor_counter++;	// count how many measure I am xoring
-				removed.push_back(*out_it);
-				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
-					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
-					MeasureKey key(out_sns_id, up_msr_id);	// create a key
-					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-					inserted.push_back(key);
+			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
+				unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+				int xor_counter = 0;	// ...how many measure I did xor
+				vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
+				vector<MeasureKey> removed;
+				vector<MeasureKey> inserted;
+				for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
+					unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
+					unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
+					ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+					xor_counter++;	// count how many measure I am xoring
+					removed.push_back(*out_it);
+					if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
+						unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
+						MeasureKey key(out_sns_id, up_msr_id);	// create a key
+						unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+						ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+						inserted.push_back(key);
+					}
 				}
-			}
-			if (xor_counter > 0) {	// if I have at least one measure to remove or update
-				OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-				vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
-				for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
-					new_events.push_back(*event_it);
+				if (xor_counter > 0) {	// if I have at least one measure to remove or update
+					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
+					vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
+					for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+						new_events.push_back(*event_it);
+					}
 				}
 			}
 		}
