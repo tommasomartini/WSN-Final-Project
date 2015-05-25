@@ -29,11 +29,9 @@ class User: public Node {
 //    }
 //  };
 
-  User() : Node () {}
-  User(unsigned int node_id) : Node (node_id) {}
-  User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {}
-
-  std::map<unsigned int, unsigned char> input_symbols_;  // list of the decoded measures and id of corresponding sensor	// TODO to remove
+  User();
+  User(unsigned int node_id);
+  User(unsigned int node_id, double y_coord, double x_coord);
   
   std::vector<Event> move(); // different implementation of the random walk
   std::vector<Event> receive_node_data(NodeInfoMessage*);
@@ -55,7 +53,8 @@ class User: public Node {
   std::map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent
   std::vector<unsigned int> dead_sensors_;		// dead sensors ids
 //  std::map<MeasureKey, unsigned char> outdated_measures_;		// old measures
-  std::vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
+//  std::vector<unsigned int> pending_dispatches;  // another user asked me for my data, I didn't manage to send him all my data, so I moved and the transmission the that user is still pending
+  std::vector<unsigned int> interrogated_nodes_;	// list of the nodes I have queried info (I don't want to query a node twice!)
 
   std::vector<Event> send(unsigned int, Message*);
   std::vector<Event> re_send(Message*);

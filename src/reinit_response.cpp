@@ -4,6 +4,7 @@
 using namespace std;
 
 ReinitResponse::ReinitResponse() {
+	xored_measure_ = 0;
 }
 
 unsigned int ReinitResponse::get_message_size() {

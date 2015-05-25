@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <random>
 #include <algorithm>    // std::find, to check whether an element is in a vector
@@ -13,6 +14,24 @@
 
 using namespace std;
 
+User::User() : Node() {
+	speed_ = 0;
+	direction_ = 0;
+}
+
+User::User(unsigned int node_id) : Node (node_id) {
+	speed_ = 0;
+	direction_ = 0;
+}
+
+User::User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
+	default_random_engine generator = MyToolbox::generator_;
+	uniform_real_distribution<double> speed_distrib(0.5, 1.5);
+	uniform_int_distribution<int> direction_distrib(0, 359);
+	speed_ = speed_distrib(generator);
+	direction_ = direction_distrib(generator);
+}
+
 
 /**************************************
     Public methods
@@ -22,20 +41,21 @@ vector<Event> User::move() {
 	vector<Event> new_events;
 
 	default_random_engine generator = MyToolbox::generator_;
-	uniform_int_distribution<int> distribution(-10, 10);  // I can have a deviation in the range -10°, +10°
+	uniform_int_distribution<int> distribution(-5, 5);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
 	direction_ += deviation;	// change a bit my direction
+	double dist = speed_ / (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
 
-	double new_x = x_coord_ + speed_ * sin(direction_);	// compute my new position
-	double new_y = y_coord_ + speed_ * cos(direction_);
+	double new_x = x_coord_ + dist * sin(direction_) * MyToolbox::space_precision_;	// compute my new position
+	double new_y = y_coord_ + dist * cos(direction_) * MyToolbox::space_precision_;
 
 	// I could also let the user go out! Just comment the following block of code!
 	bool inside_area = false;
 	while (!inside_area) {	// if I am going outside the area...
 		if (new_x < 0 || new_x > MyToolbox::square_size_ || new_y < 0 || new_y > MyToolbox::square_size_) { // I am going out from the area
 			direction_ += 30; // rotate of 30 degree in clockwise sense
-			new_x = x_coord_ + speed_ * sin(direction_);
-			new_y = y_coord_ + speed_ * cos(direction_);
+			new_x = x_coord_ + dist * sin(direction_) * MyToolbox::space_precision_;
+			new_y = y_coord_ + dist * cos(direction_) * MyToolbox::space_precision_;
 		} else {
 			inside_area = true;
 		}
@@ -45,31 +65,51 @@ vector<Event> User::move() {
 	y_coord_ = new_y;
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
+	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
+	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
+		cout << "- " << it->first << endl;
+	}
+
+	ofstream myfile("move_user.txt", ios::app);
+	if (myfile.is_open()) {
+		myfile << MyToolbox::current_time_ << "u" << node_id_ << ":" << x_coord_ << ":" << y_coord_ << endl;
+		myfile.close();
+	}
+	else cout << "Unable to open file";
+
+	decoding_succeeded = true;
+
 	if (!decoding_succeeded) {	// not yet decoded all the input symbols
 		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-			Event hello_event(event_time, Event::storage_get_user_hello);
-			Message* empty_msg = new Message();
-			empty_msg->message_type_ = Message::message_type_user_hello;
-			empty_msg->set_receiver_node_id(node_it->first);
-			empty_msg->set_sender_node_id(node_id_);
-			hello_event.set_agent(node_it->second);
-			hello_event.set_message(empty_msg);
-			new_events.push_back(hello_event);
+			if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), node_it->first) != interrogated_nodes_.end()) {	// if I haven't already queried this node
+				MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
+				Event hello_event(event_time, Event::storage_get_user_hello);
+				Message* empty_msg = new Message();
+				empty_msg->message_type_ = Message::message_type_user_hello;
+				empty_msg->set_receiver_node_id(node_it->first);
+				empty_msg->set_sender_node_id(node_id_);
+				hello_event.set_agent(node_it->second);
+				hello_event.set_message(empty_msg);
+				new_events.push_back(hello_event);
+				interrogated_nodes_.push_back(node_it->first);
+			}
 		}
 
 		bool interrogate_other_users = false;
 		if (interrogate_other_users) {
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
-				MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-				Event hello_event(event_time, Event::user_get_user_hello);
-				Message* empty_msg = new Message();
-				empty_msg->message_type_ = Message::message_type_user_hello;
-				empty_msg->set_receiver_node_id(user_it->first);
-				empty_msg->set_sender_node_id(node_id_);
-				hello_event.set_message(empty_msg);
-				hello_event.set_agent(user_it->second);
-				new_events.push_back(hello_event);
+				if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), user_it->first) != interrogated_nodes_.end()) {	// if I haven't already queried this node
+					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
+					Event hello_event(event_time, Event::user_get_user_hello);
+					Message* empty_msg = new Message();
+					empty_msg->message_type_ = Message::message_type_user_hello;
+					empty_msg->set_receiver_node_id(user_it->first);
+					empty_msg->set_sender_node_id(node_id_);
+					hello_event.set_message(empty_msg);
+					hello_event.set_agent(user_it->second);
+					new_events.push_back(hello_event);
+					interrogated_nodes_.push_back(user_it->first);
+				}
 			}
 		}
 	}

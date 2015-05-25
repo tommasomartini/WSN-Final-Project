@@ -28,7 +28,8 @@ class Event {
     remove_measure,
     move_user,
     user_receive_node_data,
-	user_receive_user_data
+	user_receive_user_data,
+	event_type_null
   };
 
   static std::string int2type(int);

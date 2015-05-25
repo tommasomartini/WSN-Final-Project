@@ -156,59 +156,59 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
 }
 
 int MyToolbox::get_robust_soliton_distribution_degree() {
-    
-    int K = num_storage_nodes_;
-    double c = 0.2;
-    double delta = 0.05;
-    double S = c * log(K / delta) * sqrt( K );
-    int tau_bound = ((int)((K / S) + .5)) - 1;
-    double den = 0;
-    for (int i = 1; i <= K; i++) {
-        if (i = 1) {
-            den += 1 / K + S / K;
-        }
-        if ((i >= 2) & (i <= tau_bound)) {
-            den += 1 / (i * (i - 1)) + S / (i * K);
-        }
-        if (i = tau_bound + 1) {
-            den += 1 / (i * (i - 1)) + S / K * log(S / delta);
-        }
-        if (i > tau_bound + 1) {
-            den += 1 / (i * (i - 1));
-        }
-    }
-    
-    int M = 10 * num_storage_nodes_ * (num_storage_nodes_ - 1); // as in ideal soliton over, the smallest interval is the last
-    double prob = (rand() % M) / (double)(M - 1);
-
-    double up_bound = ((1. / K) + (S / K)) / den;
-    double interval_length = up_bound;
-    if (prob <= up_bound) { // between 0 and (1/k+s/k)/den -> degree = 1;
-        return 1;
-    }
-    int d = 2;
-    for (int i = d; i <= tau_bound; i++) { // case 2 <= d < K/S
-        interval_length = ((1. / (i * i - i)) + (S / (K * i))) / den;
-        up_bound += interval_length;
-        if (prob <= up_bound) {
-            return i;
-        }
-        d = i;
-    }
-    interval_length = ((1. / (d * d - d)) + (S / K * log(S / delta))) / den; // case d = K/S
-    up_bound += interval_length;
-    if (prob <= up_bound) {
-        return d;    
-    } else {
-        d++;
-    }
-    for (int i = d; i <= K; i++) { // case K/S < d <= K
-       interval_length = (1. / (i * i - i)) / den;
-        up_bound += interval_length;
-        if (prob <= up_bound) {
-            return i;
-        } 
-    }
+//
+//    int K = num_storage_nodes_;
+//    double c = 0.2;
+//    double delta = 0.05;
+//    double S = c * log(K / delta) * sqrt( K );
+//    int tau_bound = ((int)((K / S) + .5)) - 1;
+//    double den = 0;
+//    for (int i = 1; i <= K; i++) {
+//        if (i = 1) {
+//            den += 1 / K + S / K;
+//        }
+//        if ((i >= 2) & (i <= tau_bound)) {
+//            den += 1 / (i * (i - 1)) + S / (i * K);
+//        }
+//        if (i = tau_bound + 1) {
+//            den += 1 / (i * (i - 1)) + S / K * log(S / delta);
+//        }
+//        if (i > tau_bound + 1) {
+//            den += 1 / (i * (i - 1));
+//        }
+//    }
+//
+//    int M = 10 * num_storage_nodes_ * (num_storage_nodes_ - 1); // as in ideal soliton over, the smallest interval is the last
+//    double prob = (rand() % M) / (double)(M - 1);
+//
+//    double up_bound = ((1. / K) + (S / K)) / den;
+//    double interval_length = up_bound;
+//    if (prob <= up_bound) { // between 0 and (1/k+s/k)/den -> degree = 1;
+//        return 1;
+//    }
+//    int d = 2;
+//    for (int i = d; i <= tau_bound; i++) { // case 2 <= d < K/S
+//        interval_length = ((1. / (i * i - i)) + (S / (K * i))) / den;
+//        up_bound += interval_length;
+//        if (prob <= up_bound) {
+//            return i;
+//        }
+//        d = i;
+//    }
+//    interval_length = ((1. / (d * d - d)) + (S / K * log(S / delta))) / den; // case d = K/S
+//    up_bound += interval_length;
+//    if (prob <= up_bound) {
+//        return d;
+//    } else {
+//        d++;
+//    }
+//    for (int i = d; i <= K; i++) { // case K/S < d <= K
+//       interval_length = (1. / (i * i - i)) / den;
+//        up_bound += interval_length;
+//        if (prob <= up_bound) {
+//            return i;
+//        }
+//    }
 
     return -1;
 }
@@ -301,7 +301,7 @@ int MyToolbox::check_clouds2() {
 		  }
 	  }
 	  cloud_index++;
-	  if (cloud_index == clouds.size()) {	// new cloud
+	  if (cloud_index == int(clouds.size())) {	// new cloud
 		  color++;
 		  clouds.push_back(pair<int, StorageNode*>(color, allnodes.begin()->second));
 		  allnodes.erase(allnodes.begin());
@@ -348,7 +348,7 @@ int MyToolbox::check_clouds() {
 	  }
 	}
 	cloud_index++;
-	if (cloud_index == clouds.size()) {	// new cloud
+	if (cloud_index == int(clouds.size())) {	// new cloud
 	  color++;
 	  clouds.push_back(pair<int, Node*>(color, allnodes.begin()->second));
 	  allnodes.erase(allnodes.begin());

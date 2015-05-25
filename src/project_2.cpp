@@ -280,6 +280,15 @@ void activate_ping_check() {
 	}
 }
 
+void activate_users() {
+	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
+	for (auto& cache_pair : MyToolbox::users_map_) {
+		Event first_step(first_step_distrib(generator), Event::move_user);
+		first_step.set_agent(&(cache_pair.second));
+		main_event_queue.push(first_step);
+	}
+}
+
 int main() {
 
 	import_settings();
@@ -289,6 +298,11 @@ int main() {
 	data_coll = new DataCollector();
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
+
+//	if( remove( "move_user.txt" ) != 0 )
+//	    perror( "Error deleting file" );
+//	  else
+//	    puts( "File successfully deleted" );
 
 	bool setup_succeeded = network_setup();
 	if (!setup_succeeded) {
@@ -300,6 +314,7 @@ int main() {
 //	activate_measure_generation();
 //	activate_ping_generation();
 //	activate_ping_check();
+	activate_users();
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();

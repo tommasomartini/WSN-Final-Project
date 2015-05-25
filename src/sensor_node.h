@@ -11,7 +11,7 @@ class Event;
 
 class SensorNode: public Node {
  public:
-  SensorNode (unsigned int node_id) : Node (node_id) {measure_id_ = 0;}  // TODO remove
+//  SensorNode (unsigned int node_id) : Node (node_id) {measure_id_ = 0;}  // TODO remove
   SensorNode (unsigned int node_id, double y_coord, double x_coord);
 
   int how_many_measures_ = 0;	// TODO debug

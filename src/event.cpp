@@ -15,7 +15,7 @@ using namespace std;
 
 
 Event::Event(MyTime event_time) {
-	event_type_ = 0;
+	event_type_ = Event::event_type_null;
 	time_ = event_time;
 	agent_ = nullptr;
 	message_ = nullptr;
@@ -162,7 +162,6 @@ vector<Event> Event::execute_action() {
 	case move_user: {
 		new_events = ((User*)agent_)->move();
 		//new_events = ((User*)agent_)->move_user(time_);
-		cout<<"evento "<<new_events.at(new_events.size()-1).get_event_type()<<endl;
 		break;
 	}
 	case node_receive_user_request: {
