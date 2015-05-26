@@ -18,16 +18,6 @@ class User: public Node {
   typedef MyToolbox::OutputSymbol OutputSymbol;
 
  public:
-//  struct OutputSymbol {
-//    unsigned char xored_msg_;
-//    std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
-//    std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
-//    OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
-//      xored_msg_ = xored_msg;
-//      sources_ = sources;
-//      outdated_ = outdated;
-//    }
-//  };
 
   User();
   User(unsigned int node_id);
@@ -38,8 +28,7 @@ class User: public Node {
   std::vector<Event> receive_user_data(UserInfoMessage*);
   std::vector<Event> receive_user_request(unsigned int);
   std::vector<Event> user_receive_data_from_user(int, Message*);
-  std::vector<Event> try_retx(Message*, int /*next_node_id*/);
-  std::vector<Event> try_retx_to_user(Message*, int /*next_node_id*/);
+  std::vector<Event> try_retx(Message*);
 
  protected:
   typedef std::map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator

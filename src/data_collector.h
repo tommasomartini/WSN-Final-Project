@@ -24,15 +24,12 @@ class DataCollector {
  public:
   DataCollector();
 
-//  std::vector<int> user_tx_delay;
-//  int user_tx_delay;
-
-//  std::vector<std::pair<unsigned int, unsigned int>> measures;	// measure identified by measure id and sensor id, in this order
-//  std::map<unsigned int, int> cache_msr;
+  std::map<unsigned int, int> num_stored_measures_per_cache_;
   std::map<MeasureKey, MeasureInfo> measures_register;
 
   void report();
   double graph_density();
+  void update_num_msr_per_cache(unsigned int, int);
   void add_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
   void record_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned int /*cache id*/, unsigned int /*sym*/);
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);

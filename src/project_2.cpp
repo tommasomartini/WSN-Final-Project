@@ -84,8 +84,6 @@ void import_settings() {
 					MyToolbox::C1_ = (double)num;
 				} else if (value_name == "square_size") {
 					MyToolbox::square_size_ = (int)num;
-				} else if (value_name == "space_precision") {
-					MyToolbox::space_precision_ = (int)num;
 				} else if (value_name == "user_velocity") {
 					MyToolbox::user_velocity_ = (double)num;
 				} else if (value_name == "user_update_time") {
@@ -100,6 +98,8 @@ void import_settings() {
 					MyToolbox::max_measure_generation_delay_ = (MyTime)num;
 				} else if (value_name == "sensor_failure_prob") {
 					MyToolbox::sensor_failure_prob_ = (double)num;
+				} else if (value_name == "num_measures_for_sensor_") {
+					MyToolbox::num_measures_for_sensor_ = (int)num;
 				}
 			}
 		}
@@ -254,8 +254,8 @@ void activate_measure_generation() {
 	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
 	uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
-		Event first_measure(first_measure_distrib(generator), Event::sensor_generate_measure);
-		cout << "first measure time " << first_measure.get_time() << endl;
+		Event first_measure(first_measure_distrib(generator), Event::event_type_generated_measure);
+//		cout << "first measure time " << first_measure.get_time() << endl;
 		first_measure.set_agent(&(sensor_pair.second));
 		main_event_queue.push(first_measure);
 	}
@@ -265,7 +265,7 @@ void activate_ping_generation() {
 	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
 	uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
-		Event first_ping(first_ping_distrib(generator), Event::sensor_ping);
+		Event first_ping(first_ping_distrib(generator), Event::event_type_sensor_ping);
 		first_ping.set_agent(&(sensor_pair.second));
 		main_event_queue.push(first_ping);
 	}
@@ -274,7 +274,7 @@ void activate_ping_generation() {
 void activate_ping_check() {
 	uniform_int_distribution<int> first_check_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
 	for (auto& cache_pair : MyToolbox::storage_nodes_map_) {
-		Event first_check(first_check_distrib(generator), Event::check_sensors);
+		Event first_check(first_check_distrib(generator), Event::event_type_cache_checks_sensors);
 		first_check.set_agent(&(cache_pair.second));
 		main_event_queue.push(first_check);
 	}
@@ -283,7 +283,8 @@ void activate_ping_check() {
 void activate_users() {
 	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
 	for (auto& cache_pair : MyToolbox::users_map_) {
-		Event first_step(first_step_distrib(generator), Event::move_user);
+//		Event first_step(first_step_distrib(generator), Event::event_type_user_moves);
+		Event first_step(MyToolbox::user_observation_time_, Event::event_type_user_moves);
 		first_step.set_agent(&(cache_pair.second));
 		main_event_queue.push(first_step);
 	}
@@ -299,10 +300,11 @@ int main() {
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
 
-//	if( remove( "move_user.txt" ) != 0 )
-//	    perror( "Error deleting file" );
-//	  else
-//	    puts( "File successfully deleted" );
+	if (std::ifstream("move_user.txt")) {
+		remove("move_user.txt");
+	}
+	ofstream outfile("move_user.txt");
+	outfile.close();
 
 	bool setup_succeeded = network_setup();
 	if (!setup_succeeded) {
@@ -311,10 +313,10 @@ int main() {
 	}
 	cout << "Network correctly set-up!" << endl;
 
-//	activate_measure_generation();
+	activate_measure_generation();
 //	activate_ping_generation();
 //	activate_ping_check();
-	activate_users();
+//	activate_users();
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();

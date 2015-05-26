@@ -6,7 +6,6 @@
 
 #include "user.h"
 #include "sensor_node.h"
-#include "my_toolbox.h"
 #include "storage_node.h"
 #include "node_info_message.h"
 #include "user_info_message.h"
@@ -46,16 +45,16 @@ vector<Event> User::move() {
 	direction_ += deviation;	// change a bit my direction
 	double dist = speed_ / (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
 
-	double new_x = x_coord_ + dist * sin(direction_) * MyToolbox::space_precision_;	// compute my new position
-	double new_y = y_coord_ + dist * cos(direction_) * MyToolbox::space_precision_;
+	double new_x = x_coord_ + dist * sin(direction_) /* MyToolbox::space_precision_*/;	// compute my new position
+	double new_y = y_coord_ + dist * cos(direction_) /* MyToolbox::space_precision_*/;
 
 	// I could also let the user go out! Just comment the following block of code!
 	bool inside_area = false;
 	while (!inside_area) {	// if I am going outside the area...
 		if (new_x < 0 || new_x > MyToolbox::square_size_ || new_y < 0 || new_y > MyToolbox::square_size_) { // I am going out from the area
 			direction_ += 30; // rotate of 30 degree in clockwise sense
-			new_x = x_coord_ + dist * sin(direction_) * MyToolbox::space_precision_;
-			new_y = y_coord_ + dist * cos(direction_) * MyToolbox::space_precision_;
+			new_x = x_coord_ + dist * sin(direction_) /* MyToolbox::space_precision_*/;
+			new_y = y_coord_ + dist * cos(direction_) /* MyToolbox::space_precision_*/;
 		} else {
 			inside_area = true;
 		}
@@ -66,9 +65,9 @@ vector<Event> User::move() {
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
 	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
-	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
-		cout << "- " << it->first << endl;
-	}
+//	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
+//		cout << "- " << it->first << endl;
+//	}
 
 	ofstream myfile("move_user.txt", ios::app);
 	if (myfile.is_open()) {
@@ -77,13 +76,13 @@ vector<Event> User::move() {
 	}
 	else cout << "Unable to open file";
 
-	decoding_succeeded = true;
+//	decoding_succeeded = true;
 
 	if (!decoding_succeeded) {	// not yet decoded all the input symbols
 		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), node_it->first) != interrogated_nodes_.end()) {	// if I haven't already queried this node
+			if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), node_it->first) == interrogated_nodes_.end()) {	// if I haven't already queried this node
 				MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-				Event hello_event(event_time, Event::storage_get_user_hello);
+				Event hello_event(event_time, Event::event_type_cache_gets_user_hello);
 				Message* empty_msg = new Message();
 				empty_msg->message_type_ = Message::message_type_user_hello;
 				empty_msg->set_receiver_node_id(node_it->first);
@@ -92,15 +91,22 @@ vector<Event> User::move() {
 				hello_event.set_message(empty_msg);
 				new_events.push_back(hello_event);
 				interrogated_nodes_.push_back(node_it->first);
+
+				ofstream myfile("move_user.txt", ios::app);
+					if (myfile.is_open()) {
+						myfile << "Interrogated node" << node_it->first << endl;
+						myfile.close();
+					}
+					else cout << "Unable to open file";
 			}
 		}
 
 		bool interrogate_other_users = false;
 		if (interrogate_other_users) {
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
-				if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), user_it->first) != interrogated_nodes_.end()) {	// if I haven't already queried this node
+				if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), user_it->first) == interrogated_nodes_.end()) {	// if I haven't already queried this node
 					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
-					Event hello_event(event_time, Event::user_get_user_hello);
+					Event hello_event(event_time, Event::event_type_user_gets_user_hello);
 					Message* empty_msg = new Message();
 					empty_msg->message_type_ = Message::message_type_user_hello;
 					empty_msg->set_receiver_node_id(user_it->first);
@@ -114,10 +120,10 @@ vector<Event> User::move() {
 		}
 	}
 
-	MyTime event_time = MyToolbox::current_time_ + MyToolbox::user_observation_time_;
-	Event new_event(event_time, Event::move_user);	// set the new move_user event
-	new_event.set_agent(this);
-	new_events.push_back(new_event);
+//	MyTime event_time = MyToolbox::current_time_ + MyToolbox::user_observation_time_;
+//	Event new_event(event_time, Event::event_type_user_moves);	// set the new move_user event
+//	new_event.set_agent(this);
+//	new_events.push_back(new_event);
 
 	return new_events;
 }
@@ -288,7 +294,7 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
 				xor_counter++;	// count how many measure I am xoring
 				removed.push_back(*out_it);
-				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
+				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to update the measure
 					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
 					MeasureKey key(out_sns_id, up_msr_id);	// create a key
 					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
@@ -392,26 +398,10 @@ bool User::CRC_check(Message message) {
 	return true;
 }
 
-vector<Event> User::try_retx(Message* message, int next_node_id) {
-	//  map<unsigned int, StorageNode*>* nodes_map = &(MyToolbox::storage_nodes_map_ptr_);
-	//  StorageNode* next_node = (StorageNode*)nodes_map->find(next_node_id)->second;
-	//  return send(next_node, message);
-	return vector<Event>();
-}
-
-vector<Event> User::try_retx_to_user(Message* message, int next_node_id) {
-	//  map<unsigned int, User>* users_map = &(MyToolbox::users_map_ptr_);
-	////  map<unsigned int, User*>* users_map = &(MyToolbox::users_map_ptr_);
-	//  User* next_user = (User*)users_map->find(next_node_id)->second;
-	//  double rx_user_x = next_user->get_x_coord();
-	//  double rx_user_y = next_user->get_y_coord();
-	//  double dist = sqrt(pow(x_coord_ - rx_user_x, 2) + pow(y_coord_ - rx_user_y, 2));  // compute the distance between the two users
-	//  if (dist < MyToolbox::tx_range_) { // the users are still able to communicate
-	//    return send(next_user, message);
-	//  } else {
-	//    return vector<Event>();
-	//  }
-	return vector<Event>();
+vector<Event> User::try_retx(Message* message) {
+	vector<Event> new_events;
+	new_events = re_send(message);
+	return new_events;
 }
 
 // this method is only for the first send!
@@ -423,7 +413,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 	message->set_sender_node_id(node_id_);
 
 	if (!event_queue_.empty()) {  // already some pending event -> does not generate new events
-		Event event_to_enqueue(0, Event::user_try_to_send);	// execution time does not matter now...
+		Event event_to_enqueue(0, Event::event_type_user_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
@@ -434,14 +424,14 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::user_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::user_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
@@ -458,12 +448,12 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			Agent* my_agent;
 			switch (message->message_type_) {
 			case Message::message_type_remove_measure: {
-				this_event_type = Event::remove_measure;
+				this_event_type = Event::event_type_cache_receives_user_info;
 				my_agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
 			case Message::message_type_intra_user: {
-				this_event_type = Event::user_receive_user_data;
+				this_event_type = Event::event_type_user_receives_user_data;
 				my_agent = near_users_.find(next_node_id)->second;
 				break;
 			}
@@ -509,14 +499,14 @@ vector<Event> User::re_send(Message* message) {
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::user_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::user_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
@@ -532,12 +522,12 @@ vector<Event> User::re_send(Message* message) {
 		Agent* my_agent;
 		switch (message->message_type_) {
 		case Message::message_type_remove_measure: {
-			this_event_type = Event::remove_measure;
+			this_event_type = Event::event_type_cache_receives_user_info;
 			my_agent = near_storage_nodes_.find(next_node_id)->second;
 			break;
 		}
 		case Message::message_type_intra_user: {
-			this_event_type = Event::user_receive_user_data;
+			this_event_type = Event::event_type_user_receives_user_data;
 			my_agent = near_users_.find(next_node_id)->second;
 			break;
 		}

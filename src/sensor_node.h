@@ -14,14 +14,10 @@ class SensorNode: public Node {
 //  SensorNode (unsigned int node_id) : Node (node_id) {measure_id_ = 0;}  // TODO remove
   SensorNode (unsigned int node_id, double y_coord, double x_coord);
 
-  int how_many_measures_ = 0;	// TODO debug
-
   // Event execution methods
-  std::vector<Event> generate_measure(); // Tom
-  std::vector<Event> try_retx(Message*); // Tom
-  std::vector<Event> sensor_ping(); // Tom
-  std::vector<Event> sensor_ping2(); // fast and simple way
-//  std::vector<Event> sensor_ping(int); // Arianna
+  std::vector<Event> generate_measure();
+  std::vector<Event> try_retx(Message*);
+  std::vector<Event> sensor_ping(); // fast and simple way
   
   void set_supervisor();	// this function has to be called at the beginning of the program, after the network initialization
   
@@ -30,13 +26,14 @@ class SensorNode: public Node {
  private:
   typedef MyToolbox::MyTime MyTime;
 
+  int how_many_measures_ = 0;
   unsigned char old_measure_data = 0;
   unsigned char new_measure_data = 0;
   unsigned int my_supervisor_id_;
   unsigned int measure_id_ = 0;
   bool first_generated_measure_ = true;
 
-  std::vector<Event> send2(unsigned int /*next node id*/, Message*);
+  std::vector<Event> send(unsigned int /*next node id*/, Message*);
   std::vector<Event> re_send(Message*);
 //  unsigned int get_random_neighbor();
 

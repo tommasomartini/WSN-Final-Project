@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <algorithm>    // std::max
 #include <iostream>
 #include <math.h>
@@ -17,6 +18,22 @@
 
 using namespace std;
 
+StorageNode::StorageNode() : Node () {
+	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	set_measure_indeces();
+}
+
+StorageNode::StorageNode(unsigned int node_id) : Node (node_id) {
+	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	set_measure_indeces();
+}
+
+StorageNode::StorageNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
+	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	set_measure_indeces();
+}
+
+
 /**************************************
     Event execution methods
  **************************************/
@@ -25,36 +42,65 @@ using namespace std;
 vector<Event> StorageNode::receive_measure(Measure* measure) {
 	vector<Event> new_events;
 	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
-	//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
+//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
 	unsigned int source_id = measure->get_source_sensor_id();  // measure from sensor source_id
 	if (!reinit_mode_) {	// if in reinit mode I only spread the measure
 		if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor
+			cout << "Node " << node_id_ << " received NEW measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
 			if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->get_source_sensor_id()) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
+				cout << " not in my ignore list. Now it is in my ignore list" << endl;
 				ignore_new_list.push_back(source_id);	// I should process a new measure for each sensor just once
-//				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
-					int k = MyToolbox::num_sensors_;
-					int d = LT_degree_;
-					default_random_engine gen = MyToolbox::generator_;
-					bernoulli_distribution bernoulli_distrib(d * 1. / k);
-					if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
-						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-						last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
-					}
-//				}
-			} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-				if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
-					// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
-					if (measure->get_measure_id() == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
-						xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-						last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
-					} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
-						// do nothing
-					} else {	// out of order update measure
-						MeasureKey outdated_measure_key(source_id, last_measures_.find(source_id)->second);	// create the key of the outdatet measure I have
-						outdated_measure_keys_.push_back(outdated_measure_key);	// store it in the list of the outdated measures
-						last_measures_.erase(source_id);	// I don't follow this sensor anymore
-					}
+				//				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+
+				indeces_counter_++;
+				if (indeces_pointer_ < indeces_msr_to_keep_.size() && indeces_counter_ == indeces_msr_to_keep_.at(indeces_pointer_)) {	// I have to keep this measure
+					indeces_pointer_++;
+					xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+					last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+					data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
+				} else {	// do NOT keep this measure
+					cout << "  do >NOT< accept" << endl;
 				}
+
+				/*
+				int k = MyToolbox::num_sensors_;
+				int d = LT_degree_;
+				default_random_engine gen = MyToolbox::generator_;
+				bernoulli_distribution bernoulli_distrib(d * 1. / k);
+				if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
+					xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+					last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+					data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
+				} else {
+					cout << "  do >NOT< accept" << endl;
+				}
+				*/
+			} else {
+				cout << " in my ignore list" << endl;
+			}
+		} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
+			cout << "Node " << node_id_ << " received UPDATE measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
+			if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
+				cout << " already received a measure from this sensor" << endl;
+				// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
+				if (measure->get_measure_id() == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
+					xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+					last_measures_.find(source_id)->second = measure->get_measure_id();  // save this measure // save this message as the last received message from sensor source_id
+					cout << "  in order measure. Now store: " << int(xored_measure_) << endl;
+				} else if (measure->get_measure_id() <= last_measures_.at(source_id)) {	// already receive this update measure
+					cout << "  old measure. Do nothing."	<< endl;
+					// do nothing
+				} else {	// out of order update measure
+					MeasureKey outdated_measure_key(source_id, last_measures_.find(source_id)->second);	// create the key of the outdatet measure I have
+					outdated_measure_keys_.push_back(outdated_measure_key);	// store it in the list of the outdated measures
+					last_measures_.erase(source_id);	// I don't follow this sensor anymore
+					data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+					cout << "  out of order measure!" << endl;
+				}
+			} else {
+				cout << " I don't hold measures from this sensor" << endl;
 			}
 		}
 	}
@@ -62,8 +108,10 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 	measure->increase_hop_counter();	// increase the hop-counter
 	int hop_limit = MyToolbox::max_num_hops_;
 	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+		cout << " forward message" << endl;
 		new_events = send(get_random_neighbor(), measure);	// propagate it!
 	} else {	// the message must not be forwarded again
+		cout << " do NOT forward the message" << endl;
 		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
 		delete measure;	// this measure will be no more used
 	}
@@ -81,7 +129,7 @@ vector<Event> StorageNode::try_retx(Message* message) {
 
 /*  A sensor is telling me it is alive
  */
-void StorageNode::receive_hello(unsigned int sensor_id) {
+void StorageNode::receive_ping(unsigned int sensor_id) {
 	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << endl;
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervisioned_map_.find(sensor_id) == supervisioned_map_.end()){
@@ -95,6 +143,12 @@ void StorageNode::receive_hello(unsigned int sensor_id) {
 /*  A user asks me to send him my data
  */
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
+	ofstream myfile("move_user.txt", ios::app);
+	if (myfile.is_open()) {
+		myfile << "->Node" << node_id_ << " receives user request" << endl;
+		myfile.close();
+	}
+	else cout << "Unable to open file";
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
 		vector<MeasureKey> keys;
@@ -102,8 +156,23 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 			MeasureKey key(msr_it->first, msr_it->second);
 			keys.push_back(key);
 		}
+		if (keys.size() > 0) {
 		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, keys, outdated_measure_keys_, my_blacklist_);
+		ofstream myfile("move_user.txt", ios::app);
+		if (myfile.is_open()) {
+			myfile << "->Node" << node_id_ << " invia " << xored_measure_ << endl;
+			myfile.close();
+		}
+		else cout << "Unable to open file";
 		new_events = send(sender_user_id, node_info_msg);
+		} else {
+			ofstream myfile("move_user.txt", ios::app);
+			if (myfile.is_open()) {
+				myfile << "->Node" << node_id_ << " nothing to send" << endl;
+				myfile.close();
+			}
+			else cout << "Unable to open file";
+		}
 	}
 	return new_events;
 }
@@ -133,7 +202,7 @@ vector<Event> StorageNode::check_sensors() {
 	}
 
 	if (supervisioned_map_.size() > 0) {	// if I have some supervisioned sensor check it in a while
-		Event new_event(MyToolbox::current_time_ + MyToolbox::check_sensors_frequency_, Event::check_sensors);
+		Event new_event(MyToolbox::current_time_ + MyToolbox::check_sensors_frequency_, Event::event_type_cache_checks_sensors);
 		new_event.set_agent(this);
 		new_events.push_back(new_event);
 	}
@@ -186,7 +255,7 @@ void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
 			}
 		}
 		for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I could add
-			if (find(my_blacklist_.begin(), my_blacklist_.end(), ins_it->sensor_id_) == my_blacklist_.end()) {	// if this sensor is NOT in my blacklist
+			if (find(my_blacklist_.begin(), my_blacklist_.end(), ins_it->sensor_id_) == my_blacklist_.end()) {	// if this sensor is NOT in my blacklist I cannot erase his measure
 				can_update = false;
 				break;
 			}
@@ -245,7 +314,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 	message->set_sender_node_id(node_id_);
 
 	if (!event_queue_.empty()) {  // already some pending event -> does not generate new events
-		Event event_to_enqueue(0, Event::storage_node_try_to_send);	// execution time does not matter now...
+		Event event_to_enqueue(0, Event::event_type_cache_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
@@ -256,14 +325,14 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
@@ -282,27 +351,27 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			Event::EventTypes this_event_type;
 			switch (message->message_type_) {
 			case Message::message_type_measure: {
-				this_event_type = Event::storage_node_receive_measure;
+				this_event_type = Event::event_type_cache_receives_measure;
 				break;
 			}
 			case Message::message_type_blacklist: {
-				this_event_type = Event::blacklist_sensor;
+				this_event_type = Event::event_type_cache_gets_blacklist;
 				break;
 			}
 			case Message::message_type_remove_measure: {
-				this_event_type = Event::remove_measure;
+				this_event_type = Event::event_type_cache_receives_user_info;
 				break;
 			}
 			case Message::message_type_measures_for_user: {
-				this_event_type = Event::user_receive_node_data;
+				this_event_type = Event::event_type_user_receives_node_data;
 				break;
 			}
 			case Message::message_type_reinit_query: {
-				this_event_type = Event::storage_get_reinit_query;
+				this_event_type = Event::event_type_cache_gets_reinit_query;
 				break;
 			}
 			case Message::message_type_reinit_response: {
-				this_event_type = Event::storage_get_reinit_response;
+				this_event_type = Event::event_type_cache_gets_reinit_response;
 				break;
 			}
 			default:
@@ -374,7 +443,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 				MyTime schedule_time = (message->message_type_ == Message::message_type_reinit_query ? 0 : MyToolbox::get_random_processing_time()) + MyToolbox::get_tx_offset();
 				event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
 
-				Event try_again_event(schedule_time, Event::storage_node_try_to_send);
+				Event try_again_event(schedule_time, Event::event_type_cache_re_send);
 				try_again_event.set_agent(this);
 				try_again_event.set_message(message);
 				// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
@@ -394,14 +463,14 @@ vector<Event> StorageNode::re_send(Message* message) {
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::storage_node_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
@@ -419,23 +488,23 @@ vector<Event> StorageNode::re_send(Message* message) {
 		Event::EventTypes this_event_type;
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
-			this_event_type = Event::storage_node_receive_measure;
+			this_event_type = Event::event_type_cache_receives_measure;
 			break;
 		}
 		case Message::message_type_blacklist: {
-			this_event_type = Event::blacklist_sensor;
+			this_event_type = Event::event_type_cache_gets_blacklist;
 			break;
 		}
 		case Message::message_type_remove_measure: {
-			this_event_type = Event::remove_measure;
+			this_event_type = Event::event_type_cache_receives_user_info;
 			break;
 		}
 		case Message::message_type_measures_for_user: {
-			this_event_type = Event::user_receive_node_data;
+			this_event_type = Event::event_type_user_receives_node_data;
 			break;
 		}
 		case Message::message_type_reinit_query: {
-			this_event_type = Event::storage_get_reinit_query;
+			this_event_type = Event::event_type_cache_gets_reinit_query;
 			break;
 		}
 		default:
@@ -502,4 +571,27 @@ vector<Event> StorageNode::reinitialize() {
 	}
 
 	return new_events;
+}
+
+void StorageNode::set_measure_indeces() {
+	for (int i = 0; i < MyToolbox::num_sensors_; i++) {
+		indeces_msr_to_keep_.push_back(i + 1);
+	}
+
+	default_random_engine generator = MyToolbox::generator_;
+	for (int i = 1; i <= MyToolbox::num_sensors_ - LT_degree_; i++) {
+		std::uniform_int_distribution<int> distribution(0, indeces_msr_to_keep_.size() - 1);
+		int n = distribution(generator);
+		vector<int>::iterator it = indeces_msr_to_keep_.begin();
+		for (int j = 0; j < n; j++) {
+			it++;
+		}
+		indeces_msr_to_keep_.erase(it);
+	}
+
+	cout << "@Node " << node_id_ << " (d=" << LT_degree_ << ") :";
+	for (vector<int>::iterator it = indeces_msr_to_keep_.begin(); it != indeces_msr_to_keep_.end(); it++) {
+		cout << " " << *it;
+	}
+	cout << endl;
 }

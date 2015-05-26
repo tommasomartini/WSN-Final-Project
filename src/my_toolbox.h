@@ -86,7 +86,6 @@ class MyToolbox {
   static int max_num_hops_;
 
   static int square_size_;
-  static int space_precision_;
 
   static double user_velocity_;
   static MyTime user_update_time_;
@@ -99,6 +98,7 @@ class MyToolbox {
 
   static MyTime max_measure_generation_delay_;
   static double sensor_failure_prob_;
+  static int num_measures_for_sensor_;
 
   // Maps <node_id, node_reference>
   static std::map<unsigned int, SensorNode> sensors_map_;

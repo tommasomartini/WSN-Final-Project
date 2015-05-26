@@ -28,6 +28,40 @@ void DataCollector::report() {
 	cout << " > Report <" << endl;
 	cout << "- Avg spreding time: " << avg_time * 1. / pow(10, 9) << endl;
 	cout << "- " << not_crossed << " messages (" << not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+
+	cout << "- Soliton check: " << endl;
+	int zero_counter = 0;
+	int one_counter = 0;
+	int miss_counter = 0;
+	for (map<unsigned int, int>::iterator it = num_stored_measures_per_cache_.begin(); it != num_stored_measures_per_cache_.end(); it++) {
+		int lt_deg = MyToolbox::storage_nodes_map_.find(it->first)->second.LT_degree_;
+		cout << "   Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
+		if (it->second == 0) {
+			zero_counter++;
+		}
+		if (it->second == 1) {
+			one_counter++;
+		}
+		if (lt_deg != it->second) {
+			miss_counter++;
+		}
+	}
+	if (zero_counter > 0) {
+		cout << "  " << zero_counter << " nodes store no measures" << endl;
+	}
+	if (one_counter > 0) {
+		cout << "  " << one_counter << " nodes store 1 measure" << endl;
+	}
+	if (miss_counter > 0) {
+		cout << "  " << miss_counter << " nodes store a wrong number of measures" << endl;
+	}
+}
+
+void DataCollector::update_num_msr_per_cache(unsigned int cache_id, int num_msrs) {
+	if (num_stored_measures_per_cache_.find(cache_id) != num_stored_measures_per_cache_.end()) {	// cache in the map
+		num_stored_measures_per_cache_.erase(cache_id);
+	}
+	num_stored_measures_per_cache_.insert(pair<unsigned int, int>(cache_id, num_msrs));
 }
 
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {

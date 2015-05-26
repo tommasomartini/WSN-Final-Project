@@ -27,52 +27,38 @@ SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : N
 /*  Return two events: a new measure generation from the same node and the reception of the measure by a storage node
 */
 vector<Event> SensorNode::generate_measure() {
-
-//	cout << "Going to generate a new one..." << MyToolbox::current_time_ << endl;
-
   vector<Event> new_events; // create the new events
 
-  how_many_measures_++;
+  default_random_engine generator = MyToolbox::generator_;
+//  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
+  MyTime rndm_time = MyToolbox::max_measure_generation_delay_;	// FIXME not random at all. Uncomment the previous line for randomness
+  MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
 
+//	Uncomment the following lines to use random breaks
+//  bernoulli_distribution distribution(MyToolbox::sensor_failure_prob_);
+//  if (distribution(generator)) {
+//  }
+
+  if (how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
+	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
+	  failure_event.set_agent(this);
+	  new_events.push_back(failure_event);
+	  return new_events;	// return
+  }
+
+  how_many_measures_++;	// new measure generated
   old_measure_data = new_measure_data;
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
-  first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
 
-   /*
-    2 events:
-    - send the generated measure to another node. This may be successful or not, that is I can generate either a 
-        storage_receive_measure event or a sensor_try_to_send_again_later event
-    - with probability p I generate another measure (another sensor_generate_measure event), with probability 1-p the sensor
-        breaks up and I genenerate a broken_sensor event.
-  */
   Measure* measure = new Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
-  unsigned int next_node_id = get_random_neighbor();
-  new_events = send2(next_node_id, measure);
-  bool generate_another_measure = true;
-  default_random_engine generator = MyToolbox::generator_;
-  bernoulli_distribution distribution(MyToolbox::sensor_failure_prob_);
-  if (distribution(generator)) {
-	  generate_another_measure = false;
-  }
-  // FIXME remove, just for debug
-  if (how_many_measures_ > 3) {
-	  generate_another_measure = false;
-  }
-  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
-  MyTime rndm_time = MyToolbox::max_measure_generation_delay_;
-  MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
-//  cout << "Next measure at time " << time_next_measure_or_failure << ": " << MyToolbox::current_time_ << " + " << rndm_time << endl;
-  if (generate_another_measure) {
-    Event next_measure_event(time_next_measure_or_failure, Event::sensor_generate_measure);
-    next_measure_event.set_agent(this);
-    new_events.push_back(next_measure_event);
-  } else {
-    Event failure_event(time_next_measure_or_failure, Event::broken_sensor);
-    failure_event.set_agent(this);
-    new_events.push_back(failure_event);
-  }
-  
+  first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
+  new_events = send(get_random_neighbor(), measure);
+
+  Event next_measure_event(time_next_measure_or_failure, Event::event_type_generated_measure);
+  next_measure_event.set_agent(this);
+  new_events.push_back(next_measure_event);
+
   return new_events;
 }
 
@@ -82,7 +68,7 @@ vector<Event> SensorNode::try_retx(Message* message) {
 	return new_events;
 }
 
-vector<Event> SensorNode::sensor_ping2() {
+vector<Event> SensorNode::sensor_ping() {
 	vector<Event> new_events;
 	map<unsigned int, StorageNode*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 	while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
@@ -93,9 +79,9 @@ vector<Event> SensorNode::sensor_ping2() {
 		supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 	}
 	cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
-	((StorageNode*)supervisor_it->second)->receive_hello(node_id_);	// send the hello ping
+	((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
 //	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
-	Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::broken_sensor);	// FIXME for debug only
+	Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);	// FIXME for debug only
 	new_event.set_agent(this);
 	new_events.push_back(new_event);
 	return new_events;
@@ -113,7 +99,7 @@ void SensorNode::set_supervisor() {
 **************************************/
 
 // this method is only for the first send!
-vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
+vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 	vector<Event> new_events;
 
 	// Set sender and receiver
@@ -137,7 +123,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 //			cout << " me not available. Try at " << new_schedule_time << endl;
@@ -145,7 +131,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-			Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+			Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
 //			cout << " other node not available. Try at " << new_schedule_time << ": " << next_node_available_time << " + " << off << endl;
@@ -164,7 +150,7 @@ vector<Event> SensorNode::send2(unsigned int next_node_id, Message* message) {
 			Event::EventTypes this_event_type;
 			switch (message->message_type_) {
 			case Message::message_type_measure: {
-				this_event_type = Event::storage_node_receive_measure;
+				this_event_type = Event::event_type_cache_receives_measure;
 				((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 				old_measure_data = new_measure_data;	// update the old measure value
 				data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
@@ -232,7 +218,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 				MyTime schedule_time = MyToolbox::get_random_processing_time() + MyToolbox::get_tx_offset();
 				event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
 
-				Event try_again_event(schedule_time, Event::sensor_try_to_send);
+				Event try_again_event(schedule_time, Event::event_type_sensor_re_send);
 				try_again_event.set_agent(this);
 				try_again_event.set_message(message);
 				// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
@@ -254,7 +240,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
 //		cout << " me not available" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
@@ -262,7 +248,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
 //		cout << " next node not available" << endl;
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
-		Event try_again_event(new_schedule_time, Event::sensor_try_to_send);
+		Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 		try_again_event.set_agent(this);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
@@ -278,7 +264,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		Event::EventTypes this_event_type;
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
-			this_event_type = Event::storage_node_receive_measure;
+			this_event_type = Event::event_type_cache_receives_measure;
 			((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 			old_measure_data = new_measure_data;	// update the old measure value
 			data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);

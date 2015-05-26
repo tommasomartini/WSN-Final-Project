@@ -33,7 +33,6 @@ double MyToolbox::C1_ = 0;
 int MyToolbox::max_num_hops_ = 0;
 
 int MyToolbox::square_size_ = 0;
-int MyToolbox::space_precision_ = 0;
 
 double MyToolbox::user_velocity_ = 0;
 MyToolbox::MyTime MyToolbox::user_update_time_ = 0;
@@ -46,6 +45,7 @@ MyToolbox::MyTime MyToolbox::user_observation_time_ = 0;
 
 MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
+int MyToolbox::num_measures_for_sensor_ = 0;
 
 map<unsigned int, SensorNode> MyToolbox::sensors_map_;
 map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_;
