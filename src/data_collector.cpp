@@ -14,65 +14,100 @@ void DataCollector::report() {
 
 	cout << " > Report <" << endl;
 
-//	// Mesures
-//	double avg_msr_time = 0;
-//	double avg_msr_life_time = 0;
-//	int avg_not_crossed = 0;
-//	int avg_counter = 0;
-//	double avg_msr_hops = 0;
-//	int num_wrong_hops_msr = 0;
-//	int num_msrs = measures_register_.size();
-//	for (map<MeasureKey, MeasureInfo>::iterator it = measures_register_.begin(); it != measures_register_.end(); it++) {
-//		avg_msr_life_time += it->second.travel_duration_;
-//		avg_msr_hops += it->second.hop_number_;
-//		if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
-//			num_wrong_hops_msr++;
-//		}
-//		if (it->second.crossed_the_network_) {
-//			avg_counter++;
-//			avg_msr_time += it->second.spreading_duration_;
-//		} else {
-//			avg_not_crossed++;
-//		}
-//	}
-//	avg_msr_time = avg_msr_time / avg_counter;
-//	avg_msr_life_time = avg_msr_life_time / measures_register_.size();
-//	avg_msr_hops = avg_msr_hops / measures_register_.size();
-
 	// Blacklist
-	double avg_bl_time = 0;
-	double avg_bl_life_time = 0;
-	int bl_not_crossed = 0;
-	int bl_counter = 0;
-	double avg_bl_hops = 0;
-	int num_wrong_hops_bl = 0;
-	int num_bl = blacklist_register_.size();
-	for (map<unsigned int, BlacklistInfo>::iterator it = blacklist_register_.begin(); it != blacklist_register_.end(); it++) {
-		avg_bl_life_time += it->second.travel_duration_;
-		avg_bl_hops += it->second.hop_number_;
-		if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
-			num_wrong_hops_bl++;
+	if (blacklist_register_.size() > 0) {
+		double avg_bl_time = 0;
+		double avg_bl_life_time = 0;
+		int bl_not_crossed = 0;
+		int bl_counter = 0;
+		double avg_bl_hops = 0;
+		int num_wrong_hops_bl = 0;
+		int num_bl = blacklist_register_.size();
+		for (map<unsigned int, BlacklistInfo>::iterator it = blacklist_register_.begin(); it != blacklist_register_.end(); it++) {
+			avg_bl_life_time += it->second.travel_duration_;
+			avg_bl_hops += it->second.hop_number_;
+			if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
+				num_wrong_hops_bl++;
+			}
+			if (it->second.crossed_the_network_) {
+				bl_counter++;
+				avg_bl_time += it->second.spreading_duration_;
+			} else {
+				bl_not_crossed++;
+			}
 		}
-		if (it->second.crossed_the_network_) {
-			bl_counter++;
-			avg_bl_time += it->second.spreading_duration_;
-		} else {
-			bl_not_crossed++;
-		}
+		avg_bl_time = avg_bl_time / bl_counter;
+		avg_bl_life_time = avg_bl_life_time / blacklist_register_.size();
+		avg_bl_hops = avg_bl_hops / blacklist_register_.size();
+
+		cout << "+ BLACKLIST" << endl;
+		cout << " - Avg blacklist spreding time: " << avg_bl_time * 1. / pow(10, 9) << "s" << endl;
+		cout << " - Avg blacklist life time: " << avg_bl_life_time * 1. / pow(10, 9) << "s (" << avg_bl_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_bl << " wrong hops)" << endl;
+		cout << " - " << bl_not_crossed << " blacklists (" << bl_not_crossed * 1. / num_bl * 100 << "%) did not cross the network" << endl;
 	}
-	avg_bl_time = avg_bl_time / bl_counter;
-	avg_bl_life_time = avg_bl_life_time / blacklist_register_.size();
-	avg_bl_hops = avg_bl_hops / blacklist_register_.size();
 
-//	cout << "+ MEASURE" << endl;
-//	cout << " - Avg measure spreding time: " << avg_msr_time * 1. / pow(10, 9) << "s" << endl;
-//	cout << " - Avg measure life time: " << avg_msr_life_time * 1. / pow(10, 9) << "s (" << avg_msr_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_msr << " wrong hops)" << endl;
-//	cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+	// Mesures
+	if (measures_register_.size() > 0) {
+		double avg_msr_time = 0;
+		double avg_msr_life_time = 0;
+		int avg_not_crossed = 0;
+		int avg_counter = 0;
+		double avg_msr_hops = 0;
+		int num_wrong_hops_msr = 0;
+		int num_msrs = measures_register_.size();
+		for (map<MeasureKey, MeasureInfo>::iterator it = measures_register_.begin(); it != measures_register_.end(); it++) {
+			avg_msr_life_time += it->second.travel_duration_;
+			avg_msr_hops += it->second.hop_number_;
+			if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
+				num_wrong_hops_msr++;
+			}
+			if (it->second.crossed_the_network_) {
+				avg_counter++;
+				avg_msr_time += it->second.spreading_duration_;
+			} else {
+				avg_not_crossed++;
+			}
+		}
+		avg_msr_time = avg_msr_time / avg_counter;
+		avg_msr_life_time = avg_msr_life_time / measures_register_.size();
+		avg_msr_hops = avg_msr_hops / measures_register_.size();
 
-	cout << "+ BLACKLIST" << endl;
-	cout << " - Avg blacklist spreding time: " << avg_bl_time * 1. / pow(10, 9) << "s" << endl;
-	cout << " - Avg blacklist life time: " << avg_bl_life_time * 1. / pow(10, 9) << "s (" << avg_bl_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_bl << " wrong hops)" << endl;
-	cout << " - " << bl_not_crossed << " blacklists (" << bl_not_crossed * 1. / num_bl * 100 << "%) did not cross the network" << endl;
+		cout << "+ MEASURE" << endl;
+		cout << " - Avg measure spreding time: " << avg_msr_time * 1. / pow(10, 9) << "s" << endl;
+		cout << " - Avg measure life time: " << avg_msr_life_time * 1. / pow(10, 9) << "s (" << avg_msr_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_msr << " wrong hops)" << endl;
+		cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+	}
+
+	//User
+	if (user_register_.size() > 0) {
+		double avg_user_dec_time = 0;
+		double avg_user_life_time = 0;
+		double avg_num_steps = 0;
+		double avg_dec_distance = 0;
+		int decoding_number = 0;
+		int num_usrs = user_register_.size();
+		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
+			avg_user_life_time += it->second.travel_duration_;
+			avg_msr_hops += it->second.hop_number_;
+			if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
+				num_wrong_hops_msr++;
+			}
+			if (it->second.crossed_the_network_) {
+				avg_counter++;
+				avg_user_dec_time += it->second.spreading_duration_;
+			} else {
+				avg_not_crossed++;
+			}
+		}
+		avg_user_dec_time = avg_user_dec_time / avg_counter;
+		avg_user_life_time = avg_user_life_time / measures_register_.size();
+		avg_msr_hops = avg_msr_hops / measures_register_.size();
+
+		cout << "+ MEASURE" << endl;
+		cout << " - Avg measure spreding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
+		cout << " - Avg measure life time: " << avg_user_life_time * 1. / pow(10, 9) << "s (" << avg_msr_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_msr << " wrong hops)" << endl;
+		cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+	}
 
 	cout << "+ SOLITON CHECK" << endl;
 	int zero_counter = 0;
@@ -80,7 +115,7 @@ void DataCollector::report() {
 	int miss_counter = 0;
 	for (map<unsigned int, int>::iterator it = num_stored_measures_per_cache_.begin(); it != num_stored_measures_per_cache_.end(); it++) {
 		int lt_deg = MyToolbox::storage_nodes_map_.find(it->first)->second.LT_degree_;
-		cout << " Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
+		//		cout << " Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
 		if (it->second == 0) {
 			zero_counter++;
 		}
@@ -163,7 +198,7 @@ void DataCollector::register_broken_sensor(unsigned int sensor_id_) {
 		BlacklistInfo bl_info;
 		bl_info.born_time_ = MyToolbox::current_time_;
 		blacklist_register_.insert(pair<unsigned int, BlacklistInfo>(sensor_id_, bl_info));
-		cout << "Blacklist " << sensor_id_ << " added" << endl;
+//		cout << "Blacklist " << sensor_id_ << " added" << endl;
 	} else {
 		cout << "Error! Trying to remove a sensor twice!" << endl;
 		exit(0);
@@ -176,7 +211,7 @@ void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 		if (!blacklist_register_.find(sensor_id)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = blacklist_register_.find(sensor_id)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this blacklist
-				cout << "Cache " << cache_id << " saw bl" << sensor_id << endl;
+//				cout << "Cache " << cache_id << " saw bl" << sensor_id << endl;
 				blacklist_register_.find(sensor_id)->second.node_map_.insert(pair<unsigned int, int>(cache_id, 1));
 			} else {	// this node already saw this measure
 				// do nothing
@@ -186,7 +221,7 @@ void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 				blacklist_register_.find(sensor_id)->second.crossed_the_network_ = true;
 				blacklist_register_.find(sensor_id)->second.spreading_time_ = MyToolbox::current_time_;
 				blacklist_register_.find(sensor_id)->second.spreading_duration_ = blacklist_register_.find(sensor_id)->second.spreading_time_ - blacklist_register_.find(sensor_id)->second.born_time_;
-				cout << "Blacklist " << sensor_id << " crossed all the networks in " << blacklist_register_.find(sensor_id)->second.spreading_duration_ * 1. / 1000000000 << "s" << endl;
+//				cout << "Blacklist " << sensor_id << " crossed all the networks in " << blacklist_register_.find(sensor_id)->second.spreading_duration_ * 1. / 1000000000 << "s" << endl;
 			}
 		}
 	} else {
@@ -199,9 +234,46 @@ void DataCollector::erase_bl(unsigned int sensor_id) {
 	if (blacklist_register_.find(sensor_id) != blacklist_register_.end()) {	// if this blacklist is still in the register
 		blacklist_register_.find(sensor_id)->second.death_time_ = MyToolbox::current_time_;
 		blacklist_register_.find(sensor_id)->second.travel_duration_ = blacklist_register_.find(sensor_id)->second.death_time_ - blacklist_register_.find(sensor_id)->second.born_time_;
-		cout << "Blacklist bl" << sensor_id << " was alive for " << blacklist_register_.find(sensor_id)->second.travel_duration_ * 1. / 1000000000 << "s" << endl;
+//		cout << "Blacklist bl" << sensor_id << " was alive for " << blacklist_register_.find(sensor_id)->second.travel_duration_ * 1. / 1000000000 << "s" << endl;
 	} else {	// I cannot find the blacklist
 		cout << "Error! BLacklist bl" << sensor_id << " lost!" << endl;
+	}
+}
+
+void DataCollector::record_user_movement(unsigned int user_id, double distance) {
+	if (user_register_.find(user_id) == user_register_.end()) {	// if the user is not in the register
+		UserInfo user_info;
+		user_info.born_time_ = MyToolbox::current_time_;
+		user_register_.insert(pair<unsigned int, UserInfo>(user_id, user_info));
+//		cout << "user " << user_id << " added to register" << endl;
+	} else {	// if the user is already in the register
+//		cout << "Error! I'm trying to insert the same user twice!" << endl;
+		user_register_.find(user_id)->second.covered_distance_ += distance;
+		user_register_.find(user_id)->second.num_steps_++;
+	}
+}
+
+void DataCollector::record_user_rx(unsigned int user_id) {
+	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
+		user_register_.find(user_id)->second.num_rx_node_info_++;
+	} else {	// if the user is not in the register
+		cout << "Error! I'm trying to update a user not in the register!" << endl;
+	}
+}
+
+void DataCollector::record_user_decoding(unsigned int user_id) {
+	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
+		if (!user_register_.find(user_id)->second.decoded_) {	// first time this user decodes
+			user_register_.find(user_id)->second.decoding_time_ = MyToolbox::current_time_;
+			user_register_.find(user_id)->second.decoding_distance_ = user_register_.find(user_id)->second.covered_distance_;
+			user_register_.find(user_id)->second.decoding_steps_ = user_register_.find(user_id)->second.num_steps_;
+			user_register_.find(user_id)->second.decoding_duration_ = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
+		} else {	// this user already decoded
+			cout << "Error! This user already decoded!" << endl;
+		}
+
+	} else {	// if the user is not in the register
+		cout << "Error! I'm trying to update a user not in the register!" << endl;
 	}
 }
 

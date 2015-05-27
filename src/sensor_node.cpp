@@ -39,14 +39,16 @@ vector<Event> SensorNode::generate_measure() {
 //  if (distribution(generator)) {
 //  }
 
-  if (how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
+  if (++how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
 	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
 	  failure_event.set_agent(this);
 	  new_events.push_back(failure_event);
 	  return new_events;	// return
   }
 
-  how_many_measures_++;	// new measure generated
+  cout << "=> New MEASURE" << endl;
+
+//  how_many_measures_++;	// new measure generated
   old_measure_data = new_measure_data;
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
@@ -70,13 +72,13 @@ vector<Event> SensorNode::try_retx(Message* message) {
 
 vector<Event> SensorNode::ping() {
 	vector<Event> new_events;
-	ping_counter_++;
-	if (ping_counter_ > how_many_pings_) {
-		do_ping_ = false;
-		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);
-		new_event.set_agent(this);
-		new_events.push_back(new_event);
-	}
+//	ping_counter_++;
+//	if (ping_counter_ > how_many_pings_) {
+//		do_ping_ = false;
+//		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);
+//		new_event.set_agent(this);
+//		new_events.push_back(new_event);
+//	}
 	if (do_ping_) {
 		map<unsigned int, StorageNode*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 		while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
@@ -86,14 +88,14 @@ vector<Event> SensorNode::ping() {
 			}
 			supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 		}
-		cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
+//		cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
 		((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
 		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_ping);
 		new_event.set_agent(this);
 		new_events.push_back(new_event);
 
-		cout << "Sensor " << node_id_ << " this ping " << MyToolbox::current_time_ << endl;
-		cout << "Sensor " << node_id_ << " next ping " << MyToolbox::current_time_ + MyToolbox::ping_frequency_ << endl;
+//		cout << "Sensor " << node_id_ << " this ping " << MyToolbox::current_time_ << endl;
+//		cout << "Sensor " << node_id_ << " next ping " << MyToolbox::current_time_ + MyToolbox::ping_frequency_ << endl;
 	}
 	return new_events;
 }
@@ -105,7 +107,7 @@ void SensorNode::set_supervisor() {
 }
 
 void SensorNode::breakup() {
-	cout << "Sensor " << node_id_ << " dead" << endl;
+//	cout << "Sensor " << node_id_ << " dead" << endl;
 //	data_collector->register_broken_sensor(node_id_);
 	do_ping_ = false;
 }
@@ -322,5 +324,6 @@ vector<Event> SensorNode::re_send(Message* message) {
 }
 
 unsigned char SensorNode::get_measure_data() {
-	return (unsigned char)(rand() % 256);
+//	return (unsigned char)(rand() % 256);	// FIXME activate this
+	return (unsigned char)((new_measure_data + 1) % 256);
 }

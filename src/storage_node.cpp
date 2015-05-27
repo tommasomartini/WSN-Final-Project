@@ -130,27 +130,28 @@ vector<Event> StorageNode::try_retx(Message* message) {
 /*  A sensor is telling me it is alive
  */
 void StorageNode::receive_ping(unsigned int sensor_id) {
-	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << " time: " << MyToolbox::current_time_ << endl;
+//	cout << "Cache " << node_id_ << " gets pings from " << sensor_id << " time: " << MyToolbox::current_time_ << endl;
 	// If it is the first time I receive a ping from a sensor it means that that sensor wants me to be his supervisor. I save it in my supervisor map
 	if (supervised_map_.find(sensor_id) == supervised_map_.end()) {	// first time a sensor contacts me
 		supervised_map_.insert(std::pair<unsigned int, MyTime>(sensor_id, MyToolbox::current_time_));
-		cout << "Node " << node_id_ << ": FIRST ping from " << sensor_id << endl;
-		cout << " size supervisioned map:" << supervised_map_.size() << endl;
+//		cout << "Node " << node_id_ << ": FIRST ping from " << sensor_id << endl;
+//		cout << " size supervisioned map:" << supervised_map_.size() << endl;
 	} else {	// this sensor already has contacted me
 		supervised_map_.find(sensor_id)->second = MyToolbox::current_time_;
-		cout << "Node " << node_id_ << ": ANOtHER ping from " << sensor_id << endl;
+//		cout << "Node " << node_id_ << ": ANOtHER ping from " << sensor_id << endl;
 	}
 }
 
 /*  A user asks me to send him my data
  */
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
-	ofstream myfile("move_user.txt", ios::app);
-	if (myfile.is_open()) {
-		myfile << "->Node" << node_id_ << " receives user request" << endl;
-		myfile.close();
-	}
-	else cout << "Unable to open file";
+//	ofstream myfile("move_user.txt", ios::app);
+//	if (myfile.is_open()) {
+//		myfile << "->Node" << node_id_ << " receives user request" << endl;
+//		myfile.close();
+//	}
+	//	else cout << "Unable to open file";
+
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
 		vector<MeasureKey> keys;
@@ -159,21 +160,22 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 			keys.push_back(key);
 		}
 		if (keys.size() > 0) {
-		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, keys, outdated_measure_keys_, my_blacklist_);
-		ofstream myfile("move_user.txt", ios::app);
-		if (myfile.is_open()) {
-			myfile << "->Node" << node_id_ << " invia " << xored_measure_ << endl;
-			myfile.close();
-		}
-		else cout << "Unable to open file";
-		new_events = send(sender_user_id, node_info_msg);
+			NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, keys, outdated_measure_keys_, my_blacklist_);
+			//			ofstream myfile("move_user.txt", ios::app);
+			//			if (myfile.is_open()) {
+			//				myfile << "->Node" << node_id_ << " invia " << xored_measure_ << endl;
+			//				myfile.close();
+			//			}
+			//			else cout << "Unable to open file";
+			new_events = send(sender_user_id, node_info_msg);
 		} else {
-			ofstream myfile("move_user.txt", ios::app);
-			if (myfile.is_open()) {
-				myfile << "->Node" << node_id_ << " nothing to send" << endl;
-				myfile.close();
-			}
-			else cout << "Unable to open file";
+			//			ofstream myfile("move_user.txt", ios::app);
+			//			if (myfile.is_open()) {
+			//				myfile << "->Node" << node_id_ << " nothing to send" << endl;
+			//				myfile.close();
+			//			}
+			//			else cout << "Unable to open file";
+			cout << " nothing to send" << endl;
 		}
 	}
 	return new_events;
@@ -184,48 +186,50 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 vector<Event> StorageNode::check_sensors() {
 //	cout << "Node " << node_id_ << " checks pings" << endl;
 	vector<Event> new_events;
-	vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
+	if (keep_checking_sensors_) {
+		vector<unsigned int> expired_sensors;	// list of sensor ids which didn't answer for 3 times in a row
 
-	for (auto& x : supervised_map_){	// for each sensor in my supervised list...
-		if(x.second + (3 * MyToolbox::ping_frequency_) < MyToolbox::current_time_){  // ...if it didn't answer for 3 times...
-			my_blacklist_.push_back(x.first);	// ...put it in my blacklist...
-			expired_sensors.push_back(x.first);	// ...and in a list I use to update the structures
-			data_collector->register_broken_sensor(x.first);
-//			cout << " s" << x.first << " dead" << endl;
-		} else {
-//			cout << " s" << x.first << " alive" << endl;
+		for (auto& x : supervised_map_){	// for each sensor in my supervised list...
+			if(x.second + (3 * MyToolbox::ping_frequency_) < MyToolbox::current_time_){  // ...if it didn't answer for 3 times...
+				my_blacklist_.push_back(x.first);	// ...put it in my blacklist...
+				expired_sensors.push_back(x.first);	// ...and in a list I use to update the structures
+				data_collector->register_broken_sensor(x.first);
+				MyToolbox::remove_sensor(x.first);
+				//			cout << " s" << x.first << " dead" << endl;
+			} else {
+				//			cout << " s" << x.first << " alive" << endl;
+			}
 		}
-	}
-	// remove from the supervisioned_map the dead sensors
-	for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
-		supervised_map_.erase(*it);
-	}
-//	cout << " " << expired_sensors.size() << " sensors dead" << endl;
-//	cout << " new size of supervisioned map: " << supervised_map_.size() << endl;
-
-	if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
-		BlacklistMessage* list = new BlacklistMessage(expired_sensors);
-		list->message_type_= Message::message_type_blacklist;
-		new_events = send(get_random_neighbor(), list);
-		cout << "Time " << MyToolbox::current_time_ * 1. / pow(10, 9) << endl;
-		cout << "@ @ @ Node " << node_id_ << " generate a blacklist with";
+		// remove from the supervisioned_map the dead sensors
 		for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
-			cout << " " << *it;
+			supervised_map_.erase(*it);
 		}
-		cout << endl;
-		cout << "Curr time " << MyToolbox::current_time_ << endl;
-		cout << "Last ping " << supervised_map_.find(*(expired_sensors.begin()))->second << endl;
-		cout << "ping time " << MyToolbox::ping_frequency_ << endl;
-		cout << "expir time " << (supervised_map_.find(*(expired_sensors.begin()))->second) + 3 * MyToolbox::ping_frequency_ << endl;
-	}
+		//	cout << " " << expired_sensors.size() << " sensors dead" << endl;
+		//	cout << " new size of supervisioned map: " << supervised_map_.size() << endl;
 
-	ping_check_counter_++;
-	if (ping_check_counter_ < num_ping_checks_) {
+		if (expired_sensors.size() > 0) {	// if there are some expired sensors I have to spread this info
+			BlacklistMessage* list = new BlacklistMessage(expired_sensors);
+			list->message_type_= Message::message_type_blacklist;
+			new_events = send(get_random_neighbor(), list);
+			//		cout << "Time " << MyToolbox::current_time_ * 1. / pow(10, 9) << endl;
+			//		cout << "@ @ @ Node " << node_id_ << " generate a blacklist with";
+			//		for (vector<unsigned int>::iterator it = expired_sensors.begin(); it != expired_sensors.end(); it++) {
+			//			cout << " " << *it;
+			//		}
+			//		cout << endl;
+			//		cout << "Curr time " << MyToolbox::current_time_ << endl;
+			//		cout << "Last ping " << supervised_map_.find(*(expired_sensors.begin()))->second << endl;
+			//		cout << "ping time " << MyToolbox::ping_frequency_ << endl;
+			//		cout << "expir time " << (supervised_map_.find(*(expired_sensors.begin()))->second) + 3 * MyToolbox::ping_frequency_ << endl;
+		}
+
+		//	ping_check_counter_++;
+		//	if (ping_check_counter_ < num_ping_checks_) {
 		Event new_event(MyToolbox::current_time_ + MyToolbox::check_sensors_frequency_, Event::event_type_cache_checks_sensors);
 		new_event.set_agent(this);
 		new_events.push_back(new_event);
+		//	}
 	}
-
 	return new_events;
 }
 
@@ -233,9 +237,9 @@ vector<Event> StorageNode::check_sensors() {
  */
 vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 	vector<Event> new_events;
-	cout << "Node " << node_id_ << " receives bl " << endl;
+//	cout << "Node " << node_id_ << " receives bl " << endl;
 	for (vector<unsigned int>::iterator sns_it = list->sensor_ids_.begin(); sns_it != list->sensor_ids_.end(); sns_it++) {
-		cout << " " << *sns_it << endl;
+//		cout << " " << *sns_it << endl;
 		data_collector->record_bl(node_id_, *sns_it);
 	}
 	if (!reinit_mode_) {	// if in reinit mode just spread the blacklist, but don't look at it
@@ -351,7 +355,6 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
-			cout << "- - - - ERROR" << endl;
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
@@ -359,7 +362,6 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-			cout << "- - - - ERROR" << endl;
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
@@ -367,7 +369,6 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else {  // sender and receiver both idle, can send the message
-			cout << "- - - - OK" << endl;
 			// Compute the message time
 			MyTime processing_time = MyToolbox::get_random_processing_time();
 			unsigned int num_total_bits = message->get_message_size();
@@ -379,36 +380,39 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
 			// Just in case I want to give priority to some particular message...
 			Event::EventTypes this_event_type;
+			Agent* agent;
 			switch (message->message_type_) {
 			case Message::message_type_measure: {
 				this_event_type = Event::event_type_cache_receives_measure;
+				agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
 			case Message::message_type_blacklist: {
 				this_event_type = Event::event_type_cache_gets_blacklist;
+				agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
-			case Message::message_type_remove_measure: {
-				this_event_type = Event::event_type_cache_receives_user_info;
-				break;
-			}
-			case Message::message_type_measures_for_user: {
+			case Message::message_type_node_info_for_user: {
 				this_event_type = Event::event_type_user_receives_node_data;
+//				agent = &(MyToolbox::users_map_.find(next_node_id)->second);
+				agent = near_users_.find(next_node_id)->second;
 				break;
 			}
 			case Message::message_type_reinit_query: {
 				this_event_type = Event::event_type_cache_gets_reinit_query;
+				agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
 			case Message::message_type_reinit_response: {
 				this_event_type = Event::event_type_cache_gets_reinit_response;
+				agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
 			default:
 				break;
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
-			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+			receive_message_event.set_agent(agent);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -439,11 +443,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			give_up = false;
 			break;
 		}
-		case Message::message_type_remove_measure: {
-			give_up = false;
-			break;
-		}
-		case Message::message_type_measures_for_user: {
+		case Message::message_type_node_info_for_user: {
 			give_up = true;
 			break;
 		}
@@ -492,7 +492,6 @@ vector<Event> StorageNode::re_send(Message* message) {
 	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
-		cout << "- - - - ERROR" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
@@ -500,7 +499,6 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-		cout << "- - - - ERROR" << endl;
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
@@ -508,7 +506,6 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else {  // sender and receiver both idle, can send the message
-		cout << "- - - - OK" << endl;
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();
@@ -519,32 +516,34 @@ vector<Event> StorageNode::re_send(Message* message) {
 		MyTime new_schedule_time = current_time + processing_time + transfer_time;
 		// Now I have to schedule a new event in the main event queue. Accordingly to the type of the message I can schedule a different event
 		Event::EventTypes this_event_type;
+		Agent* agent;
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
 			this_event_type = Event::event_type_cache_receives_measure;
+			agent = near_storage_nodes_.find(next_node_id)->second;
 			break;
 		}
 		case Message::message_type_blacklist: {
 			this_event_type = Event::event_type_cache_gets_blacklist;
+			agent = near_storage_nodes_.find(next_node_id)->second;
 			break;
 		}
-		case Message::message_type_remove_measure: {
-			this_event_type = Event::event_type_cache_receives_user_info;
-			break;
-		}
-		case Message::message_type_measures_for_user: {
+		case Message::message_type_node_info_for_user: {
 			this_event_type = Event::event_type_user_receives_node_data;
+//			agent = &(MyToolbox::users_map_.find(next_node_id)->second);
+			agent = near_users_.find(next_node_id)->second;
 			break;
 		}
 		case Message::message_type_reinit_query: {
 			this_event_type = Event::event_type_cache_gets_reinit_query;
+			agent = near_storage_nodes_.find(next_node_id)->second;
 			break;
 		}
 		default:
 			break;
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
-		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+		receive_message_event.set_agent(agent);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -622,9 +621,9 @@ void StorageNode::set_measure_indeces() {
 		indeces_msr_to_keep_.erase(it);
 	}
 
-	cout << "@Node " << node_id_ << " (d=" << LT_degree_ << ") :";
-	for (vector<int>::iterator it = indeces_msr_to_keep_.begin(); it != indeces_msr_to_keep_.end(); it++) {
-		cout << " " << *it;
-	}
-	cout << endl;
+//	cout << "@Node " << node_id_ << " (d=" << LT_degree_ << ") :";
+//	for (vector<int>::iterator it = indeces_msr_to_keep_.begin(); it != indeces_msr_to_keep_.end(); it++) {
+//		cout << " " << *it;
+//	}
+//	cout << endl;
 }

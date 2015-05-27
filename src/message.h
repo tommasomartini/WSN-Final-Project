@@ -10,7 +10,6 @@ class Message {
     message_type_blacklist,
     message_type_remove_measure,
     message_type_ping,
-    message_type_measures_for_user,	// FIXME maybe we can remove this... better to check
 	message_type_node_info_for_user,
     message_type_intra_user,
 	message_type_reinit_query,

@@ -98,7 +98,8 @@ void import_settings() {
 					MyToolbox::max_measure_generation_delay_ = (MyTime)num;
 				} else if (value_name == "sensor_failure_prob") {
 					MyToolbox::sensor_failure_prob_ = (double)num;
-				} else if (value_name == "num_measures_for_sensor_") {
+				} else if (value_name == "num_measures_for_sensor") {
+					cout << line << endl;
 					MyToolbox::num_measures_for_sensor_ = (int)num;
 				}
 			}
@@ -123,6 +124,7 @@ bool network_setup() {
 		node.data_collector = data_coll;
 		MyToolbox::sensors_map_.insert(pair<unsigned int, SensorNode>(node.get_node_id(), node));
 		MyToolbox::timetable_.insert(pair<unsigned int, MyTime>(node.get_node_id(), 0));
+		MyToolbox::alive_sensors_.push_back(node.get_node_id());
 	}
 
 	// Create the storage nodes
@@ -282,10 +284,10 @@ void activate_ping_check() {
 
 void activate_users() {
 	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
-	for (auto& cache_pair : MyToolbox::users_map_) {
+	for (auto& user_pair : MyToolbox::users_map_) {
 //		Event first_step(first_step_distrib(generator), Event::event_type_user_moves);
-		Event first_step(MyToolbox::user_observation_time_, Event::event_type_user_moves);
-		first_step.set_agent(&(cache_pair.second));
+		Event first_step(10 * MyToolbox::num_sensors_ * MyToolbox::max_measure_generation_delay_ + MyToolbox::user_observation_time_, Event::event_type_user_moves);
+		first_step.set_agent(&(user_pair.second));
 		main_event_queue.push(first_step);
 	}
 }
@@ -313,10 +315,10 @@ int main() {
 	}
 	cout << "Network correctly set-up!" << endl;
 
-//	activate_measure_generation();
-	activate_ping_generation();
-	activate_ping_check();
-//	activate_users();
+	activate_measure_generation();
+//	activate_ping_generation();
+//	activate_ping_check();
+	activate_users();
 
 	cout << "- - - Starting the Program - - -" << endl;
 

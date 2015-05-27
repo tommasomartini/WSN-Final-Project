@@ -33,12 +33,25 @@ class DataCollector {
 	  bool crossed_the_network_ = false;
   };
 
+  struct UserInfo {
+	  int num_steps_ = 0;
+	  double covered_distance_ = 0;
+	  MyTime born_time_ = 0;
+	  MyTime decoding_time_ = 0;
+	  MyTime decoding_duration_ = 0;
+	  int decoding_distance_ = 0;
+	  int decoding_steps_ = 0;
+	  int num_rx_node_info_ = 0;
+	  bool decoded_ = false;
+  };
+
  public:
   DataCollector();
 
   std::map<unsigned int, int> num_stored_measures_per_cache_;
   std::map<MeasureKey, MeasureInfo> measures_register_;
   std::map<unsigned int, BlacklistInfo> blacklist_register_;
+  std::map<unsigned int, UserInfo> user_register_;
 
   void report();
   double graph_density();
@@ -49,6 +62,9 @@ class DataCollector {
   void add_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
   void record_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned int /*cache id*/, unsigned int /*sym*/);
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
+  void record_user_movement(unsigned int, double /*distance*/);
+  void record_user_rx(unsigned int);
+  void record_user_decoding(unsigned int);
 
  private:
 };

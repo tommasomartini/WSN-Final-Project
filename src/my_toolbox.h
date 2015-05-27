@@ -107,12 +107,14 @@ class MyToolbox {
 
   static std::map<unsigned int, MyTime> timetable_;  // says when a node gets free
 
+  static std::vector<unsigned int> alive_sensors_;	// which sensors are still alive
+
   static MyTime current_time_; // to keep track of the time
 
   static std::default_random_engine generator_;
 
   // functions
-  static void initialize_toolbox(); // TODO
+  static void initialize_toolbox();
   static bool is_node_active(unsigned int /*node_id*/);
   static unsigned int get_node_id();
   static int get_ideal_soliton_distribution_degree();

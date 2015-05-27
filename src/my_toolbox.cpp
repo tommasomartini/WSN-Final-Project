@@ -13,6 +13,7 @@ using namespace std;
 
 MyToolbox::MyTime MyToolbox::current_time_ = 0;
 map<unsigned int, MyToolbox::MyTime> MyToolbox::timetable_;
+vector<unsigned int> MyToolbox::alive_sensors_;
 unsigned int MyToolbox::node_id_ = 10;	// the first 10 ids are reserved
 
 //  Global values
@@ -64,9 +65,13 @@ void MyToolbox::set_close_nodes(User* user) {
     double my_x = user->get_x_coord();
     double my_y = user->get_y_coord();
     double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
-    if (dist <= MyToolbox::tx_range_) { // the users are able to communicate
+    if (dist <= MyToolbox::tx_range_) { // the user and the cache are able to communicate
       pair<unsigned int, StorageNode*> pp(st_node->get_node_id(), st_node);
       user->near_storage_nodes_.insert(pp);
+
+      if (st_node->near_users_.find(user->get_node_id()) == st_node->near_users_.end()) {	// if the cache does not have this user as neighbour
+    	  st_node->near_users_.insert(pair<unsigned int, User*>(user->get_node_id(), user));
+      }
     }
   }
 
@@ -116,11 +121,21 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
   return false;
 }
 
-// Made by Tom
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
-  timetable_.erase(sensor_id);
-  sensors_map_.erase(sensor_id);
-  cout << "TB: eliminato sensore " << sensor_id << endl;
+	vector<unsigned int>::iterator sensor_to_remove = find(alive_sensors_.begin(), alive_sensors_.end(), sensor_id);
+	if (sensor_to_remove != alive_sensors_.end()) {
+		alive_sensors_.erase(sensor_to_remove);
+		if (alive_sensors_.size() == 0) {
+			for (map<unsigned int, StorageNode>::iterator node_it = storage_nodes_map_.begin(); node_it != storage_nodes_map_.end(); node_it++) {
+				node_it->second.keep_checking_sensors_ = false;
+			}
+			for (map<unsigned int, User>::iterator user_it = users_map_.begin(); user_it != users_map_.end(); user_it++) {
+				user_it->second.keep_moving_ = false;
+			}
+		}
+	} else {
+		cout << "Toolbox is trying to remove a sensor which doesn't exist!" << endl;
+	}
 }
 
 unsigned int MyToolbox::get_node_id() {

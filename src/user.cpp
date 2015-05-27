@@ -39,6 +39,10 @@ User::User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id
 vector<Event> User::move() {
 	vector<Event> new_events;
 
+	if (!keep_moving_) {
+		return new_events;
+	}
+
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-5, 5);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
@@ -62,9 +66,10 @@ vector<Event> User::move() {
 
 	x_coord_ = new_x; // update the user's position
 	y_coord_ = new_y;
+	data_collector->record_user_movement(node_id_, dist);
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
-	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
+//	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
 //	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
 //		cout << "- " << it->first << endl;
 //	}
@@ -92,12 +97,12 @@ vector<Event> User::move() {
 				new_events.push_back(hello_event);
 				interrogated_nodes_.push_back(node_it->first);
 
-				ofstream myfile("move_user.txt", ios::app);
-					if (myfile.is_open()) {
-						myfile << "Interrogated node" << node_it->first << endl;
-						myfile.close();
-					}
-					else cout << "Unable to open file";
+//				ofstream myfile("move_user.txt", ios::app);
+//					if (myfile.is_open()) {
+//						myfile << "Interrogated node" << node_it->first << endl;
+//						myfile.close();
+//					}
+//					else cout << "Unable to open file";
 			}
 		}
 
@@ -178,6 +183,11 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 	nodes_info_.insert(new_output_symbol);	// insert it into the map
 
+//	cout << " Output symbol" << endl;
+//	for (map<unsigned int, OutputSymbol>::iterator ii = nodes_info_.begin(); ii != nodes_info_.end(); ii++) {
+//		cout << " - " << ii->first << endl;
+//	}
+
 	// Update the measure id
 	for (vector<MeasureKey>::iterator msr_key_it_ = node_info_msg->sources_.begin(); msr_key_it_ != node_info_msg->sources_.end(); msr_key_it_++) {	// for each of the measure just received...
 		unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
@@ -191,15 +201,24 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 			}
 		}
 	}
+//	cout << " Updated measures:" << endl;
+//	for (map<unsigned int, unsigned int>::iterator ii = updated_sensors_measures_.begin(); ii != updated_sensors_measures_.end(); ii++) {
+//		cout << " - " << "s" << ii->first << ", " << ii->second << endl;
+//	}
 
 	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
-		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols
+//		cout << " Less symbols than sensors" << endl;
+		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols	// FIXME activate this
 	}
 
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
+		cout << "User" << node_id_ << "message passing OK: measures: " << endl;
+		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
+			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
+		}
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
@@ -233,6 +252,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		}
 	} else {	// message passing failed: symbols not decoded...
 		// do nothing and wait to try message passing again...
+		cout << "User " << node_id_ << " message passing FAIL" << endl;
 	}
 
 	return new_events;
@@ -385,7 +405,7 @@ bool User::message_passing() {
 				//				}
 				break;
 			} else {
-				cerr << "Impossible to decode! Message passing failed!" << endl;
+//				cerr << "Impossible to decode! Message passing failed!" << endl;
 				message_passing_succeeded = false;
 				break;
 			}

@@ -21,6 +21,7 @@ class StorageNode : public Node {
   StorageNode(unsigned int node_id, double y_coord, double x_coord); // : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
 
   int LT_degree_; // number of xored measures
+  bool keep_checking_sensors_ = true;
 
   // Event execution methods
   std::vector<Event> receive_measure(Measure*);
@@ -43,7 +44,7 @@ class StorageNode : public Node {
   int indeces_pointer_ = 0;
   int indeces_counter_ = 0;
   int num_ping_checks_ = 10;		// how many ping checks I should do TODO debug
-  int ping_check_counter_ = 0;
+  int ping_check_counter_ = 0;	// TODO debug
   std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id
 //  std::map<unsigned int, MeasureKey> measures_; // pairs <sensor_id, last_measure_id>s sns_id
   std::vector<unsigned int> ignore_new_list;		// when I don't accept a NEW msr from a sns I save here it

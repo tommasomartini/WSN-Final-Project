@@ -23,6 +23,8 @@ class User: public Node {
   User(unsigned int node_id);
   User(unsigned int node_id, double y_coord, double x_coord);
   
+  bool keep_moving_ = true;
+
   std::vector<Event> move(); // different implementation of the random walk
   std::vector<Event> receive_node_data(NodeInfoMessage*);
   std::vector<Event> receive_user_data(UserInfoMessage*);
