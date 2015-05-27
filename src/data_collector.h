@@ -39,7 +39,7 @@ class DataCollector {
 	  MyTime born_time_ = 0;
 	  MyTime decoding_time_ = 0;
 	  MyTime decoding_duration_ = 0;
-	  int decoding_distance_ = 0;
+	  double decoding_distance_ = 0;
 	  int decoding_steps_ = 0;
 	  int num_rx_node_info_ = 0;
 	  bool decoded_ = false;

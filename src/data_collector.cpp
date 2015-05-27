@@ -81,32 +81,27 @@ void DataCollector::report() {
 	//User
 	if (user_register_.size() > 0) {
 		double avg_user_dec_time = 0;
-		double avg_user_life_time = 0;
-		double avg_num_steps = 0;
+		double avg_dec_num_steps = 0;
 		double avg_dec_distance = 0;
 		int decoding_number = 0;
 		int num_usrs = user_register_.size();
 		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
-			avg_user_life_time += it->second.travel_duration_;
-			avg_msr_hops += it->second.hop_number_;
-			if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
-				num_wrong_hops_msr++;
-			}
-			if (it->second.crossed_the_network_) {
-				avg_counter++;
-				avg_user_dec_time += it->second.spreading_duration_;
-			} else {
-				avg_not_crossed++;
+			if (it->second.decoded_) {
+				decoding_number++;
+				avg_user_dec_time += it->second.decoding_duration_;
+				avg_dec_num_steps += it->second.decoding_steps_;
+				avg_dec_distance += it->second.decoding_distance_;
 			}
 		}
-		avg_user_dec_time = avg_user_dec_time / avg_counter;
-		avg_user_life_time = avg_user_life_time / measures_register_.size();
-		avg_msr_hops = avg_msr_hops / measures_register_.size();
+		avg_user_dec_time = avg_user_dec_time / decoding_number;
+		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
+		avg_dec_distance = avg_dec_distance / decoding_number;
 
-		cout << "+ MEASURE" << endl;
-		cout << " - Avg measure spreding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
-		cout << " - Avg measure life time: " << avg_user_life_time * 1. / pow(10, 9) << "s (" << avg_msr_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_msr << " wrong hops)" << endl;
-		cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+		cout << "+ USER" << endl;
+		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
+		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
+		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
+		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
 	}
 
 	cout << "+ SOLITON CHECK" << endl;
@@ -268,6 +263,7 @@ void DataCollector::record_user_decoding(unsigned int user_id) {
 			user_register_.find(user_id)->second.decoding_distance_ = user_register_.find(user_id)->second.covered_distance_;
 			user_register_.find(user_id)->second.decoding_steps_ = user_register_.find(user_id)->second.num_steps_;
 			user_register_.find(user_id)->second.decoding_duration_ = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
+			user_register_.find(user_id)->second.decoded_ = true;
 		} else {	// this user already decoded
 			cout << "Error! This user already decoded!" << endl;
 		}

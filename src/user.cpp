@@ -175,6 +175,10 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		}
 	}
 
+	if (nodes_info_.find(node_info_msg->node_id_) == nodes_info_.end()) {
+		data_collector->record_user_rx(node_id_);
+	}
+
 	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, node_info_msg->sources_, node_info_msg->outdated_measures_);	// create a new output symbol
 	pair<unsigned int, OutputSymbol> new_output_symbol(node_info_msg->node_id_, curr_output_symbol_);	// associate it to the cache
 	map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(node_info_msg->node_id_);	// the entry belonging to this cache in my map
@@ -219,6 +223,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
 			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
 		}
+		data_collector->record_user_decoding(node_id_);
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
