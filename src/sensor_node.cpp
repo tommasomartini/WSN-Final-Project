@@ -29,7 +29,7 @@ SensorNode::SensorNode(unsigned int node_id, double y_coord, double x_coord) : N
 vector<Event> SensorNode::generate_measure() {
   vector<Event> new_events; // create the new events
 
-  default_random_engine generator = MyToolbox::generator_;
+//  default_random_engine generator = MyToolbox::generator_;
 //  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
   MyTime rndm_time = MyToolbox::max_measure_generation_delay_;	// FIXME not random at all. Uncomment the previous line for randomness
   MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
@@ -43,6 +43,7 @@ vector<Event> SensorNode::generate_measure() {
 	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
 	  failure_event.set_agent(this);
 	  new_events.push_back(failure_event);
+//	  data_collector->register_broken_sensor(node_id_);
 	  return new_events;	// return
   }
 
@@ -70,20 +71,22 @@ vector<Event> SensorNode::try_retx(Message* message) {
 
 vector<Event> SensorNode::sensor_ping() {
 	vector<Event> new_events;
-	map<unsigned int, StorageNode*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
-	while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
-		my_supervisor_id_ = get_random_neighbor();	// ...try a new one
-		if (my_supervisor_id_ == 0) {	// this sensor has no more neighbours
-			return new_events;	// return now and do not schedule another ping!
+	if (do_ping_) {
+		map<unsigned int, StorageNode*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
+		while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
+			my_supervisor_id_ = get_random_neighbor();	// ...try a new one
+			if (my_supervisor_id_ == 0) {	// this sensor has no more neighbours
+				return new_events;	// return now and do not schedule another ping!
+			}
+			supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 		}
-		supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
+		cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
+		((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
+		//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
+		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);	// FIXME for debug only
+		new_event.set_agent(this);
+		new_events.push_back(new_event);
 	}
-	cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
-	((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
-//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
-	Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);	// FIXME for debug only
-	new_event.set_agent(this);
-	new_events.push_back(new_event);
 	return new_events;
 }
 
@@ -91,6 +94,11 @@ void SensorNode::set_supervisor() {
   // choose my supervisor as the first node in my list (does not matter how I choose it)
 //  my_supervisor_id_ = near_storage_nodes_->begin()->first;
   my_supervisor_id_ = get_random_neighbor();
+}
+
+void SensorNode::breakup() {
+	data_collector->register_broken_sensor(node_id_);
+	do_ping_ = false;
 }
 
 

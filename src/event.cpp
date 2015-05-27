@@ -190,7 +190,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_sensor_breaks: {
-		// TODO do something?
+		((SensorNode*)agent_)->breakup();
 		break;
 	}
 	case event_type_cache_gets_user_hello: {

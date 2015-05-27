@@ -313,10 +313,12 @@ int main() {
 	}
 	cout << "Network correctly set-up!" << endl;
 
-	activate_measure_generation();
-//	activate_ping_generation();
-//	activate_ping_check();
+//	activate_measure_generation();
+	activate_ping_generation();
+	activate_ping_check();
 //	activate_users();
+
+	cout << "- - - Starting the Program - - -" << endl;
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();
@@ -326,6 +328,8 @@ int main() {
 			main_event_queue.push(*event_it);
 		}
 	}
+
+	cout << "- - - Ending the Program - - -" << endl;
 
 	data_coll->report();
 

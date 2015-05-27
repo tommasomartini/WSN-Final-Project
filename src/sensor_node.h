@@ -18,6 +18,7 @@ class SensorNode: public Node {
   std::vector<Event> generate_measure();
   std::vector<Event> try_retx(Message*);
   std::vector<Event> sensor_ping(); // fast and simple way
+  void breakup();
   
   void set_supervisor();	// this function has to be called at the beginning of the program, after the network initialization
   
@@ -32,6 +33,7 @@ class SensorNode: public Node {
   unsigned int my_supervisor_id_;
   unsigned int measure_id_ = 0;
   bool first_generated_measure_ = true;
+  bool do_ping_ = true;
 
   std::vector<Event> send(unsigned int /*next node id*/, Message*);
   std::vector<Event> re_send(Message*);
