@@ -42,10 +42,12 @@ class StorageNode : public Node {
   unsigned char xored_measure_;
   int indeces_pointer_ = 0;
   int indeces_counter_ = 0;
+  int num_ping_checks_ = 10;		// how many ping checks I should do TODO debug
+  int ping_check_counter_ = 0;
   std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id
 //  std::map<unsigned int, MeasureKey> measures_; // pairs <sensor_id, last_measure_id>s sns_id
   std::vector<unsigned int> ignore_new_list;		// when I don't accept a NEW msr from a sns I save here it
-  std::map<unsigned int, int> supervisioned_map_;         // map with  key = sensor_id and value = time of last ping
+  std::map<unsigned int, MyTime> supervised_map_;         // map with  key = sensor_id and value = time of last ping
   std::vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
   std::vector<MeasureKey> outdated_measure_keys_;  // list of the measures I have belonging to sensors no longer in the network
   std::vector<int> indeces_msr_to_keep_;

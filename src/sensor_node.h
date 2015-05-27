@@ -17,7 +17,7 @@ class SensorNode: public Node {
   // Event execution methods
   std::vector<Event> generate_measure();
   std::vector<Event> try_retx(Message*);
-  std::vector<Event> sensor_ping(); // fast and simple way
+  std::vector<Event> ping(); // fast and simple way
   void breakup();
   
   void set_supervisor();	// this function has to be called at the beginning of the program, after the network initialization
@@ -28,6 +28,8 @@ class SensorNode: public Node {
   typedef MyToolbox::MyTime MyTime;
 
   int how_many_measures_ = 0;
+  int how_many_pings_ = 1;
+  int ping_counter_ = 0;
   unsigned char old_measure_data = 0;
   unsigned char new_measure_data = 0;
   unsigned int my_supervisor_id_;

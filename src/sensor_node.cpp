@@ -43,7 +43,6 @@ vector<Event> SensorNode::generate_measure() {
 	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
 	  failure_event.set_agent(this);
 	  new_events.push_back(failure_event);
-//	  data_collector->register_broken_sensor(node_id_);
 	  return new_events;	// return
   }
 
@@ -69,8 +68,15 @@ vector<Event> SensorNode::try_retx(Message* message) {
 	return new_events;
 }
 
-vector<Event> SensorNode::sensor_ping() {
+vector<Event> SensorNode::ping() {
 	vector<Event> new_events;
+	ping_counter_++;
+	if (ping_counter_ > how_many_pings_) {
+		do_ping_ = false;
+		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);
+		new_event.set_agent(this);
+		new_events.push_back(new_event);
+	}
 	if (do_ping_) {
 		map<unsigned int, StorageNode*>::iterator supervisor_it = near_storage_nodes_.find(my_supervisor_id_);
 		while (supervisor_it == near_storage_nodes_.end()) {	// until I don't find a valid neighbour...
@@ -82,10 +88,12 @@ vector<Event> SensorNode::sensor_ping() {
 		}
 		cout << "Sensor " << node_id_ << " pings cache " << my_supervisor_id_ << endl;	// TODO debug
 		((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
-		//	Event new_event(MyToolbox::get_current_time() + MyToolbox::ping_frequency, Event::sensor_ping);	// generate the new ping event
-		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);	// FIXME for debug only
+		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_ping);
 		new_event.set_agent(this);
 		new_events.push_back(new_event);
+
+		cout << "Sensor " << node_id_ << " this ping " << MyToolbox::current_time_ << endl;
+		cout << "Sensor " << node_id_ << " next ping " << MyToolbox::current_time_ + MyToolbox::ping_frequency_ << endl;
 	}
 	return new_events;
 }
@@ -97,7 +105,8 @@ void SensorNode::set_supervisor() {
 }
 
 void SensorNode::breakup() {
-	data_collector->register_broken_sensor(node_id_);
+	cout << "Sensor " << node_id_ << " dead" << endl;
+//	data_collector->register_broken_sensor(node_id_);
 	do_ping_ = false;
 }
 

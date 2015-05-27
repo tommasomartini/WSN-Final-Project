@@ -182,7 +182,8 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_sensor_ping: {
-		new_events = ((SensorNode*)agent_)->sensor_ping();
+		new_events = ((SensorNode*)agent_)->ping();
+		cout << " number new events after ping " << new_events.size() << endl;
 		break;
 	}
 	case event_type_cache_checks_sensors: {

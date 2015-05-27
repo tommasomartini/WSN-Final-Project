@@ -13,6 +13,7 @@ class DataCollector {
 
   struct MeasureInfo {
 	  std::map<unsigned int, int> node_map_;
+	  int hop_number_ = 0;
 	  MyTime born_time_ = 0;	// instants the message was started spreading
 	  MyTime spreading_time_ = 0;	// instant the message crossed for the first time all the nodes
 	  MyTime death_time_ = 0;	// instant its hop counter went over
@@ -23,6 +24,7 @@ class DataCollector {
 
   struct BlacklistInfo {
 	  std::map<unsigned int, int> node_map_;
+	  int hop_number_ = 0;
 	  MyTime born_time_ = 0;	// instants the message was started spreading
 	  MyTime spreading_time_ = 0;	// instant the message crossed for the first time all the nodes
 	  MyTime death_time_ = 0;	// instant its hop counter went over

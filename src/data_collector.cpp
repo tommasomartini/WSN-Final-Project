@@ -12,27 +12,47 @@ DataCollector::DataCollector() {
 
 void DataCollector::report() {
 
-	// Mesures
-	MyTime avg_msr_time = 0;
-	int avg_not_crossed = 0;
-	int avg_counter = 0;
-	int num_msrs = measures_register_.size();
-	for (map<MeasureKey, MeasureInfo>::iterator it = measures_register_.begin(); it != measures_register_.end(); it++) {
-		if (it->second.crossed_the_network_) {
-			avg_counter++;
-			avg_msr_time += it->second.spreading_duration_;
-		} else {
-			avg_not_crossed++;
-		}
-	}
-	avg_msr_time = avg_msr_time / avg_counter;
+	cout << " > Report <" << endl;
+
+//	// Mesures
+//	double avg_msr_time = 0;
+//	double avg_msr_life_time = 0;
+//	int avg_not_crossed = 0;
+//	int avg_counter = 0;
+//	double avg_msr_hops = 0;
+//	int num_wrong_hops_msr = 0;
+//	int num_msrs = measures_register_.size();
+//	for (map<MeasureKey, MeasureInfo>::iterator it = measures_register_.begin(); it != measures_register_.end(); it++) {
+//		avg_msr_life_time += it->second.travel_duration_;
+//		avg_msr_hops += it->second.hop_number_;
+//		if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
+//			num_wrong_hops_msr++;
+//		}
+//		if (it->second.crossed_the_network_) {
+//			avg_counter++;
+//			avg_msr_time += it->second.spreading_duration_;
+//		} else {
+//			avg_not_crossed++;
+//		}
+//	}
+//	avg_msr_time = avg_msr_time / avg_counter;
+//	avg_msr_life_time = avg_msr_life_time / measures_register_.size();
+//	avg_msr_hops = avg_msr_hops / measures_register_.size();
 
 	// Blacklist
-	MyTime avg_bl_time = 0;
+	double avg_bl_time = 0;
+	double avg_bl_life_time = 0;
 	int bl_not_crossed = 0;
 	int bl_counter = 0;
+	double avg_bl_hops = 0;
+	int num_wrong_hops_bl = 0;
 	int num_bl = blacklist_register_.size();
 	for (map<unsigned int, BlacklistInfo>::iterator it = blacklist_register_.begin(); it != blacklist_register_.end(); it++) {
+		avg_bl_life_time += it->second.travel_duration_;
+		avg_bl_hops += it->second.hop_number_;
+		if (it->second.hop_number_ < MyToolbox::max_num_hops_) {
+			num_wrong_hops_bl++;
+		}
 		if (it->second.crossed_the_network_) {
 			bl_counter++;
 			avg_bl_time += it->second.spreading_duration_;
@@ -41,21 +61,26 @@ void DataCollector::report() {
 		}
 	}
 	avg_bl_time = avg_bl_time / bl_counter;
+	avg_bl_life_time = avg_bl_life_time / blacklist_register_.size();
+	avg_bl_hops = avg_bl_hops / blacklist_register_.size();
 
-	cout << " > Report <" << endl;
-	cout << "- Avg measure spreding time: " << avg_msr_time * 1. / pow(10, 9) << endl;
-	cout << "- " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
+//	cout << "+ MEASURE" << endl;
+//	cout << " - Avg measure spreding time: " << avg_msr_time * 1. / pow(10, 9) << "s" << endl;
+//	cout << " - Avg measure life time: " << avg_msr_life_time * 1. / pow(10, 9) << "s (" << avg_msr_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_msr << " wrong hops)" << endl;
+//	cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
 
-	cout << "- Avg blacklist spreding time: " << avg_bl_time * 1. / pow(10, 9) << endl;
-	cout << "- " << bl_not_crossed << " blacklist (" << bl_not_crossed * 1. / num_bl * 100 << "%) did not cross the network" << endl;
+	cout << "+ BLACKLIST" << endl;
+	cout << " - Avg blacklist spreding time: " << avg_bl_time * 1. / pow(10, 9) << "s" << endl;
+	cout << " - Avg blacklist life time: " << avg_bl_life_time * 1. / pow(10, 9) << "s (" << avg_bl_hops << " hops on avg out of " << MyToolbox::max_num_hops_ << ", " << num_wrong_hops_bl << " wrong hops)" << endl;
+	cout << " - " << bl_not_crossed << " blacklists (" << bl_not_crossed * 1. / num_bl * 100 << "%) did not cross the network" << endl;
 
-	cout << "- Soliton check: " << endl;
+	cout << "+ SOLITON CHECK" << endl;
 	int zero_counter = 0;
 	int one_counter = 0;
 	int miss_counter = 0;
 	for (map<unsigned int, int>::iterator it = num_stored_measures_per_cache_.begin(); it != num_stored_measures_per_cache_.end(); it++) {
 		int lt_deg = MyToolbox::storage_nodes_map_.find(it->first)->second.LT_degree_;
-		cout << "   Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
+		cout << " Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
 		if (it->second == 0) {
 			zero_counter++;
 		}
@@ -67,13 +92,13 @@ void DataCollector::report() {
 		}
 	}
 	if (zero_counter > 0) {
-		cout << "  " << zero_counter << " nodes store no measures" << endl;
+		cout << " " << zero_counter << " nodes store no measures" << endl;
 	}
 	if (one_counter > 0) {
-		cout << "  " << one_counter << " nodes store 1 measure" << endl;
+		cout << " " << one_counter << " nodes store 1 measure" << endl;
 	}
 	if (miss_counter > 0) {
-		cout << "  " << miss_counter << " nodes store a wrong number of measures" << endl;
+		cout << " " << miss_counter << " nodes store a wrong number of measures" << endl;
 	}
 }
 
@@ -98,6 +123,7 @@ void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
 void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned int sym) {
 	MeasureKey key(sns_id, msr_id);	// key associated with this measure
 	if (measures_register_.find(key) != measures_register_.end()) {	// if this measure is still in the register
+		measures_register_.find(key)->second.hop_number_++;
 		if (!measures_register_.find(key)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = measures_register_.find(key)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this measure
@@ -140,11 +166,13 @@ void DataCollector::register_broken_sensor(unsigned int sensor_id_) {
 		cout << "Blacklist " << sensor_id_ << " added" << endl;
 	} else {
 		cout << "Error! Trying to remove a sensor twice!" << endl;
+		exit(0);
 	}
 }
 
 void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 	if (blacklist_register_.find(sensor_id) != blacklist_register_.end()) {	// if this blacklist is still in the register
+		blacklist_register_.find(sensor_id)->second.hop_number_++;
 		if (!blacklist_register_.find(sensor_id)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = blacklist_register_.find(sensor_id)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this blacklist
@@ -163,6 +191,7 @@ void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 		}
 	} else {
 		cout << "Error! Trying to record a blacklist not in the register!" << endl;
+		exit(0);
 	}
 }
 
