@@ -43,6 +43,8 @@ vector<Event> User::move() {
 		return new_events;
 	}
 
+	cout << "User " << node_id_ << " moved" << endl;
+
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-5, 5);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
@@ -169,6 +171,8 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		return new_events;
 	}
 
+	cout << "User " << node_id_ << " received from node " << node_info_msg->node_id_ << endl;
+
 	for (vector<unsigned int>::iterator dead_sns_it = node_info_msg->dead_sensors_.begin(); dead_sns_it != node_info_msg->dead_sensors_.end(); dead_sns_it++) {	// for each dead sensor id in this node info message
 		if (find(dead_sensors_.begin(), dead_sensors_.end(), *dead_sns_it) == dead_sensors_.end()) {	// if I don't have this id in my blacklist...
 			dead_sensors_.push_back(*dead_sns_it);	// ...add it!
@@ -219,7 +223,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
-		cout << "User" << node_id_ << "message passing OK: measures: " << endl;
+		cout << "User " << node_id_ << " message passing OK: measures: " << endl;
 		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
 			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
 		}
@@ -403,6 +407,10 @@ bool User::message_passing() {
 			}
 		} else {  // no symbol released at this round
 			if (info.empty()) {  // if no other symbols, everything is ok
+				if (resolved_symbols.size() < MyToolbox::num_sensors_) {	// only partially decoded...
+					message_passing_succeeded = false;
+					break;
+				}
 				decoded_symbols_ = resolved_symbols;	// store the decoded measures...
 				//				// ...and update the backlist
 				//				for (map<MeasureKey, unsigned char>::iterator bl_it = outdated_measures_.begin(); bl_it != outdated_measures_.end(); bl_it++) {	// for each blacklisted id...

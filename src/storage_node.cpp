@@ -152,6 +152,8 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 //	}
 	//	else cout << "Unable to open file";
 
+	cout << "Cache " << node_id_ << " receives request of user " << sender_user_id << endl;
+
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
 		vector<MeasureKey> keys;
