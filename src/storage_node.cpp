@@ -187,7 +187,6 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 			//				myfile.close();
 			//			}
 			//			else cout << "Unable to open file";
-			cout << " nothing to send" << endl;
 		}
 	}
 	return new_events;
@@ -287,6 +286,8 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
  */
 void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
 	vector<Event> new_events;
+	cout << "Node " << node_id_ << " rx rfresh message" << endl;
+	/*
 	if (!reinit_mode_) {	// if in reinit mode ignore this message and just pass it forward
 		vector<MeasureKey> removed = refresh_message->removed_;		// list of the measure I have removed because outdated
 		vector<MeasureKey> inserted = refresh_message->inserted_;		// list of the measure I have inserted
@@ -313,7 +314,7 @@ void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
 			}
 		}
 	}
-
+*/
 	delete refresh_message;
 }
 

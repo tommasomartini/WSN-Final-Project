@@ -46,12 +46,11 @@ vector<Event> SensorNode::generate_measure() {
 	  return new_events;	// return
   }
 
-//  cout << "=> New MEASURE" << endl;
-
-//  how_many_measures_++;	// new measure generated
   old_measure_data = new_measure_data;
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
+
+  cout << "Sensor " << node_id_ << " generates measure: " << int(new_measure_data) << endl;
 
   Measure* measure = new Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
@@ -325,5 +324,5 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 unsigned char SensorNode::get_measure_data() {
 //	return (unsigned char)(rand() % 256);	// FIXME activate this
-	return (unsigned char)((new_measure_data + 1) % 256);
+	return (unsigned char)((new_measure_data + (node_id_ - 9)) % 256);
 }

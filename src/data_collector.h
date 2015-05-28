@@ -43,6 +43,8 @@ class DataCollector {
 	  int decoding_steps_ = 0;
 	  int num_rx_node_info_ = 0;
 	  bool decoded_ = false;
+	  int num_interrogated_caches_ = 0;
+	  int num_interrogated_users_ = 0;
   };
 
  public:
@@ -65,6 +67,7 @@ class DataCollector {
   void record_user_movement(unsigned int, double /*distance*/);
   void record_user_rx(unsigned int);
   void record_user_decoding(unsigned int);
+  void record_user_query(unsigned int /*user id*/, unsigned int /*node or user id*/, bool /*is a node*/);
 
  private:
 };

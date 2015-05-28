@@ -179,9 +179,7 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 	double delta = delta_robust_;
 
 	double S = c0 * log(k / delta) * sqrt(k);
-	cout << S << endl;
 	int tau_bound = floor(k / S) - 1;
-	cout << tau_bound << endl;
 	double den = 0.;
 	for (int i = 1; i <= k; i++) {
 		if (i == 1) {
@@ -197,10 +195,8 @@ int MyToolbox::get_robust_soliton_distribution_degree() {
 			den += 1. / (i * (i - 1));
 		}
 	}
-	cout << den << endl;
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 	double prob = distribution(generator_);
-	cout << prob << endl;
 	double up_bound = ((1. / k) + (S * 1. / k)) / den;
 	double interval_length = 0;
 	if (prob <= up_bound) { // between 0 and (1/k+s/k)/den -> degree = 1;

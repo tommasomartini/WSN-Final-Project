@@ -257,7 +257,6 @@ bool network_setup() {
 
 void activate_measure_generation() {
 	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
-	uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
 		Event first_measure(first_measure_distrib(generator), Event::event_type_generated_measure);
 //		cout << "first measure time " << first_measure.get_time() << endl;
@@ -267,7 +266,6 @@ void activate_measure_generation() {
 }
 
 void activate_ping_generation() {
-	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
 	uniform_int_distribution<int> first_ping_distrib(MyToolbox::ping_frequency_ / 2, MyToolbox::ping_frequency_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
 		Event first_ping(first_ping_distrib(generator), Event::event_type_sensor_ping);
@@ -287,11 +285,14 @@ void activate_ping_check() {
 
 void activate_users() {
 	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
+	int counter = 1;	// TODO debug
 	for (auto& user_pair : MyToolbox::users_map_) {
-//		Event first_step(first_step_distrib(generator), Event::event_type_user_moves);
-		Event first_step(10 * MyToolbox::num_sensors_ * MyToolbox::max_measure_generation_delay_ + MyToolbox::user_observation_time_ + MyToolbox::get_tx_offset(), Event::event_type_user_moves);
+		MyTime first_step_time = 1 * MyToolbox::num_sensors_ * MyToolbox::max_measure_generation_delay_ + MyToolbox::user_observation_time_ + MyToolbox::get_tx_offset();
+		Event first_step(first_step_time, Event::event_type_user_moves);
 		first_step.set_agent(&(user_pair.second));
 		main_event_queue.push(first_step);
+
+		counter++;
 	}
 }
 
@@ -305,11 +306,11 @@ int main() {
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
 
-	if (std::ifstream("move_user.txt")) {
-		remove("move_user.txt");
-	}
-	ofstream outfile("move_user.txt");
-	outfile.close();
+//	if (std::ifstream("move_user.txt")) {
+//		remove("move_user.txt");
+//	}
+//	ofstream outfile("move_user.txt");
+//	outfile.close();
 
 	bool setup_succeeded = network_setup();
 	if (!setup_succeeded) {

@@ -42,17 +42,14 @@ vector<Event> User::move() {
 	vector<Event> new_events;
 
 	if (!keep_moving_) {
-		cout << "User " << node_id_ << " stops moving" << endl;
 		return new_events;
 	}
-
-//	cout << "User " << node_id_ << " moved" << endl;
 
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-5, 5);  // I can have a deviation in the range -10°, +10°
 	int deviation = distribution(generator);
 	direction_ += deviation;	// change a bit my direction
-	double dist = speed_ / (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
+	double dist = speed_ * (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
 
 	double new_x = x_coord_ + dist * sin(direction_ * PI / 180) /* MyToolbox::space_precision_*/;	// compute my new position
 	double new_y = y_coord_ + dist * cos(direction_ * PI / 180) /* MyToolbox::space_precision_*/;
@@ -74,7 +71,7 @@ vector<Event> User::move() {
 	data_collector->record_user_movement(node_id_, dist);
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
-	cout << "User " << node_id_ << " moved [(" << x_coord_ << ", " << y_coord_ << "), speed " << speed_ << "] and has " << near_storage_nodes_.size() << " neighbors" << endl;
+//	cout << "User " << node_id_ << " moved [(" << x_coord_ << ", " << y_coord_ << "), speed " << speed_ << "] and has " << near_storage_nodes_.size() << " neighbors" << endl;
 
 //	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
 //	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
@@ -103,8 +100,9 @@ vector<Event> User::move() {
 				hello_event.set_message(empty_msg);
 				new_events.push_back(hello_event);
 				interrogated_nodes_.push_back(node_it->first);
+				data_collector->record_user_query(node_id_, node_it->first, true);
 
-				cout << " interrogates node " << node_it->first << endl;
+//				cout << " interrogates node " << node_it->first << endl;
 
 //				ofstream myfile("move_user.txt", ios::app);
 //					if (myfile.is_open()) {
@@ -146,6 +144,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
+		/*
 		unsigned char ad_hoc_msg = 0;	// xored message I have to send to the node
 		int xor_counter = 0;	// how many measure I did xor
 		vector<MeasureKey> outdated_tmp = node_info_msg->outdated_measures_;
@@ -174,11 +173,10 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 				new_events.push_back(*event_it);
 			}
 		}
+		/**/
 		delete node_info_msg;
 		return new_events;
 	}
-
-//	cout << "User " << node_id_ << " received from node " << node_info_msg->node_id_ << endl;
 
 	for (vector<unsigned int>::iterator dead_sns_it = node_info_msg->dead_sensors_.begin(); dead_sns_it != node_info_msg->dead_sensors_.end(); dead_sns_it++) {	// for each dead sensor id in this node info message
 		if (find(dead_sensors_.begin(), dead_sensors_.end(), *dead_sns_it) == dead_sensors_.end()) {	// if I don't have this id in my blacklist...
@@ -198,50 +196,45 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 	nodes_info_.insert(new_output_symbol);	// insert it into the map
 
-//	cout << " Output symbol" << endl;
-//	for (map<unsigned int, OutputSymbol>::iterator ii = nodes_info_.begin(); ii != nodes_info_.end(); ii++) {
-//		cout << " - " << ii->first << endl;
-//	}
-
+	cout << "User " << node_id_ << " (updating)";
 	// Update the measure id
 	for (vector<MeasureKey>::iterator msr_key_it_ = node_info_msg->sources_.begin(); msr_key_it_ != node_info_msg->sources_.end(); msr_key_it_++) {	// for each of the measure just received...
 		unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
 		unsigned int current_msr_id = (*msr_key_it_).measure_id_;	// id of the measure
 		if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
 			updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
+			cout << " Ns" << current_sns_id << "," << current_msr_id;
 		} else {	// already received a measure from this sensor -> update it if the new measure is newer
 			unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
 			if (current_msr_id > current_updated_msr_id) {	// the just received measure is more recent than the one I had
 				updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;	// replace the old measure with the new one, just received
+				cout << " Us" << current_sns_id << "," << current_updated_msr_id << "-" << current_msr_id;
 			}
 		}
 	}
-//	cout << " Updated measures:" << endl;
-//	for (map<unsigned int, unsigned int>::iterator ii = updated_sensors_measures_.begin(); ii != updated_sensors_measures_.end(); ii++) {
-//		cout << " - " << "s" << ii->first << ", " << ii->second << endl;
-//	}
+	cout << endl;
 
 	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
-		cout << " Less symbols than sensors" << endl;
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols	// FIXME activate this
 	}
 
+	cout << "Node " << node_id_ << " trying message passing...";
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
-		cout << "User " << node_id_ << " message passing OK" << endl;
-
+		cout << "ok:";
+		for (auto& elem : decoded_symbols_) {
+			cout << " " << elem.first.sensor_id_ << "_" << int(elem.second) << ",";
+		}
+		cout << endl;
 		keep_moving_ = false; 		// TODO debug
-
-//		cout << "User " << node_id_ << " message passing OK: measures: " << endl;
-//		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
-//			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
-//		}
 		data_collector->record_user_decoding(node_id_);
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
+		//*
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
+				cout << " cache " << out_sym_it->first << " needs to erase:";
 				unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
 				int xor_counter = 0;	// ...how many measure I did xor
 				vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
@@ -253,14 +246,17 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 					ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
 					xor_counter++;	// count how many measure I am xoring
 					removed.push_back(*out_it);
+					cout << " (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")";
 					if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to updte the measure
 						unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
 						MeasureKey key(out_sns_id, up_msr_id);	// create a key
 						unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
 						ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
 						inserted.push_back(key);
+						cout << "->(s" << out_sns_id << "," << up_msr_id << ")";
 					}
 				}
+				cout << endl;
 				if (xor_counter > 0) {	// if I have at least one measure to remove or update
 					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
 					vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
@@ -270,9 +266,10 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 				}
 			}
 		}
+		/**/
 	} else {	// message passing failed: symbols not decoded...
 		// do nothing and wait to try message passing again...
-		cout << "User " << node_id_ << " message passing FAIL" << endl;
+		cout << "failed" << endl;
 	}
 
 	return new_events;
@@ -418,7 +415,13 @@ bool User::message_passing() {
 			}
 		} else {  // no symbol released at this round
 			if (info.empty()) {  // if no other symbols, everything is ok
-				if (resolved_symbols.size() < MyToolbox::num_sensors_) {	// only partially decoded...
+				vector<unsigned int> seen_sensors;
+				for (map<MeasureKey, unsigned char>::iterator it = resolved_symbols.begin(); it != resolved_symbols.end(); it++) {	// for each resolved symbol...
+					if (find(seen_sensors.begin(), seen_sensors.end(), it->first.sensor_id_) == seen_sensors.end()) {	// ...if I didn't already stored a measure of its...
+						seen_sensors.push_back(it->first.sensor_id_);	// ...store the is sensor
+					}
+				}
+				if (int(seen_sensors.size()) < MyToolbox::num_sensors_) {	// only partially decoded...
 					message_passing_succeeded = false;
 					break;
 				}

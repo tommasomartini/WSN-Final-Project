@@ -97,34 +97,36 @@ void DataCollector::report() {
 		}
 	}
 	if (zero_counter > 0) {
-		cout << " " << zero_counter << " nodes store no measures" << endl;
+		cout << " " << zero_counter << " (" << zero_counter * 100.0 / MyToolbox::num_storage_nodes_ << "%) nodes store no measures" << endl;
 	}
 	if (one_counter > 0) {
-		cout << " " << one_counter << " nodes store 1 measure" << endl;
+		cout << " " << one_counter << " (" << one_counter * 100.0 / MyToolbox::num_storage_nodes_ << "%) nodes store 1 measure" << endl;
 	}
 	if (miss_counter > 0) {
-		cout << " " << miss_counter << " nodes store a wrong number of measures" << endl;
+		cout << " " << miss_counter << " (" << miss_counter * 100.0 / MyToolbox::num_storage_nodes_ << "%) nodes store a wrong number of measures" << endl;
 	}
 	cout << " " << num_stored_measures_per_cache_.size() - zero_counter - one_counter << " nodes store more than one measure" << endl;
 
 	// Cache content
-	cout << "+ CACHE CONTENT" << endl;
-	for (map<unsigned int, StorageNode>::iterator node_it = MyToolbox::storage_nodes_map_.begin(); node_it != MyToolbox::storage_nodes_map_.end(); node_it++) {
-		StorageNode cache = node_it->second;
-		int measure = int(cache.xored_measure_);
-		map<unsigned int, unsigned int> msrs = cache.last_measures_;
-		cout << " - Node " << node_it->first << " stores " << measure << " from " << msrs.size() << " sensors: ";
-		for (map<unsigned int, unsigned int>::iterator msr_it = msrs.begin(); msr_it != msrs.end(); msr_it++) {
-			cout << " (s" << msr_it->first << ", " << msr_it->second << ")";
-		}
-		cout << endl;
-	}
+//	cout << "+ CACHE CONTENT" << endl;
+//	for (map<unsigned int, StorageNode>::iterator node_it = MyToolbox::storage_nodes_map_.begin(); node_it != MyToolbox::storage_nodes_map_.end(); node_it++) {
+//		StorageNode cache = node_it->second;
+//		int measure = int(cache.xored_measure_);
+//		map<unsigned int, unsigned int> msrs = cache.last_measures_;
+//		cout << " - Node " << node_it->first << " stores " << measure << " from " << msrs.size() << " sensors: ";
+//		for (map<unsigned int, unsigned int>::iterator msr_it = msrs.begin(); msr_it != msrs.end(); msr_it++) {
+//			cout << " (s" << msr_it->first << ", " << msr_it->second << ")";
+//		}
+//		cout << endl;
+//	}
 
 	//User
 	if (user_register_.size() > 0) {
 		double avg_user_dec_time = 0;
 		double avg_dec_num_steps = 0;
 		double avg_dec_distance = 0;
+		double avg_interr_caches = 0;
+		double avg_interr_users = 0;
 		int decoding_number = 0;
 		int num_usrs = user_register_.size();
 		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
@@ -133,16 +135,25 @@ void DataCollector::report() {
 				avg_user_dec_time += it->second.decoding_duration_;
 				avg_dec_num_steps += it->second.decoding_steps_;
 				avg_dec_distance += it->second.decoding_distance_;
+				avg_interr_caches += it->second.num_interrogated_caches_;
+				avg_interr_users += it->second.num_interrogated_users_;
 			}
 		}
 		avg_user_dec_time = avg_user_dec_time / decoding_number;
 		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
 		avg_dec_distance = avg_dec_distance / decoding_number;
+		avg_interr_caches = avg_interr_caches / decoding_number;
+		avg_interr_users = avg_interr_users / decoding_number;
 
 		cout << "+ USER" << endl;
 		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
 		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
 		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
+		cout << " - Avg number of interrogated caches: " << avg_interr_caches << " out of " << MyToolbox::num_storage_nodes_
+						<< " (" << avg_interr_caches * 100.0 / MyToolbox::num_storage_nodes_ << "%)" << endl;
+		cout << " - Avg number of interrogated users: " << avg_interr_users << " out of " << MyToolbox::num_users_
+								<< " (" << avg_interr_users * 100.0 / MyToolbox::num_users_ << "%)" << endl;
+		cout << " - Avg number of interrogated nodes: " << avg_interr_caches + avg_interr_users << " (minimum = " << MyToolbox::num_sensors_ << ")" << endl;
 		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
 	}
 }
@@ -279,6 +290,23 @@ void DataCollector::record_user_decoding(unsigned int user_id) {
 			user_register_.find(user_id)->second.decoding_steps_ = user_register_.find(user_id)->second.num_steps_;
 			user_register_.find(user_id)->second.decoding_duration_ = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
 			user_register_.find(user_id)->second.decoded_ = true;
+		} else {	// this user already decoded
+			cout << "Error! This user already decoded!" << endl;
+		}
+
+	} else {	// if the user is not in the register
+		cout << "Error! I'm trying to update a user not in the register!" << endl;
+	}
+}
+
+void DataCollector::record_user_query(unsigned int user_id, unsigned int queried_node_id, bool is_cache) {
+	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
+		if (!user_register_.find(user_id)->second.decoded_) {	// first time this user decodes
+			if (is_cache) {
+				user_register_.find(user_id)->second.num_interrogated_caches_++;
+			} else {	// is another user
+				user_register_.find(user_id)->second.num_interrogated_users_++;
+			}
 		} else {	// this user already decoded
 			cout << "Error! This user already decoded!" << endl;
 		}
