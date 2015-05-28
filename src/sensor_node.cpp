@@ -46,7 +46,7 @@ vector<Event> SensorNode::generate_measure() {
 	  return new_events;	// return
   }
 
-  cout << "=> New MEASURE" << endl;
+//  cout << "=> New MEASURE" << endl;
 
 //  how_many_measures_++;	// new measure generated
   old_measure_data = new_measure_data;

@@ -133,7 +133,7 @@ void MyToolbox::remove_sensor(unsigned int sensor_id) {
 				node_it->second.keep_checking_sensors_ = false;
 			}
 			for (map<unsigned int, User>::iterator user_it = users_map_.begin(); user_it != users_map_.end(); user_it++) {
-				user_it->second.keep_moving_ = false;
+//				user_it->second.keep_moving_ = false;
 			}
 		}
 	} else {

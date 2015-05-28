@@ -13,6 +13,8 @@
 
 using namespace std;
 
+#define PI 3.14159265
+
 User::User() : Node() {
 	speed_ = 0;
 	direction_ = 0;
@@ -40,10 +42,11 @@ vector<Event> User::move() {
 	vector<Event> new_events;
 
 	if (!keep_moving_) {
+		cout << "User " << node_id_ << " stops moving" << endl;
 		return new_events;
 	}
 
-	cout << "User " << node_id_ << " moved" << endl;
+//	cout << "User " << node_id_ << " moved" << endl;
 
 	default_random_engine generator = MyToolbox::generator_;
 	uniform_int_distribution<int> distribution(-5, 5);  // I can have a deviation in the range -10°, +10°
@@ -51,16 +54,16 @@ vector<Event> User::move() {
 	direction_ += deviation;	// change a bit my direction
 	double dist = speed_ / (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
 
-	double new_x = x_coord_ + dist * sin(direction_) /* MyToolbox::space_precision_*/;	// compute my new position
-	double new_y = y_coord_ + dist * cos(direction_) /* MyToolbox::space_precision_*/;
+	double new_x = x_coord_ + dist * sin(direction_ * PI / 180) /* MyToolbox::space_precision_*/;	// compute my new position
+	double new_y = y_coord_ + dist * cos(direction_ * PI / 180) /* MyToolbox::space_precision_*/;
 
 	// I could also let the user go out! Just comment the following block of code!
 	bool inside_area = false;
 	while (!inside_area) {	// if I am going outside the area...
 		if (new_x < 0 || new_x > MyToolbox::square_size_ || new_y < 0 || new_y > MyToolbox::square_size_) { // I am going out from the area
 			direction_ += 30; // rotate of 30 degree in clockwise sense
-			new_x = x_coord_ + dist * sin(direction_) /* MyToolbox::space_precision_*/;
-			new_y = y_coord_ + dist * cos(direction_) /* MyToolbox::space_precision_*/;
+			new_x = x_coord_ + dist * sin(direction_ * PI / 180) /* MyToolbox::space_precision_*/;
+			new_y = y_coord_ + dist * cos(direction_ * PI / 180) /* MyToolbox::space_precision_*/;
 		} else {
 			inside_area = true;
 		}
@@ -71,17 +74,19 @@ vector<Event> User::move() {
 	data_collector->record_user_movement(node_id_, dist);
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
+	cout << "User " << node_id_ << " moved [(" << x_coord_ << ", " << y_coord_ << "), speed " << speed_ << "] and has " << near_storage_nodes_.size() << " neighbors" << endl;
+
 //	cout << "User " << node_id_ << " in (" << x_coord_ << ", " << y_coord_ << "). Near nodes: " << endl;
 //	for (map<unsigned int, StorageNode*>::iterator it = near_storage_nodes_.begin(); it != near_storage_nodes_.end(); it++) {
 //		cout << "- " << it->first << endl;
 //	}
 
-	ofstream myfile("move_user.txt", ios::app);
-	if (myfile.is_open()) {
-		myfile << MyToolbox::current_time_ << "u" << node_id_ << ":" << x_coord_ << ":" << y_coord_ << endl;
-		myfile.close();
-	}
-	else cout << "Unable to open file";
+//	ofstream myfile("move_user.txt", ios::app);
+//	if (myfile.is_open()) {
+//		myfile << MyToolbox::current_time_ << "u" << node_id_ << ":" << x_coord_ << ":" << y_coord_ << endl;
+//		myfile.close();
+//	}
+//	else cout << "Unable to open file";
 
 //	decoding_succeeded = true;
 
@@ -98,6 +103,8 @@ vector<Event> User::move() {
 				hello_event.set_message(empty_msg);
 				new_events.push_back(hello_event);
 				interrogated_nodes_.push_back(node_it->first);
+
+				cout << " interrogates node " << node_it->first << endl;
 
 //				ofstream myfile("move_user.txt", ios::app);
 //					if (myfile.is_open()) {
@@ -127,10 +134,10 @@ vector<Event> User::move() {
 		}
 	}
 
-//	MyTime event_time = MyToolbox::current_time_ + MyToolbox::user_observation_time_;
-//	Event new_event(event_time, Event::event_type_user_moves);	// set the new move_user event
-//	new_event.set_agent(this);
-//	new_events.push_back(new_event);
+	MyTime event_time = MyToolbox::current_time_ + MyToolbox::user_observation_time_;
+	Event new_event(event_time, Event::event_type_user_moves);	// set the new move_user event
+	new_event.set_agent(this);
+	new_events.push_back(new_event);
 
 	return new_events;
 }
@@ -218,11 +225,15 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	delete node_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
-//		cout << " Less symbols than sensors" << endl;
+		cout << " Less symbols than sensors" << endl;
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols	// FIXME activate this
 	}
 
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
+		cout << "User " << node_id_ << " message passing OK" << endl;
+
+		keep_moving_ = false; 		// TODO debug
+
 //		cout << "User " << node_id_ << " message passing OK: measures: " << endl;
 //		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
 //			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
@@ -261,7 +272,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		}
 	} else {	// message passing failed: symbols not decoded...
 		// do nothing and wait to try message passing again...
-//		cout << "User " << node_id_ << " message passing FAIL" << endl;
+		cout << "User " << node_id_ << " message passing FAIL" << endl;
 	}
 
 	return new_events;

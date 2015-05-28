@@ -78,32 +78,7 @@ void DataCollector::report() {
 		cout << " - " << avg_not_crossed << " measures (" << avg_not_crossed * 1. / num_msrs * 100 << "%) did not cross the network" << endl;
 	}
 
-	//User
-	if (user_register_.size() > 0) {
-		double avg_user_dec_time = 0;
-		double avg_dec_num_steps = 0;
-		double avg_dec_distance = 0;
-		int decoding_number = 0;
-		int num_usrs = user_register_.size();
-		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
-			if (it->second.decoded_) {
-				decoding_number++;
-				avg_user_dec_time += it->second.decoding_duration_;
-				avg_dec_num_steps += it->second.decoding_steps_;
-				avg_dec_distance += it->second.decoding_distance_;
-			}
-		}
-		avg_user_dec_time = avg_user_dec_time / decoding_number;
-		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
-		avg_dec_distance = avg_dec_distance / decoding_number;
-
-		cout << "+ USER" << endl;
-		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
-		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
-		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
-		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
-	}
-
+	// Soliton Check
 	cout << "+ SOLITON CHECK" << endl;
 	int zero_counter = 0;
 	int one_counter = 0;
@@ -132,6 +107,7 @@ void DataCollector::report() {
 	}
 	cout << " " << num_stored_measures_per_cache_.size() - zero_counter - one_counter << " nodes store more than one measure" << endl;
 
+	// Cache content
 	cout << "+ CACHE CONTENT" << endl;
 	for (map<unsigned int, StorageNode>::iterator node_it = MyToolbox::storage_nodes_map_.begin(); node_it != MyToolbox::storage_nodes_map_.end(); node_it++) {
 		StorageNode cache = node_it->second;
@@ -142,6 +118,32 @@ void DataCollector::report() {
 			cout << " (s" << msr_it->first << ", " << msr_it->second << ")";
 		}
 		cout << endl;
+	}
+
+	//User
+	if (user_register_.size() > 0) {
+		double avg_user_dec_time = 0;
+		double avg_dec_num_steps = 0;
+		double avg_dec_distance = 0;
+		int decoding_number = 0;
+		int num_usrs = user_register_.size();
+		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
+			if (it->second.decoded_) {
+				decoding_number++;
+				avg_user_dec_time += it->second.decoding_duration_;
+				avg_dec_num_steps += it->second.decoding_steps_;
+				avg_dec_distance += it->second.decoding_distance_;
+			}
+		}
+		avg_user_dec_time = avg_user_dec_time / decoding_number;
+		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
+		avg_dec_distance = avg_dec_distance / decoding_number;
+
+		cout << "+ USER" << endl;
+		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
+		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
+		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
+		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
 	}
 }
 
