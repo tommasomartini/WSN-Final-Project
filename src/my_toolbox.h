@@ -85,6 +85,9 @@ class MyToolbox {
   static double C1_;
   static int max_num_hops_;
 
+  static double c0_robust_;
+  static double delta_robust_;
+
   static int square_size_;
 
   static double user_velocity_;

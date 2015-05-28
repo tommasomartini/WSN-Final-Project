@@ -33,6 +33,9 @@ MyToolbox::MyTime MyToolbox::check_sensors_frequency_ = 0;
 double MyToolbox::C1_ = 0;
 int MyToolbox::max_num_hops_ = 0;
 
+double MyToolbox::c0_robust_ = 0;
+double MyToolbox::delta_robust_ = 0;
+
 int MyToolbox::square_size_ = 0;
 
 double MyToolbox::user_velocity_ = 0;
@@ -171,61 +174,62 @@ int MyToolbox::get_ideal_soliton_distribution_degree() {
 }
 
 int MyToolbox::get_robust_soliton_distribution_degree() {
-//
-//    int K = num_storage_nodes_;
-//    double c = 0.2;
-//    double delta = 0.05;
-//    double S = c * log(K / delta) * sqrt( K );
-//    int tau_bound = ((int)((K / S) + .5)) - 1;
-//    double den = 0;
-//    for (int i = 1; i <= K; i++) {
-//        if (i = 1) {
-//            den += 1 / K + S / K;
-//        }
-//        if ((i >= 2) & (i <= tau_bound)) {
-//            den += 1 / (i * (i - 1)) + S / (i * K);
-//        }
-//        if (i = tau_bound + 1) {
-//            den += 1 / (i * (i - 1)) + S / K * log(S / delta);
-//        }
-//        if (i > tau_bound + 1) {
-//            den += 1 / (i * (i - 1));
-//        }
-//    }
-//
-//    int M = 10 * num_storage_nodes_ * (num_storage_nodes_ - 1); // as in ideal soliton over, the smallest interval is the last
-//    double prob = (rand() % M) / (double)(M - 1);
-//
-//    double up_bound = ((1. / K) + (S / K)) / den;
-//    double interval_length = up_bound;
-//    if (prob <= up_bound) { // between 0 and (1/k+s/k)/den -> degree = 1;
-//        return 1;
-//    }
-//    int d = 2;
-//    for (int i = d; i <= tau_bound; i++) { // case 2 <= d < K/S
-//        interval_length = ((1. / (i * i - i)) + (S / (K * i))) / den;
-//        up_bound += interval_length;
-//        if (prob <= up_bound) {
-//            return i;
-//        }
-//        d = i;
-//    }
-//    interval_length = ((1. / (d * d - d)) + (S / K * log(S / delta))) / den; // case d = K/S
-//    up_bound += interval_length;
-//    if (prob <= up_bound) {
-//        return d;
-//    } else {
-//        d++;
-//    }
-//    for (int i = d; i <= K; i++) { // case K/S < d <= K
-//       interval_length = (1. / (i * i - i)) / den;
-//        up_bound += interval_length;
-//        if (prob <= up_bound) {
-//            return i;
-//        }
-//    }
+	int k = num_sensors_;
+	double c0 = c0_robust_;
+	double delta = delta_robust_;
 
-    return -1;
+	double S = c0 * log(k / delta) * sqrt(k);
+	cout << S << endl;
+	int tau_bound = floor(k / S) - 1;
+	cout << tau_bound << endl;
+	double den = 0.;
+	for (int i = 1; i <= k; i++) {
+		if (i == 1) {
+			den += 1. / k + (S * 1. / k);
+		}
+		if (i >= 2 && i <= tau_bound) {
+			den += 1. / (i * (i - 1)) + S * 1. / (i * k);
+		}
+		if (i == tau_bound + 1) {
+			den += 1. / (i * (i - 1)) + S * 1. / k * log(S * 1. / delta);
+		}
+		if (i > tau_bound + 1) {
+			den += 1. / (i * (i - 1));
+		}
+	}
+	cout << den << endl;
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+	double prob = distribution(generator_);
+	cout << prob << endl;
+	double up_bound = ((1. / k) + (S * 1. / k)) / den;
+	double interval_length = 0;
+	if (prob <= up_bound) { // between 0 and (1/k+s/k)/den -> degree = 1;
+		return 1;
+	}
+	int d = 2;
+	for (int i = d; i <= tau_bound; i++) { // case 2 <= d < K/S
+		interval_length = ((1. / (i * i - i)) + (S * 1. / (k * i))) / den;
+		up_bound += interval_length;
+		if (prob <= up_bound) {
+			return i;
+		}
+	}
+	d = tau_bound + 1;
+	interval_length = ((1. / (d * d - d)) + (S * 1. / k * log(S * 1. / delta))) / den; // case d = K/S
+	up_bound += interval_length;
+	if (prob <= up_bound) {
+		return d;
+	} else {
+		d++;
+	}
+	for (int i = d; i <= k; i++) { // case K/S < d <= K
+		interval_length = (1. / (i * i - i)) / den;
+		up_bound += interval_length;
+		if (prob <= up_bound) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 MyToolbox::MyTime MyToolbox::get_random_processing_time() {

@@ -19,17 +19,27 @@
 using namespace std;
 
 StorageNode::StorageNode() : Node () {
-	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
+	xored_measure_ = 0;
 	set_measure_indeces();
 }
 
 StorageNode::StorageNode(unsigned int node_id) : Node (node_id) {
-	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
+	xored_measure_ = 0;
 	set_measure_indeces();
 }
 
 StorageNode::StorageNode(unsigned int node_id, double y_coord, double x_coord) : Node (node_id, y_coord, x_coord) {
-	LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;
+	if (MyToolbox::num_sensors_ < 3) {
+		LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree();
+	} else {
+		LT_degree_ = MyToolbox::get_robust_soliton_distribution_degree();
+		if (LT_degree_ > MyToolbox::num_sensors_ || LT_degree_< 0) {
+			cerr << "Error with LT_degrees_: " << LT_degree_ <<endl;
+		}
+	}
+	xored_measure_ = 0;
 	set_measure_indeces();
 }
 
@@ -152,7 +162,7 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 //	}
 	//	else cout << "Unable to open file";
 
-	cout << "Cache " << node_id_ << " receives request of user " << sender_user_id << endl;
+//	cout << "Cache " << node_id_ << " receives request of user " << sender_user_id << endl;
 
 	vector<Event> new_events;
 	if (!reinit_mode_) {	// if in reinit mode ignore users' requests
@@ -347,6 +357,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 	message->set_sender_node_id(node_id_);
 
 	if (!event_queue_.empty()) {  // already some pending event -> does not generate new events
+//		cout << " queue not empty" << endl;
 		Event event_to_enqueue(0, Event::event_type_cache_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
 		event_to_enqueue.set_message(message);
@@ -357,6 +368,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+//			cout << " me not free" << endl;
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
@@ -364,6 +376,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+//			cout << " him not free" << endl;
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
@@ -434,7 +447,9 @@ vector<Event> StorageNode::re_send(Message* message) {
 	vector<Event> new_events;
 
 	unsigned int next_node_id = message->get_receiver_node_id();
-	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end()) {	// my neighbor there is no longer
+//	cout << "Node " << node_id_ << " resend a " << next_node_id << endl;
+	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end() && near_users_.find(next_node_id) == near_users_.end()) {	// my neighbor there is no longer
+		cout << " " << next_node_id << " non più vicino" << endl;
 		bool give_up = false;	// I could gie up transmitting: it depends on the message type!
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
@@ -462,6 +477,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			break;
 		}
 		if (give_up) {	// do not try to tx this message, pass to the following one
+//			cout << " give up!" << endl;
 			event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
 			if (event_queue_.empty()) {	// if the queue is now empty...
 				return new_events;	// return an empty vector, I don't have new events to schedule
@@ -470,7 +486,8 @@ vector<Event> StorageNode::re_send(Message* message) {
 				return re_send(new_message);
 			}
 		} else {	// I cannot give up! Find another node to spread the message
-			next_node_id = get_random_neighbor();	// find another neighbour
+//			cout << " no NOT give up!" << endl;
+			next_node_id = get_random_neighbor();	// find another neighbour. Only cache!
 			if (next_node_id == 0) {	// no more neighbours, I'm isolated. Postpone my delivery
 				MyTime schedule_time = (message->message_type_ == Message::message_type_reinit_query ? 0 : MyToolbox::get_random_processing_time()) + MyToolbox::get_tx_offset();
 				event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
@@ -494,6 +511,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
+//		cout << " me not free!" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
@@ -501,6 +519,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
+//		cout << " him not free!" << endl;
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
@@ -508,6 +527,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else {  // sender and receiver both idle, can send the message
+//		cout << " everybody free!" << endl;
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();

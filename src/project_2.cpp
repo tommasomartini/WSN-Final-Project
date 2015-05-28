@@ -99,8 +99,11 @@ void import_settings() {
 				} else if (value_name == "sensor_failure_prob") {
 					MyToolbox::sensor_failure_prob_ = (double)num;
 				} else if (value_name == "num_measures_for_sensor") {
-					cout << line << endl;
 					MyToolbox::num_measures_for_sensor_ = (int)num;
+				} else if (value_name == "c0_robust") {
+					MyToolbox::c0_robust_ = (double)num;
+				} else if (value_name == "delta_robust") {
+					MyToolbox::delta_robust_ = (double)num;
 				}
 			}
 		}

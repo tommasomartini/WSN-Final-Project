@@ -130,6 +130,19 @@ void DataCollector::report() {
 	if (miss_counter > 0) {
 		cout << " " << miss_counter << " nodes store a wrong number of measures" << endl;
 	}
+	cout << " " << num_stored_measures_per_cache_.size() - zero_counter - one_counter << " nodes store more than one measure" << endl;
+
+	cout << "+ CACHE CONTENT" << endl;
+	for (map<unsigned int, StorageNode>::iterator node_it = MyToolbox::storage_nodes_map_.begin(); node_it != MyToolbox::storage_nodes_map_.end(); node_it++) {
+		StorageNode cache = node_it->second;
+		int measure = int(cache.xored_measure_);
+		map<unsigned int, unsigned int> msrs = cache.last_measures_;
+		cout << " - Node " << node_it->first << " stores " << measure << " from " << msrs.size() << " sensors: ";
+		for (map<unsigned int, unsigned int>::iterator msr_it = msrs.begin(); msr_it != msrs.end(); msr_it++) {
+			cout << " (s" << msr_it->first << ", " << msr_it->second << ")";
+		}
+		cout << endl;
+	}
 }
 
 void DataCollector::update_num_msr_per_cache(unsigned int cache_id, int num_msrs) {

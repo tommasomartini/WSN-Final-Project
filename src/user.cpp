@@ -171,7 +171,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		return new_events;
 	}
 
-	cout << "User " << node_id_ << " received from node " << node_info_msg->node_id_ << endl;
+//	cout << "User " << node_id_ << " received from node " << node_info_msg->node_id_ << endl;
 
 	for (vector<unsigned int>::iterator dead_sns_it = node_info_msg->dead_sensors_.begin(); dead_sns_it != node_info_msg->dead_sensors_.end(); dead_sns_it++) {	// for each dead sensor id in this node info message
 		if (find(dead_sensors_.begin(), dead_sensors_.end(), *dead_sns_it) == dead_sensors_.end()) {	// if I don't have this id in my blacklist...
@@ -223,10 +223,10 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
-		cout << "User " << node_id_ << " message passing OK: measures: " << endl;
-		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
-			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
-		}
+//		cout << "User " << node_id_ << " message passing OK: measures: " << endl;
+//		for (map<MeasureKey, unsigned char>::iterator data_it = decoded_symbols_.begin(); data_it != decoded_symbols_.end(); data_it++) {
+//			cout << "- (s" << data_it->first.sensor_id_ << ", " << data_it->first.measure_id_ << ") : " << int(data_it->second) << endl;
+//		}
 		data_collector->record_user_decoding(node_id_);
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
@@ -261,7 +261,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		}
 	} else {	// message passing failed: symbols not decoded...
 		// do nothing and wait to try message passing again...
-		cout << "User " << node_id_ << " message passing FAIL" << endl;
+//		cout << "User " << node_id_ << " message passing FAIL" << endl;
 	}
 
 	return new_events;
