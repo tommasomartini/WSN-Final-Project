@@ -178,120 +178,194 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		return new_events;
 	}
 
-	cout << "User " << node_id_ << " received a msg from node " << node_info_msg->node_id_ << endl;
-	cout << " Dead sensors:" << endl;
+//	cout << "User " << node_id_ << " received a msg from node " << node_info_msg->node_id_ << endl;
+//	cout << " Dead sensors:" << endl;
 	for (vector<unsigned int>::iterator dead_sns_it = node_info_msg->dead_sensors_.begin(); dead_sns_it != node_info_msg->dead_sensors_.end(); dead_sns_it++) {	// for each dead sensor id in this node info message
-		cout << " - " << *dead_sns_it;
+//		cout << " - " << *dead_sns_it;
 		if (find(dead_sensors_.begin(), dead_sensors_.end(), *dead_sns_it) == dead_sensors_.end()) {	// if I don't have this id in my blacklist...
 			dead_sensors_.push_back(*dead_sns_it);	// ...add it!
-			cout << " -> new! Added";
+//			cout << " -> new! Added";
 		}
-		cout << endl;
+//		cout << endl;
 	}
-	cout << "  I have these dead sensors:" << endl;
-	for (auto& elem : dead_sensors_) {
-		cout << "  - " << elem << endl;
+//	cout << "  I have these dead sensors:" << endl;
+//	for (auto& elem : dead_sensors_) {
+//		cout << "  - " << elem << endl;
+//	}
+
+	if (nodes_info_.find(node_info_msg->node_id_) == nodes_info_.end()) {	// if it is the first time I get a message from this cache
+		data_collector->record_user_rx(node_id_);	// record it to the data collector
 	}
 
-	if (nodes_info_.find(node_info_msg->node_id_) == nodes_info_.end()) {
-		data_collector->record_user_rx(node_id_);
+//	cout << " Add the node info. My nodes info size is: " << nodes_info_.size();
+	/*
+	 * Remember that also the updated measures compose the xored measure!
+	 */
+	vector<MeasureKey> sources = node_info_msg->sources_;
+	vector<MeasureKey> outdated_measures = node_info_msg->outdated_measures_;
+	for (vector<MeasureKey>::iterator out_msr_it = outdated_measures.begin(); out_msr_it != outdated_measures.end(); out_msr_it++) {
+		sources.push_back(*out_msr_it);
 	}
-
-	cout << " Add the node info. My nodes info size is: " << nodes_info_.size();
-	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, node_info_msg->sources_, node_info_msg->outdated_measures_);	// create a new output symbol
+	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, sources, node_info_msg->outdated_measures_);	// create a new output symbol
 	pair<unsigned int, OutputSymbol> new_output_symbol(node_info_msg->node_id_, curr_output_symbol_);	// associate it to the cache
 	map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(node_info_msg->node_id_);	// the entry belonging to this cache in my map
 	if (info_it != nodes_info_.end()) {	// if there is already an entry related to this cache...
 		nodes_info_.erase(info_it);	// ...remove it!
-		cout << "->(the same!)";
+//		cout << "->(the same!)";
 	}
-	nodes_info_.insert(new_output_symbol);	// insert it into the map
-	cout << "->" << nodes_info_.size() << endl;
+	nodes_info_.insert(new_output_symbol);	// insert the info from the cache into the map
+//	cout << "->" << nodes_info_.size() << endl;
 
-	cout << " User " << node_id_ << " updating measures I received:" << endl;
+//	cout << " User " << node_id_ << " updating measures I received:" << endl;
 	// Update the measure id
 	for (vector<MeasureKey>::iterator msr_key_it_ = node_info_msg->sources_.begin(); msr_key_it_ != node_info_msg->sources_.end(); msr_key_it_++) {	// for each of the measure just received...
 		unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
 		unsigned int current_msr_id = (*msr_key_it_).measure_id_;	// id of the measure
-		cout << " - (s" << current_sns_id << "," << current_msr_id << ")";
+//		cout << " - (s" << current_sns_id << "," << current_msr_id << ")";
 		if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
 			updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
-			cout << "->new! Save it!";
+//			cout << "->new! Save it!";
 		} else {	// already received a measure from this sensor -> update it if the new measure is newer
 			unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
-			cout << "->already seen! I have this measure: " << current_updated_msr_id;
+//			cout << "->already seen! I have this measure: " << current_updated_msr_id;
 			if (current_msr_id > current_updated_msr_id) {	// the just received measure is more recent than the one I had
 				updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;	// replace the old measure with the new one, just received
-				cout << ". But now I have a newer one! Save it!";
+//				cout << ". But now I have a newer one! Save it!";
 			} else {
 				// do nothing
-				cout << ". Mine is newer!";
+//				cout << ". Mine is newer!";
 			}
 		}
-		cout << endl;
+//		cout << endl;
 	}
-	cout << "  Updated measures:" << endl;
-	for (auto& elem : updated_sensors_measures_) {
-		cout << "  - (s" << elem.first << "," << elem.second << ")" << endl;
-	}
+//	cout << "  Updated measures:" << endl;
+//	for (auto& elem : updated_sensors_measures_) {
+//		cout << "  - (s" << elem.first << "," << elem.second << ")" << endl;
+//	}
 
 	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
-		cout << " Though I have still too few measures: " << nodes_info_.size() << " instead of " << MyToolbox::num_sensors_ << "... Wait!" << endl;
+//		cout << " Though I have still too few measures: " << nodes_info_.size() << " instead of " << MyToolbox::num_sensors_ << "... Wait!" << endl;
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols	// FIXME activate this
 	}
 
-	cout << " Try message passing...";
+//	cout << " Try message passing...";
 	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
-		cout << "ok:";
-		for (auto& elem : decoded_symbols_) {
-			cout << " " << elem.first.sensor_id_ << "_" << int(elem.second) << ",";
-		}
-		cout << endl;
+//		cout << "ok:";
+//		for (auto& elem : decoded_symbols_) {
+//			cout << " " << elem.first.sensor_id_ << "_" << int(elem.second) << ",";
+//		}
+//		cout << endl;
 		keep_moving_ = false; 		// TODO debug
 		data_collector->record_user_decoding(node_id_);
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
+
+		// TODO super debug
+		cout << "User " << node_id_ << " MSG PASS OK" << endl;
+		cout << "Decoded: " << endl;
+		for (auto& elem : decoded_symbols_) {
+			cout << "- (s" << elem.first.sensor_id_ << "," << elem.first.measure_id_ << ") = " << int(elem.second) << endl;
+		}
+		cout << "Output symbols: " << endl;
+		for (auto& elem : nodes_info_) {
+			cout << "- Cache " << elem.first << endl;
+			cout << "  Xored" << int(elem.second.xored_msg_) << endl;
+			cout << "  Sources" << endl;
+			for (auto& elem2 : elem.second.sources_) {
+				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
+			}
+			cout << "  Outdated" << endl;
+			for (auto& elem2 : elem.second.outdated_) {
+				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
+			}
+		}
+
 		//*
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
+			cout << "Examining cache " << out_sym_it->first << ": ";
+			for (auto& elem : out_sym_it->second.outdated_) {
+				cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
+			}
+			cout << endl;
 			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
-				cout << " Cache " << out_sym_it->first << " needs to erase:";
+				cout << " Cache " << out_sym_it->first << " needs to erase/update:" << endl;
 				unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
 				int xor_counter = 0;	// ...how many measure I did xor
 				vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
 				vector<MeasureKey> removed;
 				vector<MeasureKey> inserted;
 				if (outdated_tmp.empty()) {
-					cout << " nothing";
+					cout << " nothing" << endl;
 				}
 				for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
-					unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
-					unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
-					ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-					xor_counter++;	// count how many measure I am xoring
-					removed.push_back(*out_it);
-					cout << " (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")";
-					if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to update the measure
-						unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
-						MeasureKey key(out_sns_id, up_msr_id);	// create a key
-						unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-						ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-						inserted.push_back(key);
-						cout << "->(s" << out_sns_id << "," << up_msr_id << ")";
+					cout << "  * (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")" << endl;
+					MeasureKey outdated_msr_key = *out_it;	// key of the outdated measure tha cache wants to erase
+					unsigned int outdated_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
+					unsigned int outdated_msr_id = out_it->measure_id_;	// measure id of this outdated measure
+					bool have_decoded_this_measure = decoded_symbols_.find(outdated_msr_key) != decoded_symbols_.end();
+					bool measure_of_dead_sensor = find(dead_sensors_.begin(), dead_sensors_.end(), outdated_sns_id) != dead_sensors_.end();
+					bool have_newer_msr_for_this_sns = false;
+					unsigned int newest_msr_for_this_sns = updated_sensors_measures_.find(outdated_sns_id)->second;
+					if (newest_msr_for_this_sns > outdated_msr_id) {
+						have_newer_msr_for_this_sns = true;
 					}
+					/* TODO
+					 * When I do the message passing, could I decode only some of the measure I collected? Don't know... Just in case I state that the
+					 * message passing is ok only if the most recent measures I have have been decoded!
+					 * Then I could  not have the "pure" measures a cache is looking for. Better to check it!
+					 */
+					if (have_decoded_this_measure) {	// if I have decoded this measure
+						cout << " Decoded this measure" << endl;
+						if (measure_of_dead_sensor) {	// if this node is dead I want just to remove this measure
+							cout << "  Measure of dead sensor" << endl;
+							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
+							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+							xor_counter++;	// count how many measure I am xoring
+							removed.push_back(*out_it);
+							//					cout << " (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")";
+						} else if (have_newer_msr_for_this_sns) { // otherwise, if this sensor is not dead and I have a newer measure I want to update it
+							/*
+							 * Scenario: the cache A has (s10, 1), but receives (s10, 3). There is (s10, 2) missing.
+							 * Cahce A passes me (s10, 1), but tells me this is an outdated measure. Anyway I only receive measure 1 of sensor 10,
+							 * then (s10, 1) is the most update measure I know for sensor 10.
+							 * It does not make any sense to pass cache A again MY most updated measure, because it is equal to his!
+							 * Moreover, it does not neither make any sense to erase this measure from the cache! Better leave that another user,
+							 * who decoded (s10, 3), updates cache A.
+							 */
+							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
+							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+							xor_counter++;	// count how many measure I am xoring
+							removed.push_back(*out_it);
+							MeasureKey key(outdated_sns_id, newest_msr_for_this_sns);	// create a key
+							unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+							ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+							inserted.push_back(key);
+							cout << "  Measure of alive sensor and have a most recent measure: (s" << outdated_sns_id << "," << newest_msr_for_this_sns << ")" << endl;
+							//						cout << "->(s" << out_sns_id << "," << up_msr_id << ")";
+						} else {	// sensor is not dead, but I don't have a newer measure
+							// do nothing
+							cout << "  Measure of alive sensor but NOT have a most recent measure" << endl;
+						}
+					} else {	// I have NOT decoded this measure
+						cout << " Not decoded this measure" << endl;
+					}
+					cout << " xor counter:" << xor_counter << endl;
 				}
-				cout << endl;
+//				cout << endl;
 				if (xor_counter > 0) {	// if I have at least one measure to remove or update
-					cout << "  I have at least one measure t send to this node." << endl;
+					cout << " I have at least one measure t send to this node." << endl;
 					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-					cout << "  Going to send it to " << out_sym_it->first << "..." << endl;
+//					cout << "  Going to send it to " << out_sym_it->first << "..." << endl;
 					vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
-					cout << "  ...sent it! " << curr_events.size() << " new events." << endl;
+//					cout << "  ...sent it! " << curr_events.size() << " new events." << endl;
 					for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
 						new_events.push_back(*event_it);
 					}
 				}
+			} else {	// cache not in my neighborhood
+				cout << " Cache " << out_sym_it->first << " not my neighbor" << endl;
 			}
 		}
 		/**/
@@ -491,19 +565,19 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 	message->set_sender_node_id(node_id_);
 
 	if (!event_queue_.empty()) {  // already some pending event -> does not generate new eventsk
-		cout << " coda piena" << endl;
+//		cout << " coda piena" << endl;
 		Event event_to_enqueue(0, Event::event_type_user_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
-		cout << " coda vuota" << endl;
+//		cout << " coda vuota" << endl;
 		map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
 		MyTime current_time = MyToolbox::current_time_;  // current time of the system
 		MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 		MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 		if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
-			cout << " io occupato" << endl;
+//			cout << " io occupato" << endl;
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
@@ -511,7 +585,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-			cout << " lui occupato" << endl;
+//			cout << " lui occupato" << endl;
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
@@ -519,7 +593,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
 		} else {  // sender and receiver both idle, can send the message
-			cout << " tutti liberi" << endl;
+//			cout << " tutti liberi" << endl;
 			// Compute the message time
 			MyTime processing_time = MyToolbox::get_random_processing_time();
 			unsigned int num_total_bits = message->get_message_size();
@@ -572,14 +646,14 @@ vector<Event> User::re_send(Message* message) {
 
 	unsigned int next_node_id = message->get_receiver_node_id();
 	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end() && near_users_.find(next_node_id) == near_users_.end()) {	// my neighbor there is no longer
-		cout << next_node_id << " non è più mio visino" << endl;
+//		cout << next_node_id << " non è più mio visino" << endl;
 		event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
 		if (event_queue_.empty()) {	// if the queue is now empty...
-			cout << " coda vuota" << endl;
+//			cout << " coda vuota" << endl;
 			return new_events;	// return an empty vector, I don't have new events to schedule
 		} else {
 			Message* new_message = event_queue_.front().get_message();
-			cout << " nuovo messaggio di tipo " << new_message->message_type_ << endl;
+//			cout << " nuovo messaggio di tipo " << new_message->message_type_ << endl;
 			return re_send(new_message);
 		}
 	}
@@ -591,7 +665,7 @@ vector<Event> User::re_send(Message* message) {
 	MyTime my_available_time = timetable.find(node_id_)->second; // time this node gets free (ME)
 	MyTime next_node_available_time = timetable.find(next_node_id)->second;  // time next_node gets free
 	if (my_available_time > current_time) { // this node is already involved in a communication or surrounded by another communication
-		cout << " io occupato" << endl;
+//		cout << " io occupato" << endl;
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
@@ -599,7 +673,7 @@ vector<Event> User::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else if (next_node_available_time > current_time) { // next_node already involved in a communication or surrounded by another communication
-		cout << " lui occupato" << endl;
+//		cout << " lui occupato" << endl;
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
@@ -607,7 +681,7 @@ vector<Event> User::re_send(Message* message) {
 		new_events.push_back(try_again_event);
 		return new_events;
 	} else {  // sender and receiver both idle, can send the message
-		cout << " tutti liberi" << endl;
+//		cout << " tutti liberi" << endl;
 		// Compute the message time
 		MyTime processing_time = MyToolbox::get_random_processing_time();
 		unsigned int num_total_bits = message->get_message_size();
@@ -620,13 +694,13 @@ vector<Event> User::re_send(Message* message) {
 		case Message::message_type_user_info_for_cache: {
 			this_event_type = Event::event_type_cache_receives_user_info;
 			my_agent = near_storage_nodes_.find(next_node_id)->second;
-			cout << " msg type remove measure a cache " << next_node_id << endl;
+//			cout << " msg type remove measure a cache " << next_node_id << endl;
 			break;
 		}
 		case Message::message_type_user_info_for_user: {
 			this_event_type = Event::event_type_user_receives_user_data;
 			my_agent = near_users_.find(next_node_id)->second;
-			cout << " msg type intra a user " << next_node_id << endl;
+//			cout << " msg type intra a user " << next_node_id << endl;
 			break;
 		}
 		default:
@@ -637,7 +711,6 @@ vector<Event> User::re_send(Message* message) {
 		receive_message_event.set_agent(my_agent);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
-		cout << " created event at time " << new_schedule_time << endl;
 
 		// Update the timetable
 		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
@@ -653,7 +726,6 @@ vector<Event> User::re_send(Message* message) {
 
 		// Update the event_queue_
 		event_queue_.pop();	// remove the current send event, now successful
-		cout << " other events in queue" << endl;
 		if (!event_queue_.empty()) {  // if there are other events in the queue
 			// I will be available, in the best case scenario, after new_schedule_time
 			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();

@@ -13,6 +13,8 @@ DataCollector::DataCollector() {
 void DataCollector::report() {
 
 	cout << " > Report <" << endl;
+	cout << "+ " << MyToolbox::num_storage_nodes_ << " storage nodes" << endl;
+	cout << "+ " << MyToolbox::num_sensors_ << " sensors with " << MyToolbox::num_measures_for_sensor_ << " measures each" << endl;
 
 	// Blacklist
 	if (blacklist_register_.size() > 0) {

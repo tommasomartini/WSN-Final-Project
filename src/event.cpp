@@ -126,18 +126,18 @@ vector<Event> Event::execute_action() {
 	Node* current_agent = (Node*)agent_;
 	unsigned int current_node_id = current_agent->get_node_id();
 	if (!MyToolbox::is_node_active(current_node_id)) {
-//		cout << "Skip this event: dead agent " << current_node_id << "!" << endl;
-//		return new_events;	TODO debug
+		cout << "Skip this event: dead agent " << current_node_id << "!" << endl;
+		return new_events;
 	}
 
 	switch (event_type_) {
 	case event_type_generated_measure: {
-		cout << "=== generate measure" << endl;
+//		cout << "=== generate measure" << endl;
 		new_events = ((SensorNode*)agent_)->generate_measure();
 		break;
 	}
 	case event_type_sensor_re_send: {
-		cout << "=== event_type_sensor_re_send" << endl;
+//		cout << "=== event_type_sensor_re_send" << endl;
 		new_events = ((SensorNode*)agent_)->try_retx(message_);
 		break;
 	}
@@ -154,27 +154,27 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_cache_receives_user_info: {
-		cout << "=== event_type_cache_receives_user_info" << endl;
-		if (!MyToolbox::is_node_active(current_node_id)) {
-				cout << "Skip this event: dead agent " << current_node_id << "!" << endl;
-		//		return new_events;	TODO debug
-			}
+//		cout << "=== event_type_cache_receives_user_info" << endl;
+//		if (!MyToolbox::is_node_active(current_node_id)) {
+//				cout << "Skip this event: dead agent " << current_node_id << "!" << endl;
+//		//		return new_events;	TODO debug
+//			}
 		((StorageNode*)agent_)->refresh_xored_data((OutdatedMeasure*)message_);
 		break;
 	}
 	case event_type_user_moves: {
-		cout << "=== event_type_user_moves" << endl;
+//		cout << "=== event_type_user_moves" << endl;
 		new_events = ((User*)agent_)->move();
 		break;
 	}
 	case event_type_cache_receives_user_request: {
-		cout << "=== event_type_cache_receives_user_request" << endl;
+//		cout << "=== event_type_cache_receives_user_request" << endl;
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
 		delete message_;
 		break;
 	}
 	case event_type_user_receives_user_request: {
-		cout << "=== event_type_user_receives_user_request" << endl;
+//		cout << "=== event_type_user_receives_user_request" << endl;
 		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
 		delete message_;
 		break;
@@ -184,23 +184,11 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_user_re_send: {
-		cout << "=== event_type_user_re_send" << endl;
-		if (!MyToolbox::is_node_active(current_node_id)) {
-			cout << "User resend dead agent " << current_node_id << "!" << endl;
-			//		return new_events;	TODO debug
-		} else {
-			cout << "User resend alive agent " << current_node_id << "!" << endl;
-		}
 		new_events = ((User*)agent_)->try_retx(message_);
-		cout << "eventi resed user (" << new_events.size() << "events)" << endl;
-		for (auto& elem : new_events) {
-//			cout << "agent" << ((Node*)elem.agent_)->get_node_id() << endl;
-			cout << "agent" << endl;
-		}
 		break;
 	}
 	case event_type_user_receives_node_data: {
-		cout << "=== event_type_user_receives_node_data" << endl;
+//		cout << "=== event_type_user_receives_node_data" << endl;
 		new_events = ((User*)agent_)->receive_node_data((NodeInfoMessage*)message_);
 		break;
 	}
@@ -213,17 +201,17 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_sensor_breaks: {
-		cout << "=== event_type_sensor_breaks" << endl;
+//		cout << "=== event_type_sensor_breaks" << endl;
 		((SensorNode*)agent_)->breakup();
 		break;
 	}
 	case event_type_cache_gets_user_hello: {
-		cout << "=== event_type_cache_gets_user_hello" << endl;
+//		cout << "=== event_type_cache_gets_user_hello" << endl;
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
 		break;
 	}
 	case event_type_user_gets_user_hello: {
-		cout << "=== event_type_user_gets_user_hello" << endl;
+//		cout << "=== event_type_user_gets_user_hello" << endl;
 		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
 		break;
 	}

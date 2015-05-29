@@ -22,7 +22,9 @@ class StorageNode : public Node {
 
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
+ private:
   std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id
+ public:
   bool keep_checking_sensors_ = true;
 
   // Event execution methods
