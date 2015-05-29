@@ -142,7 +142,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_cache_receives_measure: {
-		new_events = ((StorageNode*)agent_)->receive_measure((Measure*)message_);
+		new_events = ((StorageNode*)agent_)->receive_measure2((Measure*)message_);
 		break;
 	}
 	case event_type_cache_re_send: {

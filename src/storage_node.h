@@ -22,13 +22,12 @@ class StorageNode : public Node {
 
   int LT_degree_; // number of xored measures
   unsigned char xored_measure_;
- private:
-  std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id
- public:
+  std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id	// TODO to deprecate
   bool keep_checking_sensors_ = true;
 
   // Event execution methods
   std::vector<Event> receive_measure(Measure*);
+  std::vector<Event> receive_measure2(Measure*);
   std::vector<Event> try_retx(Message*);
   std::vector<Event> receive_user_request(unsigned int /*sender user id*/);
   std::vector<Event> receive_reinit_query(unsigned int /*sender user id*/);
@@ -42,6 +41,14 @@ class StorageNode : public Node {
   typedef MyToolbox::MyTime MyTime;
   typedef MyToolbox::MeasureKey MeasureKey;
 
+  struct SensorInfo {
+	  bool alive_;
+	  bool following_;
+	  unsigned int sensor_id_;
+//	  unsigned int most_recent_id_;
+	  MeasureKey most_recent_key_;
+  };
+
   bool reinit_mode_ = false;
 //  int LT_degree_; // number of xored measures
 //  unsigned char xored_measure_;
@@ -53,8 +60,9 @@ class StorageNode : public Node {
 //  std::map<unsigned int, MeasureKey> measures_; // pairs <sensor_id, last_measure_id>s sns_id
   std::vector<unsigned int> ignore_new_list;		// when I don't accept a NEW msr from a sns I save here it
   std::map<unsigned int, MyTime> supervised_map_;         // map with  key = sensor_id and value = time of last ping
-  std::vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network
-  std::vector<MeasureKey> outdated_measure_keys_;  // list of the measures I have belonging to sensors no longer in the network
+  std::map<unsigned int, SensorInfo> stored_measures_;
+  std::vector<unsigned int> my_blacklist_;  // list of the sensor id's no more in the network	// TODO to deprecate
+  std::vector<MeasureKey> outdated_measure_keys_;  // list of the measures I have belonging to sensors no longer in the network	// TODO to deprecate
   std::vector<int> indeces_msr_to_keep_;
 
   std::vector<Event> send(unsigned int /*next_node_id*/, Message*);
