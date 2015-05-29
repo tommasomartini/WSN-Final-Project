@@ -4,7 +4,7 @@
 using namespace std;
 
 NodeInfoMessage::NodeInfoMessage() {
-	message_type_ = MessageTypes::message_type_node_info_for_user;
+	message_type_ = MessageTypes::message_type_cache_info_for_user;
 
 	node_id_ = 0;
 	output_message_ = 0;
@@ -15,7 +15,7 @@ NodeInfoMessage::NodeInfoMessage(unsigned int node_id,
 		  std::vector<MyToolbox::MeasureKey> sources,
 		  std::vector<MeasureKey> outdated_measures,
 		  std::vector<unsigned int> dead_sensors) {
-	message_type_ = MessageTypes::message_type_node_info_for_user;
+	message_type_ = MessageTypes::message_type_cache_info_for_user;
 
 	node_id_ = node_id;
 	output_message_ = output_message;

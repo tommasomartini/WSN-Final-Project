@@ -189,8 +189,14 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 
 			// Update the timetable
 			MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-				MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+			for (map<unsigned int, SensorNode*>::iterator sns_it = near_sensors_.begin(); sns_it != near_sensors_.end(); sns_it++) {
+				MyToolbox::timetable_.find(sns_it->first)->second = new_schedule_time;
+			}
+			for (map<unsigned int, StorageNode*>::iterator cache_it = near_storage_nodes_.begin(); cache_it != near_storage_nodes_.end(); cache_it++) {
+				MyToolbox::timetable_.find(cache_it->first)->second = new_schedule_time;
+			}
+			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+				MyToolbox::timetable_.find(user_it->first)->second = new_schedule_time;
 			}
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
@@ -303,8 +309,14 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 		// Update the timetable
 		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+		for (map<unsigned int, SensorNode*>::iterator sns_it = near_sensors_.begin(); sns_it != near_sensors_.end(); sns_it++) {
+			MyToolbox::timetable_.find(sns_it->first)->second = new_schedule_time;
+		}
+		for (map<unsigned int, StorageNode*>::iterator cache_it = near_storage_nodes_.begin(); cache_it != near_storage_nodes_.end(); cache_it++) {
+			MyToolbox::timetable_.find(cache_it->first)->second = new_schedule_time;
+		}
+		for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+			MyToolbox::timetable_.find(user_it->first)->second = new_schedule_time;
 		}
 
 		// Update the event_queue_

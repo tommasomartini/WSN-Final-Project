@@ -1,5 +1,5 @@
 num_storage_nodes=180 180
-num_sensors=10 50
+num_sensors=3 50
 num_users=1
 
 num_bits_for_measure=80000

@@ -158,53 +158,50 @@ bool network_setup() {
 	double distance;
 
 	// ...for the sensors
-	//	for (auto& sensor1_pair : *sensors_map) {
 	for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
-		//		SensorNode sensor1 = sns_it->second;
-		y1 = sns_it->second.get_y_coord();
-		x1 = sns_it->second.get_x_coord();
-		//		for (map<unsigned int, SensorNode>::iterator sns_it2 = MyToolbox::sensors_map_.begin(); sns_it2 != MyToolbox::sensors_map_.end(); sns_it2++) {
-		////			SensorNode* sensor2 = &(sns_it2->second);
-		//			y2 = sns_it2->second.get_y_coord();
-		//			x2 = sns_it2->second.get_x_coord();
-		//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-		//			if (sensor1.get_node_id() != sensor2->get_node_id() && distance <= MyToolbox::tx_range_) {
-		//				//    	pair<map<unsigned int, Node*>::iterator, bool> res;
-		//				//        res = (sensor1->near_sensors_)->insert(pair<unsigned int, Node*>(sensor2->get_node_id(), sensor2));
-		//				sns_it->second.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2->get_node_id(), *sensor2));
-		//			}
-		//		}
+		SensorNode* sns1 = &(sns_it->second);
+		y1 = sns1->get_y_coord();
+		x1 = sns1->get_x_coord();
+		for (map<unsigned int, SensorNode>::iterator sns_it2 = MyToolbox::sensors_map_.begin(); sns_it2 != MyToolbox::sensors_map_.end(); sns_it2++) {
+			SensorNode* sns2 = &(sns_it2->second);
+			y2 = sns2->get_y_coord();
+			x2 = sns2->get_x_coord();
+			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+			if (sns1->get_node_id() != sns2->get_node_id() && distance <= MyToolbox::tx_range_) {
+				sns1->near_sensors_.insert(pair<unsigned int, SensorNode*>(sns2->get_node_id(), sns2));
+			}
+		}
 		for (map<unsigned int, StorageNode>::iterator cache_it = MyToolbox::storage_nodes_map_.begin(); cache_it != MyToolbox::storage_nodes_map_.end(); cache_it++) {
-			//			StorageNode* storage_node2 = &(cache_it->second);
-			y2 = cache_it->second.get_y_coord();
-			x2 = cache_it->second.get_x_coord();
+			StorageNode* cache2 = &(cache_it->second);
+			y2 = cache2->get_y_coord();
+			x2 = cache2->get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
 			if (distance <= MyToolbox::tx_range_) {
-				sns_it->second.near_storage_nodes_.insert(pair<unsigned int, StorageNode*>(cache_it->second.get_node_id(), &(cache_it->second)));
+				sns1->near_storage_nodes_.insert(pair<unsigned int, StorageNode*>(cache2->get_node_id(), cache2));
 			}
 		}
 	}
 	// ...for the storage nodes
 	for (map<unsigned int, StorageNode>::iterator cache_it = MyToolbox::storage_nodes_map_.begin(); cache_it != MyToolbox::storage_nodes_map_.end(); cache_it++) {
-		//		StorageNode storage_node1 = cache_it->second;
-		y1 = cache_it->second.get_y_coord();
-		x1 = cache_it->second.get_x_coord();
-		//		for (map<unsigned int, SensorNode>::iterator sns_it = sensors_map.begin(); sns_it != sensors_map.end(); sns_it++) {
-		//			SensorNode sensor2 = sns_it->second;
-		//			y2 = sensor2.get_y_coord();
-		//			x2 = sensor2.get_x_coord();
-		//			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-		//			if (distance <= MyToolbox::tx_range_) {
-		//				storage_node1.near_sensors_.insert(pair<unsigned int, SensorNode>(sensor2.get_node_id(), sensor2));
-		//			}
-		//		}
-		for (map<unsigned int, StorageNode>::iterator cache_it2 = MyToolbox::storage_nodes_map_.begin(); cache_it2 != MyToolbox::storage_nodes_map_.end(); cache_it2++) {
-			//			StorageNode* storage_node2 = &(cache_it2->second);
-			y2 = cache_it2->second.get_y_coord();
-			x2 = cache_it2->second.get_x_coord();
+		StorageNode* cache1 = &(cache_it->second);
+		y1 = cache1->get_y_coord();
+		x1 = cache1->get_x_coord();
+		for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
+			SensorNode* sns2 = &(sns_it->second);
+			y2 = sns2->get_y_coord();
+			x2 = sns2->get_x_coord();
 			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
-			if (cache_it->second.get_node_id() != cache_it2->second.get_node_id() && distance <= MyToolbox::tx_range_) {
-				cache_it->second.near_storage_nodes_.insert(pair<unsigned int, StorageNode*>(cache_it2->second.get_node_id(), &(cache_it2->second)));
+			if (distance <= MyToolbox::tx_range_) {
+				cache1->near_sensors_.insert(pair<unsigned int, SensorNode*>(sns2->get_node_id(), sns2));
+			}
+		}
+		for (map<unsigned int, StorageNode>::iterator cache_it2 = MyToolbox::storage_nodes_map_.begin(); cache_it2 != MyToolbox::storage_nodes_map_.end(); cache_it2++) {
+			StorageNode* cache2 = &(cache_it2->second);
+			y2 = cache2->get_y_coord();
+			x2 = cache2->get_x_coord();
+			distance = sqrt(pow(y1 - y2, 2) + pow(x1 - x2, 2));
+			if (cache1->get_node_id() != cache2->get_node_id() && distance <= MyToolbox::tx_range_) {
+				cache1->near_storage_nodes_.insert(pair<unsigned int, StorageNode*>(cache2->get_node_id(), cache2));
 			}
 		}
 	}

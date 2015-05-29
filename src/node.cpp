@@ -30,7 +30,7 @@ Node::Node(unsigned int node_id, double y_coord, double x_coord) {
   y_coord_ = y_coord;
   x_coord_ = x_coord;
   data_collector = nullptr;
-  near_sensors_ = map<unsigned int, SensorNode>();
+  near_sensors_ = map<unsigned int, SensorNode*>();
   near_storage_nodes_ = map<unsigned int, StorageNode*>();
   near_users_ = map<unsigned int, User*>();
 }

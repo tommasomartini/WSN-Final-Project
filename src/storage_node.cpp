@@ -285,7 +285,6 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 /*  A user informs me about what measures are obsolete
  */
 void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
-	vector<Event> new_events;
 	cout << "Node " << node_id_ << " rx rfresh message" << endl;
 	/*
 	if (!reinit_mode_) {	// if in reinit mode ignore this message and just pass it forward
@@ -408,7 +407,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 				agent = near_storage_nodes_.find(next_node_id)->second;
 				break;
 			}
-			case Message::message_type_node_info_for_user: {
+			case Message::message_type_cache_info_for_user: {
 				this_event_type = Event::event_type_user_receives_node_data;
 //				agent = &(MyToolbox::users_map_.find(next_node_id)->second);
 				agent = near_users_.find(next_node_id)->second;
@@ -434,8 +433,14 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 
 			// Update the timetable
 			MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
-			for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-				MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+			for (map<unsigned int, SensorNode*>::iterator sns_it = near_sensors_.begin(); sns_it != near_sensors_.end(); sns_it++) {
+				MyToolbox::timetable_.find(sns_it->first)->second = new_schedule_time;
+			}
+			for (map<unsigned int, StorageNode*>::iterator cache_it = near_storage_nodes_.begin(); cache_it != near_storage_nodes_.end(); cache_it++) {
+				MyToolbox::timetable_.find(cache_it->first)->second = new_schedule_time;
+			}
+			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+				MyToolbox::timetable_.find(user_it->first)->second = new_schedule_time;
 			}
 
 			// If I am here the queue was empty and it is still empty! I have to do nothing on the queue!
@@ -461,7 +466,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			give_up = false;
 			break;
 		}
-		case Message::message_type_node_info_for_user: {
+		case Message::message_type_cache_info_for_user: {
 			give_up = true;
 			break;
 		}
@@ -551,7 +556,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			agent = near_storage_nodes_.find(next_node_id)->second;
 			break;
 		}
-		case Message::message_type_node_info_for_user: {
+		case Message::message_type_cache_info_for_user: {
 			this_event_type = Event::event_type_user_receives_node_data;
 //			agent = &(MyToolbox::users_map_.find(next_node_id)->second);
 			agent = near_users_.find(next_node_id)->second;
@@ -572,8 +577,14 @@ vector<Event> StorageNode::re_send(Message* message) {
 
 		// Update the timetable
 		MyToolbox::timetable_.find(node_id_)->second = new_schedule_time; // update my available time
-		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			MyToolbox::timetable_.find(node_it->first)->second = new_schedule_time;
+		for (map<unsigned int, SensorNode*>::iterator sns_it = near_sensors_.begin(); sns_it != near_sensors_.end(); sns_it++) {
+			MyToolbox::timetable_.find(sns_it->first)->second = new_schedule_time;
+		}
+		for (map<unsigned int, StorageNode*>::iterator cache_it = near_storage_nodes_.begin(); cache_it != near_storage_nodes_.end(); cache_it++) {
+			MyToolbox::timetable_.find(cache_it->first)->second = new_schedule_time;
+		}
+		for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+			MyToolbox::timetable_.find(user_it->first)->second = new_schedule_time;
 		}
 
 		// Update the event_queue_

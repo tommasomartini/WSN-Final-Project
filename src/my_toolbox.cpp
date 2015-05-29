@@ -58,40 +58,53 @@ map<unsigned int, User> MyToolbox::users_map_;
 default_random_engine MyToolbox::generator_;
 
 void MyToolbox::set_close_nodes(User* user) {
-  user->near_storage_nodes_.clear();
-  user->near_users_.clear();
+	user->near_sensors_.clear();
+	user->near_storage_nodes_.clear();
+	user->near_users_.clear();
 
-  for (auto& st_node_elem : storage_nodes_map_) {
-    StorageNode* st_node = &(st_node_elem.second);
-    double his_x = st_node->get_x_coord();
-    double his_y = st_node->get_y_coord();
-    double my_x = user->get_x_coord();
-    double my_y = user->get_y_coord();
-    double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
-    if (dist <= MyToolbox::tx_range_) { // the user and the cache are able to communicate
-      pair<unsigned int, StorageNode*> pp(st_node->get_node_id(), st_node);
-      user->near_storage_nodes_.insert(pp);
+	double my_x = user->get_x_coord();
+	double my_y = user->get_y_coord();
 
-      if (st_node->near_users_.find(user->get_node_id()) == st_node->near_users_.end()) {	// if the cache does not have this user as neighbour
-    	  st_node->near_users_.insert(pair<unsigned int, User*>(user->get_node_id(), user));
-      }
-    }
-  }
+	for (auto& sens_elem : sensors_map_) {
+		SensorNode* sns = &(sens_elem.second);
+		double his_x = sns->get_x_coord();
+		double his_y = sns->get_y_coord();
+		double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+		if (dist <= MyToolbox::tx_range_) { // the user and the cache are able to communicate
+			user->near_sensors_.insert(pair<unsigned int, SensorNode*>(sns->get_node_id(), sns));
+			if (sns->near_users_.find(user->get_node_id()) == sns->near_users_.end()) {	// if the sensor does not have this user as neighbor
+				sns->near_users_.insert(pair<unsigned int, User*>(user->get_node_id(), user));
+			}
+		}
+	}
 
-  for (auto& us_node_elem : users_map_) {
-	  User* us_node = &(us_node_elem.second);
-	  if (us_node != user) {  // does not make sense to include myself among my neighbours
-		  double his_x = us_node->get_x_coord();
-		  double his_y = us_node->get_y_coord();
-		  double my_x = user->get_x_coord();
-		  double my_y = user->get_y_coord();
-		  double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
-		  if (dist <= MyToolbox::tx_range_) { // the users are able to communicate
-			  pair<unsigned int, User*> pp(us_node->get_node_id(), us_node);
-			  user->near_users_.insert(pp);
-		  }
-	  }
-  }
+	for (auto& st_node_elem : storage_nodes_map_) {
+		StorageNode* st_node = &(st_node_elem.second);
+		double his_x = st_node->get_x_coord();
+		double his_y = st_node->get_y_coord();
+		double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+		if (dist <= MyToolbox::tx_range_) { // the user and the cache are able to communicate
+			user->near_storage_nodes_.insert(pair<unsigned int, StorageNode*>(st_node->get_node_id(), st_node));
+			if (st_node->near_users_.find(user->get_node_id()) == st_node->near_users_.end()) {	// if the cache does not have this user as neighbor
+				st_node->near_users_.insert(pair<unsigned int, User*>(user->get_node_id(), user));
+			}
+		}
+	}
+
+	for (auto& us_node_elem : users_map_) {
+		User* us_node = &(us_node_elem.second);
+		if (us_node != user) {  // does not make sense to include myself among my neighbours
+			double his_x = us_node->get_x_coord();
+			double his_y = us_node->get_y_coord();
+			double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
+			if (dist <= MyToolbox::tx_range_) { // the users are able to communicate
+				user->near_users_.insert(pair<unsigned int, User*>(us_node->get_node_id(), us_node));
+				if (us_node->near_users_.find(user->get_node_id()) == us_node->near_users_.end()) {	// if the user does not have this user as neighbor
+					us_node->near_users_.insert(pair<unsigned int, User*>(user->get_node_id(), user));
+				}
+			}
+		}
+	}
 }
 
 /**************************************
