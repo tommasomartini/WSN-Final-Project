@@ -156,6 +156,21 @@ void DataCollector::report() {
 								<< " (" << avg_interr_users * 100.0 / MyToolbox::num_users_ << "%)" << endl;
 		cout << " - Avg number of interrogated nodes: " << avg_interr_caches + avg_interr_users << " (minimum = " << MyToolbox::num_sensors_ << ")" << endl;
 		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
+		cout << " - Decoding errors:" << endl;
+		for (map<unsigned int, UserInfo>::iterator user_it = user_register_.begin(); user_it != user_register_.end(); user_it++) {
+			string s;
+			bool errors = 0;
+			map<MeasureKey, int> results = user_it->second.decoding_result_;
+			for (auto& res : results) {
+				if (res.second == 0) {
+					errors++;
+					s = s + " (s" + to_string(res.first.sensor_id_) + "," + to_string(res.first.measure_id_) + ")";
+				}
+			}
+			if (errors > 0) {
+				cout << "  " << s << endl;
+			}
+		}
 	}
 }
 
@@ -166,7 +181,7 @@ void DataCollector::update_num_msr_per_cache(unsigned int cache_id, int num_msrs
 	num_stored_measures_per_cache_.insert(pair<unsigned int, int>(cache_id, num_msrs));
 }
 
-void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
+void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id, unsigned char data) {
 	MeasureKey key(sns_id, msr_id);	// create the key
 	MeasureInfo measureInfo;
 //	map<unsigned int, StorageNode> cache_map = MyToolbox::storage_nodes_map_;	// take the map of the storage nodes
@@ -174,7 +189,7 @@ void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id) {
 	measureInfo.born_time_ = MyToolbox::current_time_;
 //	measureInfo.node_map_ = node_map;
 	measures_register_.insert(pair<MeasureKey, MeasureInfo>(key, measureInfo));	// store this measure entry
-//	cout << "Measure (s" << sns_id << ", " << msr_id << ") added" << endl;
+	measure_data_register_.insert(pair<MeasureKey, unsigned char>(key, data));
 }
 
 void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned int sym) {
@@ -283,7 +298,7 @@ void DataCollector::record_user_rx(unsigned int user_id) {
 	}
 }
 
-void DataCollector::record_user_decoding(unsigned int user_id) {
+void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, unsigned char> decoded_symbols) {
 	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
 		if (!user_register_.find(user_id)->second.decoded_) {	// first time this user decodes
 			user_register_.find(user_id)->second.decoding_time_ = MyToolbox::current_time_;
@@ -291,6 +306,18 @@ void DataCollector::record_user_decoding(unsigned int user_id) {
 			user_register_.find(user_id)->second.decoding_steps_ = user_register_.find(user_id)->second.num_steps_;
 			user_register_.find(user_id)->second.decoding_duration_ = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
 			user_register_.find(user_id)->second.decoded_ = true;
+
+			// Check the correct decoding
+			for (map<MeasureKey, unsigned char>::iterator symb_it = decoded_symbols.begin(); symb_it != decoded_symbols.end(); symb_it++) {	// for each decoded symbol
+				MeasureKey this_key = symb_it->first;
+				unsigned char my_data = symb_it->second;
+				unsigned char actual_data = measure_data_register_.find(this_key)->second;
+				if (my_data == actual_data) {
+					user_register_.find(user_id)->second.decoding_result_.insert(pair<MeasureKey, int>(this_key, 1));
+				} else {
+					user_register_.find(user_id)->second.decoding_result_.insert(pair<MeasureKey, int>(this_key, 0));
+				}
+			}
 		} else {	// this user already decoded
 			cout << "Error! This user already decoded!" << endl;
 		}

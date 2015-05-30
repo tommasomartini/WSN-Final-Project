@@ -21,12 +21,12 @@ class StorageNode : public Node {
   StorageNode(unsigned int node_id, double y_coord, double x_coord); // : Node (node_id, y_coord, x_coord) {LT_degree_ = MyToolbox::get_ideal_soliton_distribution_degree(); xored_measure_ = 0;}
 
   int LT_degree_; // number of xored measures
-  unsigned char xored_measure_;
+  unsigned char xored_measure_ = (unsigned char)0;
   std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id	// TODO to deprecate
   bool keep_checking_sensors_ = true;
 
   // Event execution methods
-  std::vector<Event> receive_measure(Measure*);
+//  std::vector<Event> receive_measure(Measure*);
   std::vector<Event> receive_measure2(Measure*);
   std::vector<Event> try_retx(Message*);
   std::vector<Event> receive_user_request(unsigned int /*sender user id*/);

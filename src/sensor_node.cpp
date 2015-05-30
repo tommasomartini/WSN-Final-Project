@@ -46,14 +46,15 @@ vector<Event> SensorNode::generate_measure() {
 	  return new_events;	// return
   }
 
-  old_measure_data = new_measure_data;
+//  if (!first_generated_measure_) {
+//	  old_measure_data = new_measure_data;
+//  }
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
 
-  cout << "Sensor " << node_id_ << " generates measure: " << int(new_measure_data) << endl;
+  cout << "Sensor " << node_id_ << " generates measure: (s" << node_id_ << "," << measure_id_  << ") - " << int(new_measure_data) << endl;
 
   Measure* measure = new Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
-  first_generated_measure_ = false;	// once I generate a measure, the next measure cannot be the first one
   new_events = send(get_random_neighbor(), measure);
 
   Event next_measure_event(time_next_measure_or_failure, Event::event_type_generated_measure);
@@ -171,7 +172,8 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 				this_event_type = Event::event_type_cache_receives_measure;
 				((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 				old_measure_data = new_measure_data;	// update the old measure value
-				data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
+				first_generated_measure_ = false;
+				data_collector->add_msr(((Measure*)message)->measure_id_, node_id_, new_measure_data);
 				break;
 			}
 			default:
@@ -212,47 +214,25 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 	unsigned int next_node_id = message->get_receiver_node_id();
 	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end()) {	// my neighbor there is no longer
-//		cout << " don't have my neighour" << endl;
-		bool give_up = false;	// I could give up transmitting: it depends on the message type!
-		switch (message->message_type_) {
-		case Message::message_type_measure: {
-			give_up = false;
-			break;
-		}
-		default:
-			give_up = true;
-			break;
-		}
-		if (give_up) {	// do not try to tx this message, pass to the following one
-//			cout << " I give up" << endl;
-			event_queue_.pop();	// remove this event from the queue, I'm not going to execute it anymore
-			if (event_queue_.empty()) {	// if the queue is now empty...
-//				cout << " empty queue, do nothing" << endl;
-				return new_events;	// return an empty vector, I don't have new events to schedule
-			} else {
-//				cout << " not empty queue, next message..." << endl;
-				Message* new_message = event_queue_.front().get_message();
-				return re_send(new_message);
-			}
-		} else {	// I cannot give up! Find another node to spread the message
-//			cout << " I don't give up" << endl;
-			next_node_id = get_random_neighbor();	// find another neighbour
-			if (next_node_id == 0) {	// no more neighbours, I'm isolated. Postpone my delivery
-//				cout << " I'm alone, finish here" << endl;
-				MyTime schedule_time = MyToolbox::get_random_processing_time() + MyToolbox::get_tx_offset();
-				event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
+		//		cout << " don't have my neighour" << endl;
 
-				Event try_again_event(schedule_time, Event::event_type_sensor_re_send);
-				try_again_event.set_agent(this);
-				try_again_event.set_message(message);
-				// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
-//				new_events.push_back(try_again_event);
-				return new_events;	// return, there's no more I can do!
-			}
-			// if next_node_id is a valid id...
-			message->set_receiver_node_id(next_node_id);	// set the new node id and go on
-//			cout << " there's someone else, send to him" << endl;
+		//			cout << " I don't give up" << endl;
+		next_node_id = get_random_neighbor();	// find another neighbour
+		if (next_node_id == 0) {	// no more neighbours, I'm isolated. Postpone my delivery
+			//				cout << " I'm alone, finish here" << endl;
+			MyTime schedule_time = MyToolbox::get_random_processing_time() + MyToolbox::get_tx_offset();
+			event_queue_.front().set_time(schedule_time);	// change the schedule time of the message I am trying to send
+
+			Event try_again_event(schedule_time, Event::event_type_sensor_re_send);
+			try_again_event.set_agent(this);
+			try_again_event.set_message(message);
+			// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
+			//				new_events.push_back(try_again_event);
+			return new_events;	// return, there's no more I can do!
 		}
+		// if next_node_id is a valid id...
+		message->set_receiver_node_id(next_node_id);	// set the new node id and go on
+		//			cout << " there's someone else, send to him" << endl;
 	}
 
 	// If I arrive here I have a neighbour to whom I can try to send
@@ -291,7 +271,8 @@ vector<Event> SensorNode::re_send(Message* message) {
 			this_event_type = Event::event_type_cache_receives_measure;
 			((Measure*)message)->measure_ = old_measure_data ^ new_measure_data;	// fill the measure with the most updated value
 			old_measure_data = new_measure_data;	// update the old measure value
-			data_collector->add_msr(((Measure*)message)->measure_id_, node_id_);
+			first_generated_measure_ = false;
+			data_collector->add_msr(((Measure*)message)->measure_id_, node_id_, new_measure_data);
 			break;
 		}
 		default:
@@ -335,11 +316,11 @@ vector<Event> SensorNode::re_send(Message* message) {
 }
 
 unsigned char SensorNode::get_measure_data() {
-//	return (unsigned char)(rand() % 256);	// FIXME activate this
+	return (unsigned char)(rand() % 256);	// FIXME activate this
 //	return (unsigned char)((new_measure_data + (node_id_ - 9)) % 256);
 //	int c = int(new_measure_data) + 1;
 //	if (c == 0 || c == 17 || c > 255) {
 //		c = 1;
 //	}
-	return (unsigned char)3;
+//	return (unsigned char)3;
 }

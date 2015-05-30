@@ -66,15 +66,15 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 				stored_measures_.insert(pair<unsigned int, SensorInfo>(source_id, sensor_info));
 				data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
 
-				cout << "Cache " << node_id_ << ": " << int(xored_measure_) << endl;
+//				if (stored_measures_.size() % 2 == 0 && int(xored_measure_) != 0) {
+//					cerr << "Node "<< node_id_ << " rx new. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
+//				}
+//				if (stored_measures_.size() % 2 == 1 && int(xored_measure_) == 0) {
+//					cerr << "Node "<< node_id_ << " rx new. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
+//				}
 			}
 		}
 	} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-// TODO debug
-		//		if (int(measure->measure_) != 0) {
-//			cerr << "lo sapevo" << endl;
-//			exit(0);
-//						}
 		if (stored_measures_.find(source_id) != stored_measures_.end()) {	// I'm following this sensor
 			if (stored_measures_.find(source_id)->second.following_) {  // and I am synchronized with it
 				unsigned int last_measure_id = stored_measures_.find(source_id)->second.most_recent_key_.measure_id_;
@@ -83,6 +83,13 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 					xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
 					MeasureKey new_key(source_id, measure->measure_id_);
 					stored_measures_.find(source_id)->second.most_recent_key_ = new_key;
+
+//					if (stored_measures_.size() % 2 == 0 && int(xored_measure_) != 0) {
+//						cerr << "Node "<< node_id_ << " rx up. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
+//					}
+//					if (stored_measures_.size() % 2 == 1 && int(xored_measure_) == 0) {
+//						cerr << "Node "<< node_id_ << " rx up. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
+//					}
 					//				cout << "Cache " << node_id_ << ": " << int(xored_measure_) << endl;
 				} else if (measure->measure_id_ > last_measure_id + 1) {	// out of order update measure
 					stored_measures_.find(source_id)->second.following_ = false;
@@ -103,86 +110,86 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 
 	return new_events;
 }
-/*  Receive a measure either from a sensor or from another cache node
- */
-vector<Event> StorageNode::receive_measure(Measure* measure) {
-	vector<Event> new_events;
-	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
-	//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
-	unsigned int source_id = measure->source_sensor_id_;  // measure from sensor source_id
-	if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor
-		//			cout << "Node " << node_id_ << " received NEW measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
-		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->source_sensor_id_) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
-			//				cout << " not in my ignore list. Now it is in my ignore list" << endl;
-			ignore_new_list.push_back(source_id);	// I should process a new measure for each sensor just once
-			//				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
-
-			indeces_counter_++;
-			if (indeces_pointer_ < int(indeces_msr_to_keep_.size()) && indeces_counter_ == indeces_msr_to_keep_.at(indeces_pointer_)) {	// I have to keep this measure
-				indeces_pointer_++;
-				xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
-				last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->measure_id_));  // save this measure
-				data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
-				//					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
-			} else {	// do NOT keep this measure
-				//					cout << "  do >NOT< accept" << endl;
-			}
-
-			/*
-				int k = MyToolbox::num_sensors_;
-				int d = LT_degree_;
-				default_random_engine gen = MyToolbox::generator_;
-				bernoulli_distribution bernoulli_distrib(d * 1. / k);
-				if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
-					xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
-					last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
-					data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
-					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
-				} else {
-					cout << "  do >NOT< accept" << endl;
-				}
-			 */
-		} else {
-			//				cout << " in my ignore list" << endl;
-		}
-	} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
-		//			cout << "Node " << node_id_ << " received UPDATE measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
-		if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
-			//				cout << " already received a measure from this sensor" << endl;
-			// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
-			if (measure->measure_id_ == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
-
-				xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
-				last_measures_.find(source_id)->second = measure->measure_id_;  // save this measure // save this message as the last received message from sensor source_id
-				//					cout << "  in order measure. Now store: " << int(xored_measure_) << endl;
-			} else if (measure->measure_id_ <= last_measures_.at(source_id)) {	// already receive this update measure
-				//					cout << "  old measure. Do nothing."	<< endl;
-				// do nothing
-			} else {	// out of order update measure
-				MeasureKey outdated_measure_key(source_id, last_measures_.find(source_id)->second);	// create the key of the outdatet measure I have
-				outdated_measure_keys_.push_back(outdated_measure_key);	// store it in the list of the outdated measures
-				last_measures_.erase(source_id);	// I don't follow this sensor anymore
-				data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
-				//					cout << "  out of order measure!" << endl;
-			}
-		} else {
-			//				cout << " I don't hold measures from this sensor" << endl;
-		}
-	}
-
-	measure->increase_hop_counter();	// increase the hop-counter
-	int hop_limit = MyToolbox::max_num_hops_;
-	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
-//		cout << " forward message" << endl;
-		new_events = send(get_random_neighbor(), measure);	// propagate it!
-	} else {	// the message must not be forwarded again
-//		cout << " do NOT forward the message" << endl;
-		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
-		delete measure;	// this measure will be no more used
-	}
-
-	return new_events;
-} 
+///*  Receive a measure either from a sensor or from another cache node
+// */
+//vector<Event> StorageNode::receive_measure(Measure* measure) {
+//	vector<Event> new_events;
+//	data_collector->record_msr(measure->measure_id_, measure->source_sensor_id_, node_id_, 1);
+//	//	cout << "Node " << node_id_ << " received measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << ") at " << MyToolbox::current_time_ << endl;
+//	unsigned int source_id = measure->source_sensor_id_;  // measure from sensor source_id
+//	if (measure->get_measure_type() == Measure::measure_type_new) { // new measure from a new sensor
+//		//			cout << "Node " << node_id_ << " received NEW measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
+//		if (find(ignore_new_list.begin(), ignore_new_list.end(), measure->source_sensor_id_) == ignore_new_list.end()) {	// ignore all the measures of the sensors in the ignore list
+//			//				cout << " not in my ignore list. Now it is in my ignore list" << endl;
+//			ignore_new_list.push_back(source_id);	// I should process a new measure for each sensor just once
+//			//				if (last_measures_.find(source_id) == last_measures_.end()) {  // not yet received a msg from this sensor
+//
+//			indeces_counter_++;
+//			if (indeces_pointer_ < int(indeces_msr_to_keep_.size()) && indeces_counter_ == indeces_msr_to_keep_.at(indeces_pointer_)) {	// I have to keep this measure
+//				indeces_pointer_++;
+//				xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
+//				last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->measure_id_));  // save this measure
+//				data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+//				//					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
+//			} else {	// do NOT keep this measure
+//				//					cout << "  do >NOT< accept" << endl;
+//			}
+//
+//			/*
+//				int k = MyToolbox::num_sensors_;
+//				int d = LT_degree_;
+//				default_random_engine gen = MyToolbox::generator_;
+//				bernoulli_distribution bernoulli_distrib(d * 1. / k);
+//				if (bernoulli_distrib(gen)) { // accept the new msg with probability d/k
+//					xored_measure_ = xored_measure_ ^ measure->get_measure();  // save the new xored message
+//					last_measures_.insert(pair<unsigned int, unsigned int>(source_id, measure->get_measure_id()));  // save this measure
+//					data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+//					cout << "  >ACCEPT< this measure. Store: " << int(xored_measure_) << endl;
+//				} else {
+//					cout << "  do >NOT< accept" << endl;
+//				}
+//			 */
+//		} else {
+//			//				cout << " in my ignore list" << endl;
+//		}
+//	} else if (measure->get_measure_type() == Measure::measure_type_update) { // update measure from a sensor: always accept it, if I'm collecting this sensor's measures
+//		//			cout << "Node " << node_id_ << " received UPDATE measure (s" << measure->get_source_sensor_id() << ", " << measure->get_measure_id() << "), value: " << int(measure->measure_) << endl;
+//		if (last_measures_.find(source_id) != last_measures_.end()) {  // already received a msg from this sensor
+//			//				cout << " already received a measure from this sensor" << endl;
+//			// if the received measure is one unit higher than the stored one everything is ok, otherwise I missed a measure and I have to re-initialize the system
+//			if (measure->measure_id_ == last_measures_.at(source_id) + 1) {	// actual new measure for me and received in order: I have to update
+//
+//				xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
+//				last_measures_.find(source_id)->second = measure->measure_id_;  // save this measure // save this message as the last received message from sensor source_id
+//				//					cout << "  in order measure. Now store: " << int(xored_measure_) << endl;
+//			} else if (measure->measure_id_ <= last_measures_.at(source_id)) {	// already receive this update measure
+//				//					cout << "  old measure. Do nothing."	<< endl;
+//				// do nothing
+//			} else {	// out of order update measure
+//				MeasureKey outdated_measure_key(source_id, last_measures_.find(source_id)->second);	// create the key of the outdatet measure I have
+//				outdated_measure_keys_.push_back(outdated_measure_key);	// store it in the list of the outdated measures
+//				last_measures_.erase(source_id);	// I don't follow this sensor anymore
+//				data_collector->update_num_msr_per_cache(node_id_, last_measures_.size());
+//				//					cout << "  out of order measure!" << endl;
+//			}
+//		} else {
+//			//				cout << " I don't hold measures from this sensor" << endl;
+//		}
+//	}
+//
+//	measure->increase_hop_counter();	// increase the hop-counter
+//	int hop_limit = MyToolbox::max_num_hops_;
+//	if (measure->get_hop_counter() < hop_limit) {  // the message has to be forwarded again
+////		cout << " forward message" << endl;
+//		new_events = send(get_random_neighbor(), measure);	// propagate it!
+//	} else {	// the message must not be forwarded again
+////		cout << " do NOT forward the message" << endl;
+//		data_collector->erase_msr(measure->measure_id_, measure->source_sensor_id_);
+//		delete measure;	// this measure will be no more used
+//	}
+//
+//	return new_events;
+//}
 
 /*  I have already tried to send a message to someone, but I failed. Now I try again!
  */
@@ -301,7 +308,7 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 /*  A user informs me about what measures are obsolete
  */
 void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
-	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
+//	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
 	return;
  	map<unsigned int, vector<unsigned int>> update_info = refresh_message->update_infos_;	// download the info structure
 	map<unsigned int, vector<unsigned int>>::iterator info_it = update_info.begin();	// extract the iterator

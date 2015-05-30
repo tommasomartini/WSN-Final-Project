@@ -198,15 +198,8 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 
 //	cout << " Add the node info. My nodes info size is: " << nodes_info_.size();
-	/*
-	 * Remember that also the updated measures compose the xored measure!
-	 */
-	vector<MeasureKey> sources = node_info_msg->sources_;
-	vector<MeasureKey> outdated_measures = node_info_msg->outdated_measures_;
-	for (vector<MeasureKey>::iterator out_msr_it = outdated_measures.begin(); out_msr_it != outdated_measures.end(); out_msr_it++) {
-		sources.push_back(*out_msr_it);
-	}
-	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, sources, node_info_msg->outdated_measures_);	// create a new output symbol
+
+	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, node_info_msg->sources_, node_info_msg->outdated_measures_);	// create a new output symbol
 	pair<unsigned int, OutputSymbol> new_output_symbol(node_info_msg->node_id_, curr_output_symbol_);	// associate it to the cache
 	map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(node_info_msg->node_id_);	// the entry belonging to this cache in my map
 	if (info_it != nodes_info_.end()) {	// if there is already an entry related to this cache...
@@ -259,28 +252,28 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 //		}
 //		cout << endl;
 		keep_moving_ = false; 		// TODO debug
-		data_collector->record_user_decoding(node_id_);
+		data_collector->record_user_decoding(node_id_, decoded_symbols_);
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 
 		// TODO super debug
-		cout << "User " << node_id_ << " MSG PASS OK" << endl;
-		cout << "Decoded: " << endl;
-		for (auto& elem : decoded_symbols_) {
-			cout << "- (s" << elem.first.sensor_id_ << "," << elem.first.measure_id_ << ") = " << int(elem.second) << endl;
-		}
-		cout << "Output symbols: " << endl;
-		for (auto& elem : nodes_info_) {
-			cout << "- Cache " << elem.first << endl;
-			cout << "  Xored" << int(elem.second.xored_msg_) << endl;
-			cout << "  Sources" << endl;
-			for (auto& elem2 : elem.second.sources_) {
-				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
-			}
-			cout << "  Outdated" << endl;
-			for (auto& elem2 : elem.second.outdated_) {
-				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
-			}
-		}
+//		cout << "User " << node_id_ << " MSG PASS OK" << endl;
+//		cout << "Decoded: " << endl;
+//		for (auto& elem : decoded_symbols_) {
+//			cout << "- (s" << elem.first.sensor_id_ << "," << elem.first.measure_id_ << ") = " << int(elem.second) << endl;
+//		}
+//		cout << "Output symbols: " << endl;
+//		for (auto& elem : nodes_info_) {
+//			cout << "- Cache " << elem.first << endl;
+//			cout << "  Xored" << int(elem.second.xored_msg_) << endl;
+//			cout << "  Sources" << endl;
+//			for (auto& elem2 : elem.second.sources_) {
+//				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
+//			}
+//			cout << "  Outdated" << endl;
+//			for (auto& elem2 : elem.second.outdated_) {
+//				cout << "  - (s" << elem2.sensor_id_ << "," << elem2.measure_id_ << ")" << endl;
+//			}
+//		}
 
 		//*
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
@@ -614,7 +607,6 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			case Message::message_type_user_info_for_cache: {
 				this_event_type = Event::event_type_cache_receives_user_info;
 				my_agent = near_storage_nodes_.find(next_node_id)->second;
-				cout << " type remove measure to " << ((Node*)my_agent)->get_node_id() << endl;
 				break;
 			}
 			case Message::message_type_user_info_for_user: {
