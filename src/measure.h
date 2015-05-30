@@ -26,16 +26,8 @@ class Measure : public Message {
   Measure(unsigned char, unsigned int /*measure_id*/, unsigned int /*source_sensor_id*/, Measure::MeasureTypes);
 
   // getters
-  unsigned char get_measure() {return measure_;}
-  unsigned int get_measure_id() {return measure_id_;}
-  unsigned int get_source_sensor_id() {return source_sensor_id_;}
   int get_hop_counter() {return hop_counter_;}
   Measure::MeasureTypes get_measure_type() {return measure_type_;}
-
-  // setters
-  // void set_measure(unsigned char /*measure*/);
-  // void set_source_sensor_id(unsigned int);
-  // void set_measure_type(Measure::MeasureTypes);
 
   // functions
   unsigned int increase_hop_counter();

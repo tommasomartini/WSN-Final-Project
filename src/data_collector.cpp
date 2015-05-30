@@ -87,7 +87,6 @@ void DataCollector::report() {
 	int miss_counter = 0;
 	for (map<unsigned int, int>::iterator it = num_stored_measures_per_cache_.begin(); it != num_stored_measures_per_cache_.end(); it++) {
 		int lt_deg = MyToolbox::storage_nodes_map_.find(it->first)->second.LT_degree_;
-		//		cout << " Node " << it->first << " (d = " << lt_deg << ") stores " << it->second << " measures" << endl;
 		if (it->second == 0) {
 			zero_counter++;
 		}

@@ -13,8 +13,6 @@ class Message {
 	message_type_user_hello,
     message_type_user_info_for_cache,
     message_type_user_info_for_user,
-	message_type_reinit_query,
-	message_type_reinit_response,
   } message_type_;
 
   virtual ~Message() {}

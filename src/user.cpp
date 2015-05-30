@@ -284,24 +284,25 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 		//*
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
-			cout << "Examining cache " << out_sym_it->first << ": ";
-			for (auto& elem : out_sym_it->second.outdated_) {
-				cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
-			}
-			cout << endl;
+//			cout << "Examining cache " << out_sym_it->first << ": ";
+//			for (auto& elem : out_sym_it->second.outdated_) {
+//				cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
+//			}
+//			cout << endl;
 			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
-				cout << " Cache " << out_sym_it->first << " needs to erase/update:" << endl;
+//				cout << " Cache " << out_sym_it->first << " needs to erase/update:" << endl;
 				unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
 				int xor_counter = 0;	// ...how many measure I did xor
 				vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
-				vector<MeasureKey> removed;
-				vector<MeasureKey> inserted;
-				if (outdated_tmp.empty()) {
-					cout << " nothing" << endl;
-				}
+				map<unsigned int, vector<unsigned int>> update_info;
+//				vector<MeasureKey> removed;
+//				vector<MeasureKey> inserted;
+//				if (outdated_tmp.empty()) {
+//					cout << " nothing" << endl;
+//				}
 				for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
-					cout << "  * (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")" << endl;
-					MeasureKey outdated_msr_key = *out_it;	// key of the outdated measure tha cache wants to erase
+//					cout << "  * (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")" << endl;
+					MeasureKey outdated_msr_key = *out_it;	// key of the outdated measure the cache wants to erase
 					unsigned int outdated_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
 					unsigned int outdated_msr_id = out_it->measure_id_;	// measure id of this outdated measure
 					bool have_decoded_this_measure = decoded_symbols_.find(outdated_msr_key) != decoded_symbols_.end();
@@ -317,13 +318,18 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 					 * Then I could  not have the "pure" measures a cache is looking for. Better to check it!
 					 */
 					if (have_decoded_this_measure) {	// if I have decoded this measure
-						cout << " Decoded this measure" << endl;
+//						cout << " Decoded this measure" << endl;
 						if (measure_of_dead_sensor) {	// if this node is dead I want just to remove this measure
-							cout << "  Measure of dead sensor" << endl;
+//							cout << "  Measure of dead sensor" << endl;
 							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
 							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
 							xor_counter++;	// count how many measure I am xoring
-							removed.push_back(*out_it);
+							vector<unsigned int> inner_vec;
+							inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
+							inner_vec.push_back(0);		// store 0 because I don't want to replace this measure
+							inner_vec.push_back(0);		// store a random number, I won't use this value
+							update_info.insert(pair<unsigned int, vector<unsigned int>>(outdated_sns_id, inner_vec));	// add this entry to the map
+//							removed.push_back(*out_it);
 							//					cout << " (s" << out_it->sensor_id_ << "," << out_it->measure_id_ << ")";
 						} else if (have_newer_msr_for_this_sns) { // otherwise, if this sensor is not dead and I have a newer measure I want to update it
 							/*
@@ -337,26 +343,32 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
 							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
 							xor_counter++;	// count how many measure I am xoring
-							removed.push_back(*out_it);
+//							removed.push_back(*out_it);
 							MeasureKey key(outdated_sns_id, newest_msr_for_this_sns);	// create a key
 							unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
 							ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-							inserted.push_back(key);
-							cout << "  Measure of alive sensor and have a most recent measure: (s" << outdated_sns_id << "," << newest_msr_for_this_sns << ")" << endl;
+//							inserted.push_back(key);
+
+							vector<unsigned int> inner_vec;
+							inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
+							inner_vec.push_back(1);		// store 1 because I want to replace this measure
+							inner_vec.push_back(newest_msr_for_this_sns);		// store the id of the newest measure I have for this sensor
+							update_info.insert(pair<unsigned int, vector<unsigned int>>(outdated_sns_id, inner_vec));	// add this entry to the map
+//							cout << "  Measure of alive sensor and have a most recent measure: (s" << outdated_sns_id << "," << newest_msr_for_this_sns << ")" << endl;
 							//						cout << "->(s" << out_sns_id << "," << up_msr_id << ")";
 						} else {	// sensor is not dead, but I don't have a newer measure
 							// do nothing
-							cout << "  Measure of alive sensor but NOT have a most recent measure" << endl;
+//							cout << "  Measure of alive sensor but NOT have a most recent measure" << endl;
 						}
 					} else {	// I have NOT decoded this measure
-						cout << " Not decoded this measure" << endl;
+//						cout << " Not decoded this measure" << endl;
 					}
-					cout << " xor counter:" << xor_counter << endl;
+//					cout << " xor counter:" << xor_counter << endl;
 				}
 //				cout << endl;
 				if (xor_counter > 0) {	// if I have at least one measure to remove or update
-					cout << " I have at least one measure t send to this node." << endl;
-					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
+//					cout << " I have at least one measure t send to this node." << endl;
+					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, update_info);	// create an outdated measure message
 //					cout << "  Going to send it to " << out_sym_it->first << "..." << endl;
 					vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
 //					cout << "  ...sent it! " << curr_events.size() << " new events." << endl;
@@ -365,7 +377,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 					}
 				}
 			} else {	// cache not in my neighborhood
-				cout << " Cache " << out_sym_it->first << " not my neighbor" << endl;
+//				cout << " Cache " << out_sym_it->first << " not my neighbor" << endl;
 			}
 		}
 		/**/
@@ -518,25 +530,20 @@ bool User::message_passing() {
 				}
 			}
 		} else {  // no symbol released at this round
-			if (info.empty()) {  // if no other symbols, everything is ok
+			if (info.empty()) {  // if no other symbols
 				vector<unsigned int> seen_sensors;
 				for (map<MeasureKey, unsigned char>::iterator it = resolved_symbols.begin(); it != resolved_symbols.end(); it++) {	// for each resolved symbol...
-					if (find(seen_sensors.begin(), seen_sensors.end(), it->first.sensor_id_) == seen_sensors.end()) {	// ...if I didn't already stored a measure of its...
-						seen_sensors.push_back(it->first.sensor_id_);	// ...store the is sensor
+					if (find(seen_sensors.begin(), seen_sensors.end(), it->first.sensor_id_) == seen_sensors.end()) {	// ...if I didn't already store a measure of its...
+						seen_sensors.push_back(it->first.sensor_id_);	// ...store the id sensor
 					}
 				}
 				if (int(seen_sensors.size()) < MyToolbox::num_sensors_) {	// only partially decoded...
 					message_passing_succeeded = false;
 					break;
 				}
-				decoded_symbols_ = resolved_symbols;	// store the decoded measures...
-				//				// ...and update the backlist
-				//				for (map<MeasureKey, unsigned char>::iterator bl_it = outdated_measures_.begin(); bl_it != outdated_measures_.end(); bl_it++) {	// for each blacklisted id...
-				//					bl_it->second = decoded_symbols_.find(bl_it->first)->second;	// ...store the just decoded measure
-				//				}
+				decoded_symbols_ = resolved_symbols;	// store the decoded measures
 				break;
 			} else {
-//				cerr << "Impossible to decode! Message passing failed!" << endl;
 				message_passing_succeeded = false;
 				break;
 			}
@@ -551,7 +558,7 @@ bool User::CRC_check(Message message) {
 
 vector<Event> User::try_retx(Message* message) {
 	vector<Event> new_events;
-	cout << "User resend metodo retx" << endl;
+//	cout << "User resend metodo retx" << endl;
 	new_events = re_send(message);
 	return new_events;
 }

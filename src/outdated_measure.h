@@ -14,8 +14,10 @@ class OutdatedMeasure : public Message {
  public:
   OutdatedMeasure();
   OutdatedMeasure(unsigned char, std::vector<MeasureKey> /*removed*/, std::vector<MeasureKey> /*inserted*/);
+  OutdatedMeasure(unsigned char, std::map<unsigned int, std::vector<unsigned int>>);
 
   unsigned char xored_data_; 	// data the node will have to xor to its measure
+  std::map<unsigned int, std::vector<unsigned int>> update_infos_;
   std::vector<MeasureKey> removed_;	// keys of the measures the node will remove
   std::vector<MeasureKey> inserted_;	// keys of the measures the node will insert
 

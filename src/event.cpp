@@ -159,7 +159,7 @@ vector<Event> Event::execute_action() {
 //				cout << "Skip this event: dead agent " << current_node_id << "!" << endl;
 //		//		return new_events;	TODO debug
 //			}
-		((StorageNode*)agent_)->refresh_xored_data((OutdatedMeasure*)message_);
+		((StorageNode*)agent_)->refresh_xored_data2((OutdatedMeasure*)message_);
 		break;
 	}
 	case event_type_user_moves: {

@@ -8,6 +8,14 @@ OutdatedMeasure::OutdatedMeasure() {
     xored_data_ = 0;
 }
 
+OutdatedMeasure::OutdatedMeasure(unsigned char xored_data, map<unsigned int, vector<unsigned int>> update_infos) {
+	message_type_ = Message::message_type_user_info_for_cache;
+	hop_counter_ = 0;
+
+	xored_data_ = xored_data;
+	update_infos_ = update_infos;
+}
+
 OutdatedMeasure::OutdatedMeasure(unsigned char xored_data, vector<MeasureKey> removed, vector<MeasureKey> inserted) {
 	message_type_ = Message::message_type_user_info_for_cache;
 	hop_counter_ = 0;

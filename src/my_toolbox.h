@@ -21,6 +21,10 @@ class MyToolbox {
   struct MeasureKey {
     unsigned int sensor_id_;
 	unsigned int measure_id_;
+	MeasureKey() {
+		sensor_id_ = 0;
+		measure_id_ = 0;
+	}
 	MeasureKey(unsigned int sns_id, unsigned int msr_id) {
       sensor_id_ = sns_id;
       measure_id_ = msr_id;

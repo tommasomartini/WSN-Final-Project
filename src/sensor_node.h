@@ -30,8 +30,8 @@ class SensorNode: public Node {
   int how_many_measures_ = 0;
   int how_many_pings_ = 1;
   int ping_counter_ = 0;
-  unsigned char old_measure_data = 17;
-  unsigned char new_measure_data = 17;
+  unsigned char old_measure_data = 0;
+  unsigned char new_measure_data = 0;
   unsigned int my_supervisor_id_;
   unsigned int measure_id_ = 0;
   bool first_generated_measure_ = true;

@@ -30,10 +30,9 @@ class StorageNode : public Node {
   std::vector<Event> receive_measure2(Measure*);
   std::vector<Event> try_retx(Message*);
   std::vector<Event> receive_user_request(unsigned int /*sender user id*/);
-  std::vector<Event> receive_reinit_query(unsigned int /*sender user id*/);
-  std::vector<Event> receive_reinit_response();
   std::vector<Event> check_sensors();
   std::vector<Event> spread_blacklist(BlacklistMessage*);
+  void refresh_xored_data2(OutdatedMeasure*);
   void refresh_xored_data(OutdatedMeasure*);
   void receive_ping(unsigned int /*sensor id*/);	// from sensor
 
@@ -49,7 +48,6 @@ class StorageNode : public Node {
 	  MeasureKey most_recent_key_;
   };
 
-  bool reinit_mode_ = false;
 //  int LT_degree_; // number of xored measures
 //  unsigned char xored_measure_;
   int indeces_pointer_ = 0;
@@ -67,7 +65,6 @@ class StorageNode : public Node {
 
   std::vector<Event> send(unsigned int /*next_node_id*/, Message*);
   std::vector<Event> re_send(Message*);
-  std::vector<Event> reinitialize();	// used to reinitialize the node when something happens (for example a received msr gap)
   void set_measure_indeces();
 };
 

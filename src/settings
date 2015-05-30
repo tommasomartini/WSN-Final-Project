@@ -1,6 +1,6 @@
 num_storage_nodes=180 180
 num_sensors=5 50
-num_users=1
+num_users=0
 
 num_bits_for_measure=80000
 
@@ -28,4 +28,4 @@ user_observation_time=1000000000 ns (= 10s)
 
 max_measure_generation_delay=500000000 ns 1800000000000
 sensor_failure_prob=0  0.2
-num_measures_for_sensor=3
+num_measures_for_sensor=30

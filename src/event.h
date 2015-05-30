@@ -18,8 +18,6 @@ class Event {
     event_type_cache_receives_user_request,
     event_type_sensor_breaks,
     event_type_user_re_send,
-	event_type_cache_gets_reinit_query,
-	event_type_cache_gets_reinit_response,
 	event_type_cache_gets_user_hello,
 	event_type_user_gets_user_hello,
     event_type_cache_gets_blacklist,
