@@ -57,6 +57,8 @@ map<unsigned int, User> MyToolbox::users_map_;
 
 default_random_engine MyToolbox::generator_;
 
+bool MyToolbox::end_ = false;
+
 void MyToolbox::set_close_nodes(User* user) {
 	user->near_sensors_.clear();
 	user->near_storage_nodes_.clear();
@@ -112,6 +114,7 @@ void MyToolbox::set_close_nodes(User* user) {
 **************************************/
 void MyToolbox::initialize_toolbox() {
   cout << "Toolbox initialization..." << endl;
+  end_ = false;
   cout << "Setting maximum number of hops: ";
   max_num_hops_ = ceil(C1_ * num_storage_nodes_ * log(num_storage_nodes_));
   cout << max_num_hops_ << endl;
@@ -121,19 +124,15 @@ void MyToolbox::initialize_toolbox() {
 }
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
-
   if (sensors_map_.find(node_id) != sensors_map_.end()) {
     return true;
   }
-
   if (storage_nodes_map_.find(node_id) != storage_nodes_map_.end()) {
     return true;
   }
-
   if (users_map_.find(node_id) != users_map_.end()) {
     return true;
   }
-
   return false;
 }
 
@@ -141,17 +140,69 @@ void MyToolbox::remove_sensor(unsigned int sensor_id) {
 	vector<unsigned int>::iterator sensor_to_remove = find(alive_sensors_.begin(), alive_sensors_.end(), sensor_id);
 	if (sensor_to_remove != alive_sensors_.end()) {
 		alive_sensors_.erase(sensor_to_remove);
+		sensors_map_.erase(sensor_id);
+		timetable_.erase(sensor_id);
+
+		for (auto& sens_elem : sensors_map_) {
+			sens_elem.second.near_sensors_.erase(sensor_id);
+		}
+
+		for (auto& st_node_elem : storage_nodes_map_) {
+			st_node_elem.second.near_sensors_.erase(sensor_id);
+		}
+
+		for (auto& us_node_elem : users_map_) {
+			us_node_elem.second.near_sensors_.erase(sensor_id);
+		}
+
 		if (alive_sensors_.size() == 0) {
 			for (map<unsigned int, StorageNode>::iterator node_it = storage_nodes_map_.begin(); node_it != storage_nodes_map_.end(); node_it++) {
 				node_it->second.keep_checking_sensors_ = false;
 			}
-			for (map<unsigned int, User>::iterator user_it = users_map_.begin(); user_it != users_map_.end(); user_it++) {
+//			for (map<unsigned int, User>::iterator user_it = users_map_.begin(); user_it != users_map_.end(); user_it++) {
 //				user_it->second.keep_moving_ = false;
-			}
+//			}
 		}
 	} else {
 		cout << "Toolbox is trying to remove a sensor which doesn't exist!" << endl;
 	}
+}
+
+vector<Event> MyToolbox::replace_user(unsigned int user_id) {
+	vector<Event> new_events;
+	if (users_map_.find(user_id) != users_map_.end()) {
+//		timetable_.erase(user_id);
+//
+//		for (auto& sens_elem : sensors_map_) {
+//			sens_elem.second.near_users_.erase(user_id);
+//		}
+//
+//		for (auto& st_node_elem : storage_nodes_map_) {
+//			st_node_elem.second.near_users_.erase(user_id);
+//		}
+//
+//		for (auto& us_node_elem : users_map_) {
+//			us_node_elem.second.near_users_.erase(user_id);
+//		}
+//
+//		uniform_real_distribution<double> distribution(0.0, square_size_ * 1.0);
+//		double y_coord = distribution(generator_);
+//		double x_coord = distribution(generator_);
+//		User new_user(get_node_id(), y_coord, x_coord);
+//		new_user.data_collector = users_map_.find(user_id)->second.data_collector;
+//		users_map_.insert(pair<unsigned int, User>(new_user.get_node_id(), new_user));
+//		timetable_.insert(pair<unsigned int, MyTime>(new_user.get_node_id(), current_time_));
+//
+//		MyTime first_step_time = current_time_ + user_observation_time_ + get_tx_offset();
+//		Event first_step(first_step_time, Event::event_type_user_moves);
+//		first_step.set_agent(&(new_user));
+//		new_events.push_back(first_step);
+//
+//		cout << "MyToolbox: new user: " << new_user.get_node_id() << " replaces user " << user_id << endl;
+//		users_map_.erase(user_id);
+	}
+
+	return new_events;
 }
 
 unsigned int MyToolbox::get_node_id() {

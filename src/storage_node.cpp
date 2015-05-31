@@ -309,37 +309,51 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
  */
 void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 //	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
-	return;
  	map<unsigned int, vector<unsigned int>> update_info = refresh_message->update_infos_;	// download the info structure
+
+// 	// TODO super debug
+// 	for (auto& elem : update_info) {
+// 		cout << "  " << elem.first << " - " << elem.second.at(0) << ", " << elem.second.at(1) << ", " << elem.second.at(2) << "(" << stored_measures_.find(elem.first)->second.most_recent_key_.measure_id_ << ")" << endl;
+// 	}
+
 	map<unsigned int, vector<unsigned int>>::iterator info_it = update_info.begin();	// extract the iterator
  	bool can_update = true;
 	for (; info_it != update_info.end(); info_it++) {	// for each sensor of the structure
+//		cout << " sensor " << info_it->first << endl;
 		if (stored_measures_.find(info_it->first) == stored_measures_.end()) {	// this sensor is not composing my xor
+//			cout << "  not xoring its measure" << endl;
 			can_update = false;
 			break;
 		}
 		unsigned int my_measure_id = stored_measures_.find(info_it->first)->second.most_recent_key_.measure_id_;	// measure id I have from this sensor
 		unsigned int to_remove_measure_id = info_it->second.at(0);	// first field of the vector: measure id I am trying to remove
 		if (my_measure_id != to_remove_measure_id) {	// not the measure composing my xor
+//			cout << "  xoring its measure, but not this one: " << to_remove_measure_id << endl;
 			can_update = false;
 			break;
 		}
 		if (stored_measures_.find(info_it->first)->second.following_) {	// I am following this sensor. It is ok, no need to remove the measure
+//			cout << "  xoring this measure, but not following" << endl;
 			can_update = false;
 			break;
 		}
 		if (info_it->second.at(1) == 0) {	// I want to erase this measure without replacing
+//			cout << "  wants to erase " << to_remove_measure_id << endl;
 			if (stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is alive
+//				cout << "   sensor alive" << endl;
 				can_update = false;
 				break;
 			}
 		} else if (info_it->second.at(1) == 1) {	// I want to replace this measure
+//			cout << "  wants to replace " << to_remove_measure_id << " with " << info_it->second.at(2) << endl;
 			if (!stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is not alive anymore. Makes no sense to replace its measure
+//				cout << "   sensor dead" << endl;
 				can_update = false;
 				break;
 			}
 			unsigned int new_measure_id = info_it->second.at(2);	// id of the new measure I am inserting
 			if (new_measure_id < my_measure_id) {	// I am trying to insert an older measure
+//				cout << "   sensor alive, but my measure " << my_measure_id << " is newer than " << new_measure_id << endl;
 				can_update = false;
 				break;
 			}
@@ -347,6 +361,7 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 	}
 
 	if (can_update) {	// if I can perform the xor while preserving consistency
+//		cout << " I can update!" << endl;
 		xored_measure_ ^= refresh_message->xored_data_;
 		for (info_it = update_info.begin(); info_it != update_info.end(); info_it++) {	// for each sensor of the structure
 			bool replaced = info_it->second.at(1) == 1;	// did I removed or replaced this measure?
@@ -359,82 +374,83 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 			}
 		}
 	}
+//	cout << " end method" << endl;
 
 	delete refresh_message;
 }
 
-/*  A user informs me about what measures are obsolete
- */
-void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
-	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
-
-	cout << "Ref message removed: " << endl;
-	for (auto& elem : refresh_message->removed_) {
-		cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
-	}
-	cout << endl;
-	cout << "Ref message inserted: " << endl;
-	for (auto& elem : refresh_message->inserted_) {
-		cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
-	}
-	cout << endl;
-
-
-	cout << "Cache " << node_id_ << " BEFORE stores: " << int(xored_measure_) << endl;
-	cout << " Last:" << endl;
-	for (map<unsigned int, unsigned int>::iterator last_it = last_measures_.begin(); last_it != last_measures_.end(); last_it++) {
-		cout << " - (s" << last_it->first << "," << last_it->second << ")" << endl;
-	}
-	cout << " Outdated:" << endl;
-	for (vector<MeasureKey>::iterator outdated_it = outdated_measure_keys_.begin(); outdated_it != outdated_measure_keys_.end(); outdated_it++) {
-		cout << " - (s" << outdated_it->sensor_id_ << "," << outdated_it->measure_id_ << ")";
-		if (find(my_blacklist_.begin(), my_blacklist_.end(), outdated_it->sensor_id_) != my_blacklist_.end()) {
-			cout << " -> dead sensor";
-		}
-		cout << endl;
-	}
-
-	vector<MeasureKey> removed = refresh_message->removed_;		// list of the measure I have removed because outdated
-	vector<MeasureKey> inserted = refresh_message->inserted_;		// list of the measure I have inserted
-	bool can_update = true;
-	for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I could erase
-		if (find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it) == outdated_measure_keys_.end()) {	// if it is NOT among the measure I have to erase
-			can_update = false;
-			break;
-		}
-	}
-	for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I could add
-		if (find(my_blacklist_.begin(), my_blacklist_.end(), ins_it->sensor_id_) == my_blacklist_.end()) {	// if this sensor is NOT in my blacklist I cannot erase this measure
-			can_update = false;
-			break;
-		}
-	}
-	if (can_update) {	// if I can perform the xor while preserving consistency
-		xored_measure_ ^= refresh_message->xored_data_;
-		for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I have erased
-			outdated_measure_keys_.erase(find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it));	// remove it from my outdated list: these data are no more outdated
-		}
-		for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I have added
-			last_measures_.insert(pair<unsigned int, unsigned int>(ins_it->sensor_id_, ins_it->measure_id_));	// add this measure to the list of the measure I have in my xor
-		}
-	}
-
-	cout << "Cache " << node_id_ << " AFTER stores: " << int(xored_measure_) << endl;
-	cout << " Last:" << endl;
-	for (map<unsigned int, unsigned int>::iterator last_it = last_measures_.begin(); last_it != last_measures_.end(); last_it++) {
-		cout << " - (s" << last_it->first << "," << last_it->second << ")" << endl;
-	}
-	cout << " Outdated:" << endl;
-	for (vector<MeasureKey>::iterator outdated_it = outdated_measure_keys_.begin(); outdated_it != outdated_measure_keys_.end(); outdated_it++) {
-		cout << " - (s" << outdated_it->sensor_id_ << "," << outdated_it->measure_id_ << ")";
-		if (find(my_blacklist_.begin(), my_blacklist_.end(), outdated_it->sensor_id_) != my_blacklist_.end()) {
-			cout << " -> dead sensor";
-		}
-		cout << endl;
-	}
-
-	delete refresh_message;
-}
+///*  A user informs me about what measures are obsolete
+// */
+//void StorageNode::refresh_xored_data(OutdatedMeasure* refresh_message){
+//	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
+//
+//	cout << "Ref message removed: " << endl;
+//	for (auto& elem : refresh_message->removed_) {
+//		cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
+//	}
+//	cout << endl;
+//	cout << "Ref message inserted: " << endl;
+//	for (auto& elem : refresh_message->inserted_) {
+//		cout << " (s" << elem.sensor_id_ << "," << elem.measure_id_ << ")";
+//	}
+//	cout << endl;
+//
+//
+//	cout << "Cache " << node_id_ << " BEFORE stores: " << int(xored_measure_) << endl;
+//	cout << " Last:" << endl;
+//	for (map<unsigned int, unsigned int>::iterator last_it = last_measures_.begin(); last_it != last_measures_.end(); last_it++) {
+//		cout << " - (s" << last_it->first << "," << last_it->second << ")" << endl;
+//	}
+//	cout << " Outdated:" << endl;
+//	for (vector<MeasureKey>::iterator outdated_it = outdated_measure_keys_.begin(); outdated_it != outdated_measure_keys_.end(); outdated_it++) {
+//		cout << " - (s" << outdated_it->sensor_id_ << "," << outdated_it->measure_id_ << ")";
+//		if (find(my_blacklist_.begin(), my_blacklist_.end(), outdated_it->sensor_id_) != my_blacklist_.end()) {
+//			cout << " -> dead sensor";
+//		}
+//		cout << endl;
+//	}
+//
+//	vector<MeasureKey> removed = refresh_message->removed_;		// list of the measure I have removed because outdated
+//	vector<MeasureKey> inserted = refresh_message->inserted_;		// list of the measure I have inserted
+//	bool can_update = true;
+//	for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I could erase
+//		if (find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it) == outdated_measure_keys_.end()) {	// if it is NOT among the measure I have to erase
+//			can_update = false;
+//			break;
+//		}
+//	}
+//	for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I could add
+//		if (find(my_blacklist_.begin(), my_blacklist_.end(), ins_it->sensor_id_) == my_blacklist_.end()) {	// if this sensor is NOT in my blacklist I cannot erase this measure
+//			can_update = false;
+//			break;
+//		}
+//	}
+//	if (can_update) {	// if I can perform the xor while preserving consistency
+//		xored_measure_ ^= refresh_message->xored_data_;
+//		for (vector<MeasureKey>::iterator rem_it = removed.begin(); rem_it != removed.end(); rem_it++) {	// for each measure I have erased
+//			outdated_measure_keys_.erase(find(outdated_measure_keys_.begin(), outdated_measure_keys_.end(), *rem_it));	// remove it from my outdated list: these data are no more outdated
+//		}
+//		for (vector<MeasureKey>::iterator ins_it = inserted.begin(); ins_it != inserted.end(); ins_it++) {	// for each measure I have added
+//			last_measures_.insert(pair<unsigned int, unsigned int>(ins_it->sensor_id_, ins_it->measure_id_));	// add this measure to the list of the measure I have in my xor
+//		}
+//	}
+//
+//	cout << "Cache " << node_id_ << " AFTER stores: " << int(xored_measure_) << endl;
+//	cout << " Last:" << endl;
+//	for (map<unsigned int, unsigned int>::iterator last_it = last_measures_.begin(); last_it != last_measures_.end(); last_it++) {
+//		cout << " - (s" << last_it->first << "," << last_it->second << ")" << endl;
+//	}
+//	cout << " Outdated:" << endl;
+//	for (vector<MeasureKey>::iterator outdated_it = outdated_measure_keys_.begin(); outdated_it != outdated_measure_keys_.end(); outdated_it++) {
+//		cout << " - (s" << outdated_it->sensor_id_ << "," << outdated_it->measure_id_ << ")";
+//		if (find(my_blacklist_.begin(), my_blacklist_.end(), outdated_it->sensor_id_) != my_blacklist_.end()) {
+//			cout << " -> dead sensor";
+//		}
+//		cout << endl;
+//	}
+//
+//	delete refresh_message;
+//}
 
 /**************************************
     Private methods

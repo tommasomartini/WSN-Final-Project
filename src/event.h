@@ -28,6 +28,7 @@ class Event {
     event_type_user_receives_node_data,
 	event_type_user_receives_user_data,
 	event_type_user_receives_user_request,
+	event_type_end,
 	event_type_null
   };
 

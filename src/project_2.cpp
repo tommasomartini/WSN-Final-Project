@@ -44,6 +44,7 @@ public:
 DataCollector* data_coll;
 priority_queue<Event, vector<Event>, EventComparator> main_event_queue;
 default_random_engine generator;
+int end_time;
 
 void import_settings() {
 	cout << "Importing settings from file: " << kFileName << "...";
@@ -104,6 +105,8 @@ void import_settings() {
 					MyToolbox::c0_robust_ = (double)num;
 				} else if (value_name == "delta_robust") {
 					MyToolbox::delta_robust_ = (double)num;
+				} else if (value_name == "end_time") {
+					end_time = (int)num;
 				}
 			}
 		}
@@ -322,6 +325,10 @@ int main() {
 //	activate_ping_check();
 	activate_users();
 
+	MyTime end_time_ns = end_time * 60 * 60 * pow(10, 9);
+	Event end_event(end_time_ns, Event::event_type_end);
+	main_event_queue.push(end_event);
+
 	cout << "- - - Starting the Program - - -" << endl;
 
 	while (!main_event_queue.empty()) {
@@ -330,6 +337,10 @@ int main() {
 		vector<Event> new_events = next_event.execute_action();
 		for (vector<Event>::iterator event_it = new_events.begin(); event_it != new_events.end(); event_it++) {
 			main_event_queue.push(*event_it);
+		}
+		if (MyToolbox::end_) {
+			cout << "End reached!" << endl;
+			break;
 		}
 	}
 

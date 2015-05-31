@@ -15,6 +15,7 @@
 class SensorNode;
 class StorageNode;
 class User;
+class Event;
 
 class MyToolbox {
  public:
@@ -120,6 +121,8 @@ class MyToolbox {
 
   static std::default_random_engine generator_;
 
+  static bool end_;	// says whether the program should be terminated
+
   // functions
   static void initialize_toolbox();
   static bool is_node_active(unsigned int /*node_id*/);
@@ -130,6 +133,7 @@ class MyToolbox {
   static void set_close_nodes(User* user);
   static MyTime get_tx_offset();
   static void remove_sensor(unsigned int /*sensor_id*/);
+  static std::vector<Event> replace_user(unsigned int /*user_id*/);
 
   static std::string int2nodetype(unsigned int);	// TODO just for debug
   static int check_clouds();

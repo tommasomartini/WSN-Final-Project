@@ -42,7 +42,14 @@ vector<Event> User::move() {
 	vector<Event> new_events;
 
 	if (!keep_moving_) {
+		cout << " " << node_id_ << " stop moving" << endl;
 		return new_events;
+	}
+	if (decoding_succeeded && event_queue_.empty()) {
+		keep_moving_ = false;
+		cout << " " << node_id_ << " dec ok e coda vuota" << endl;
+		return MyToolbox::replace_user(node_id_);
+//		return new_events;
 	}
 
 	default_random_engine generator = MyToolbox::generator_;
@@ -144,36 +151,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
-		/*
-		unsigned char ad_hoc_msg = 0;	// xored message I have to send to the node
-		int xor_counter = 0;	// how many measure I did xor
-		vector<MeasureKey> outdated_tmp = node_info_msg->outdated_measures_;
-		vector<MeasureKey> removed;
-		vector<MeasureKey> inserted;
-		for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
-			unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
-			if (decoded_symbols_.find(*out_it) != decoded_symbols_.end()) {	// if I have these data
-				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
-				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-				xor_counter++;	// count how many measure I am xoring
-				removed.push_back(*out_it);
-				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to update the measure
-					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
-					MeasureKey key(out_sns_id, up_msr_id);	// create a key
-					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-					inserted.push_back(key);
-				}
-			}
-		}
-		if (xor_counter > 0) {	// if I have at least one measure to remove or update
-			OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-			vector<Event> curr_events = send(node_info_msg->node_id_, outdated_measure);		// send it
-			for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
-				new_events.push_back(*event_it);
-			}
-		}
-		/**/
+		cout << " user " << node_id_ << " non caga il mess" << endl;
 		delete node_info_msg;
 		return new_events;
 	}
@@ -251,9 +229,13 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 //			cout << " " << elem.first.sensor_id_ << "_" << int(elem.second) << ",";
 //		}
 //		cout << endl;
-		keep_moving_ = false; 		// TODO debug
-		data_collector->record_user_decoding(node_id_, decoded_symbols_);
+		cout << " user " << node_id_ << " msg pass ok" << endl;
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
+		data_collector->record_user_decoding(node_id_, decoded_symbols_);
+//		vector<Event> new_user_events = MyToolbox::replace_user(node_id_);
+//		for (vector<Event>::iterator ev_it = new_user_events.begin(); ev_it != new_user_events.end(); ev_it++) {
+//			new_events.push_back(*ev_it);
+//		}
 
 		// TODO super debug
 //		cout << "User " << node_id_ << " MSG PASS OK" << endl;
@@ -381,6 +363,13 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 //	cout << " Sto per ritornare" << endl;
 
+	return new_events;
+}
+
+vector<Event> User::try_retx(Message* message) {
+	vector<Event> new_events;
+//	cout << "User resend metodo retx" << endl;
+	new_events = re_send(message);
 	return new_events;
 }
 
@@ -547,13 +536,6 @@ bool User::message_passing() {
 
 bool User::CRC_check(Message message) {
 	return true;
-}
-
-vector<Event> User::try_retx(Message* message) {
-	vector<Event> new_events;
-//	cout << "User resend metodo retx" << endl;
-	new_events = re_send(message);
-	return new_events;
 }
 
 // this method is only for the first send!

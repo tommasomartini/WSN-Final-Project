@@ -52,7 +52,7 @@ vector<Event> SensorNode::generate_measure() {
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
 
-  cout << "Sensor " << node_id_ << " generates measure: (s" << node_id_ << "," << measure_id_  << ") - " << int(new_measure_data) << endl;
+//  cout << "Sensor " << node_id_ << " generates measure: (s" << node_id_ << "," << measure_id_  << ") - " << int(new_measure_data) << endl;
 
   Measure* measure = new Measure(0, measure_id_, node_id_, first_generated_measure_ ? Measure::measure_type_new : Measure::measure_type_update);
   new_events = send(get_random_neighbor(), measure);
