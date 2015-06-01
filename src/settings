@@ -1,6 +1,6 @@
 num_storage_nodes=180 180
-num_sensors=5 50
-num_users=10
+num_sensors=10 50
+num_users=1
 
 num_bits_for_measure=80000
 
@@ -11,7 +11,7 @@ tx_range=15 15 in m
 ping_frequency=1000000000 1000000000
 check_sensors_frequency=2000000000 5000000000  
 
-C1=4
+C1=3
 c0_robust=0.2
 delta_robust=0.05
 
@@ -26,8 +26,8 @@ max_tx_offset=1000000000 ns
 
 user_observation_time=1000000000 ns (= 10s)
 
-max_measure_generation_delay=500000000 ns 1800000000000
+max_measure_generation_delay=1800000000000 ns 1800000000000
 sensor_failure_prob=0  0.2
 num_measures_for_sensor=3
 
-end_time=6 h
+end_time=1 h

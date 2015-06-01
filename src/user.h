@@ -23,7 +23,7 @@ class User: public Node {
   User(unsigned int node_id);
   User(unsigned int node_id, double y_coord, double x_coord);
   
-  bool keep_moving_ = true;
+//  bool keep_moving_ = true;
 
   std::vector<Event> move(); // different implementation of the random walk
   std::vector<Event> receive_node_data(NodeInfoMessage*);
@@ -49,6 +49,7 @@ class User: public Node {
   std::vector<Event> re_send(Message*);
   bool message_passing(); // implements the message passing procedure
   bool CRC_check(Message /*message*/);  // check with the CRC field whether the message is valid
+  bool check_decoding();
 };
 
 #endif

@@ -130,91 +130,93 @@ vector<Event> Event::execute_action() {
 		return new_events;
 	}
 
+	bool debug = false;
+
 	switch (event_type_) {
 	case event_type_generated_measure: {
-		cout << "=== generate measure" << endl;
+		if(debug)cout << "=== generate measure" << endl;
 		new_events = ((SensorNode*)agent_)->generate_measure();
 		break;
 	}
 	case event_type_sensor_re_send: {
-		cout << "=== event_type_sensor_re_send" << endl;
+		if(debug) cout << "=== event_type_sensor_re_send" << endl;
 		new_events = ((SensorNode*)agent_)->try_retx(message_);
 		break;
 	}
 	case event_type_cache_receives_measure: {
-		cout << "=== event_type_cache receives measure " << ((StorageNode*)agent_)->get_node_id() << endl;
+		if(debug)cout << "=== event_type_cache receives measure " << ((StorageNode*)agent_)->get_node_id() << endl;
 		new_events = ((StorageNode*)agent_)->receive_measure2((Measure*)message_);
 		break;
 	}
 	case event_type_cache_re_send: {
-		cout << "=== event_type_cache resend " << ((StorageNode*)agent_)->get_node_id() << endl;
+		if (debug) cout << "=== event_type_cache resend " << ((StorageNode*)agent_)->get_node_id() << endl;
 		new_events = ((StorageNode*)agent_)->try_retx(message_);
 		break;
 	}
 	case event_type_cache_gets_blacklist: {
-		cout << "=== event_type_gets blacklist" << endl;
+		if(debug)cout << "=== event_type_gets blacklist" << endl;
 		new_events = ((StorageNode*)agent_)->spread_blacklist((BlacklistMessage*)message_);
 		break;
 	}
 	case event_type_cache_receives_user_info: {
-		cout << "=== event_type_cache_receives_user_info" << endl;
+		if(debug)cout << "=== event_type_cache_receives_user_info" << endl;
 		((StorageNode*)agent_)->refresh_xored_data2((OutdatedMeasure*)message_);
 		break;
 	}
 	case event_type_user_moves: {
-		cout << "=== event_type_user_moves " << ((User*)agent_)->get_node_id() << endl;
+		if(debug)cout << "=== event_type_user_moves " << ((User*)agent_)->get_node_id() << endl;
 		new_events = ((User*)agent_)->move();
 		break;
 	}
 	case event_type_cache_receives_user_request: {
-		cout << "=== event_type_cache_receives_user_request" << endl;
+		if(debug)cout << "=== event_type_cache_receives_user_request" << endl;
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
 		delete message_;
 		break;
 	}
 	case event_type_user_receives_user_request: {
-		cout << "=== event_type_user_receives_user_request" << endl;
+		if(debug)cout << "=== event_type_user_receives_user_request" << endl;
 		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
 		delete message_;
 		break;
 	}
 	case event_type_user_receives_user_data: {
-		cout << "=== event_type_user_receives_user_data" << endl;
+		if(debug)cout << "=== event_type_user_receives_user_data" << endl;
 		new_events = ((User*)agent_)->receive_user_data((UserInfoMessage*)message_);
 		break;
 	}
 	case event_type_user_re_send: {
-		cout << "=== event_type_user_resend " << ((User*)agent_)->get_node_id() << endl;
+		if(debug)cout << "=== event_type_user_resend " << ((User*)agent_)->get_node_id() << endl;
 		new_events = ((User*)agent_)->try_retx(message_);
 		break;
 	}
 	case event_type_user_receives_node_data: {
-		cout << "=== event_type_user_receives_node_data" << endl;
+		if(debug)cout << "=== event_type_user_receives_node_data" << endl;
 		new_events = ((User*)agent_)->receive_node_data((NodeInfoMessage*)message_);
 		break;
 	}
 	case event_type_sensor_ping: {
-		cout << "=== event_type_ping" << endl;
+		if(debug)cout << "=== event_type_ping" << endl;
 		new_events = ((SensorNode*)agent_)->ping();
 		break;
 	}
 	case event_type_cache_checks_sensors: {
-		cout << "=== event_type_check sensors" << endl;
+		if(debug)cout << "=== event_type_check sensors" << endl;
 		new_events = ((StorageNode*)agent_)->check_sensors();
 		break;
 	}
 	case event_type_sensor_breaks: {
-		cout << "=== event_type_sensor_breaks" << endl;
+		if(debug)cout << "=== event_type_sensor_breaks" << endl;
 		((SensorNode*)agent_)->breakup();
 		break;
 	}
 	case event_type_cache_gets_user_hello: {
-		cout << "=== event_type_cache_gets_user_hello" << endl;
+		if(debug)cout << "=== event_type_cache_gets_user_hello" << endl;
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
 		break;
 	}
 	case event_type_user_gets_user_hello: {
-		cout << "=== event_type_user_gets_user_hello" << endl;
+		if(debug)cout << "=== event_type_user_gets_user_hello" << endl;
 		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
 		break;
 	}

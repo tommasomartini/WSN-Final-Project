@@ -41,13 +41,13 @@ User::User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id
 vector<Event> User::move() {
 	vector<Event> new_events;
 
-	if (!keep_moving_) {
-		cout << " " << node_id_ << " stop moving" << endl;
-		return new_events;
-	}
+//	if (!keep_moving_) {
+////		cout << " " << node_id_ << " stop moving" << endl;
+//		return new_events;
+//	}
 	if (decoding_succeeded && event_queue_.empty()) {
-		keep_moving_ = false;
-		cout << " " << node_id_ << " dec ok e coda vuota" << endl;
+//		keep_moving_ = false;
+//		cout << " " << node_id_ << " dec ok e coda vuota" << endl;
 		return MyToolbox::replace_user(node_id_);
 //		return new_events;
 	}
@@ -75,7 +75,7 @@ vector<Event> User::move() {
 
 	x_coord_ = new_x; // update the user's position
 	y_coord_ = new_y;
-	data_collector->record_user_movement(node_id_, dist);
+	data_collector->record_user_movement(node_id_, dist, speed_);
 	MyToolbox::set_close_nodes(this);   // set new storage nodes and users
 
 //	cout << "User " << node_id_ << " moved [(" << x_coord_ << ", " << y_coord_ << "), speed " << speed_ << "] and has " << near_storage_nodes_.size() << " neighbors" << endl;
@@ -151,7 +151,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	vector<Event> new_events;
 
 	if (decoding_succeeded) {	// I already decoded the measure and I am just doing some of the operations AFTER decoding
-		cout << " user " << node_id_ << " non caga il mess" << endl;
+//		cout << " user " << node_id_ << " non caga il mess" << endl;
 		delete node_info_msg;
 		return new_events;
 	}
@@ -223,13 +223,14 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	}
 
 //	cout << " Try message passing...";
-	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
+	bool msg_passing_ok = message_passing();
+	if (msg_passing_ok && data_collector->check_user_decoding(decoded_symbols_)) {	// message passing succeeded: I have decoded all the symbols
 //		cout << "ok:";
 //		for (auto& elem : decoded_symbols_) {
 //			cout << " " << elem.first.sensor_id_ << "_" << int(elem.second) << ",";
 //		}
 //		cout << endl;
-		cout << " user " << node_id_ << " msg pass ok" << endl;
+//		cout << " user " << node_id_ << " msg pass ok" << endl;
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		data_collector->record_user_decoding(node_id_, decoded_symbols_);
 //		vector<Event> new_user_events = MyToolbox::replace_user(node_id_);

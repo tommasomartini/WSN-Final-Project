@@ -66,6 +66,7 @@ class StorageNode : public Node {
   std::vector<Event> send(unsigned int /*next_node_id*/, Message*);
   std::vector<Event> re_send(Message*);
   void set_measure_indeces();
+  bool check_consistency();
 };
 
 #endif

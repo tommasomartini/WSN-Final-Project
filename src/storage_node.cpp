@@ -66,6 +66,11 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 				stored_measures_.insert(pair<unsigned int, SensorInfo>(source_id, sensor_info));
 				data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
 
+				if (!check_consistency()) {
+					cerr << "Cache " << node_id_ << " has no consistent xor" << endl;
+					exit(0);
+				}
+
 //				if (stored_measures_.size() % 2 == 0 && int(xored_measure_) != 0) {
 //					cerr << "Node "<< node_id_ << " rx new. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
 //				}
@@ -83,6 +88,12 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 					xored_measure_ = xored_measure_ ^ measure->measure_;  // save the new xored message
 					MeasureKey new_key(source_id, measure->measure_id_);
 					stored_measures_.find(source_id)->second.most_recent_key_ = new_key;
+					data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
+
+					if (!check_consistency()) {
+						cerr << "Cache " << node_id_ << " has no consistent xor" << endl;
+						exit(0);
+					}
 
 //					if (stored_measures_.size() % 2 == 0 && int(xored_measure_) != 0) {
 //						cerr << "Node "<< node_id_ << " rx up. SM size = " << stored_measures_.size() << ", xor = " << int(xored_measure_) << endl;
@@ -108,7 +119,6 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 		delete measure;	// this measure will be no more used
 	}
 
-	cout << "fine" << endl;
 	return new_events;
 }
 ///*  Receive a measure either from a sensor or from another cache node
@@ -375,6 +385,11 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 			}
 		}
 	}
+
+	if (!check_consistency()) {
+		cerr << "Cache " << node_id_ << " has no consistent xor" << endl;
+		exit(0);
+	}
 //	cout << " end method" << endl;
 
 	delete refresh_message;
@@ -551,7 +566,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 	unsigned int next_node_id = message->get_receiver_node_id();
 //	cout << "Node " << node_id_ << " resend a " << next_node_id << endl;
 	if (near_storage_nodes_.find(next_node_id) == near_storage_nodes_.end() && near_users_.find(next_node_id) == near_users_.end()) {	// my neighbor there is no longer
-		cout << " " << next_node_id << " non più vicino" << endl;
+//		cout << " " << next_node_id << " non più vicino" << endl;
 		bool give_up = false;	// I could gie up transmitting: it depends on the message type!
 		switch (message->message_type_) {
 		case Message::message_type_measure: {
@@ -702,4 +717,12 @@ void StorageNode::set_measure_indeces() {
 //		cout << " " << *it;
 //	}
 //	cout << endl;
+}
+
+bool StorageNode::check_consistency() {
+	vector<MeasureKey> keys;
+	for (map<unsigned int, SensorInfo>::iterator info_it = stored_measures_.begin(); info_it != stored_measures_.end(); info_it++) {
+		keys.push_back(info_it->second.most_recent_key_);
+	}
+	return data_collector->check_measure_consistency(keys, xored_measure_);
 }

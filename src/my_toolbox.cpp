@@ -168,35 +168,37 @@ void MyToolbox::remove_sensor(unsigned int sensor_id) {
 vector<Event> MyToolbox::replace_user(unsigned int user_id) {
 	vector<Event> new_events;
 	if (users_map_.find(user_id) != users_map_.end()) {
-//		timetable_.erase(user_id);
-//
-//		for (auto& sens_elem : sensors_map_) {
-//			sens_elem.second.near_users_.erase(user_id);
-//		}
-//
-//		for (auto& st_node_elem : storage_nodes_map_) {
-//			st_node_elem.second.near_users_.erase(user_id);
-//		}
-//
-//		for (auto& us_node_elem : users_map_) {
-//			us_node_elem.second.near_users_.erase(user_id);
-//		}
-//
-//		uniform_real_distribution<double> distribution(0.0, square_size_ * 1.0);
-//		double y_coord = distribution(generator_);
-//		double x_coord = distribution(generator_);
-//		User new_user(get_node_id(), y_coord, x_coord);
-//		new_user.data_collector = users_map_.find(user_id)->second.data_collector;
-//		users_map_.insert(pair<unsigned int, User>(new_user.get_node_id(), new_user));
-//		timetable_.insert(pair<unsigned int, MyTime>(new_user.get_node_id(), current_time_));
-//
-//		MyTime first_step_time = current_time_ + user_observation_time_ + get_tx_offset();
-//		Event first_step(first_step_time, Event::event_type_user_moves);
-//		first_step.set_agent(&(new_user));
-//		new_events.push_back(first_step);
-//
+		timetable_.erase(user_id);
+
+		for (auto& sens_elem : sensors_map_) {
+			sens_elem.second.near_users_.erase(user_id);
+		}
+
+		for (auto& st_node_elem : storage_nodes_map_) {
+			st_node_elem.second.near_users_.erase(user_id);
+		}
+
+		for (auto& us_node_elem : users_map_) {
+//			if (us_node_elem.second.get_node_id() != user_id) {
+				us_node_elem.second.near_users_.erase(user_id);
+//			}
+		}
+
+		uniform_real_distribution<double> distribution(0.0, square_size_ * 1.0);
+		double y_coord = distribution(generator_);
+		double x_coord = distribution(generator_);
+		User new_user(get_node_id(), y_coord, x_coord);
+		new_user.data_collector = users_map_.find(user_id)->second.data_collector;
+		users_map_.insert(pair<unsigned int, User>(new_user.get_node_id(), new_user));
+		timetable_.insert(pair<unsigned int, MyTime>(new_user.get_node_id(), current_time_));
+
+		MyTime first_step_time = current_time_ + user_observation_time_ + get_tx_offset();
+		Event first_step(first_step_time, Event::event_type_user_moves);
+		first_step.set_agent(&(users_map_.find(new_user.get_node_id())->second));
+		new_events.push_back(first_step);
+
 //		cout << "MyToolbox: new user: " << new_user.get_node_id() << " replaces user " << user_id << endl;
-//		users_map_.erase(user_id);
+		users_map_.erase(user_id);
 	}
 
 	return new_events;

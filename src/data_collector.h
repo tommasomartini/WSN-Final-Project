@@ -34,6 +34,7 @@ class DataCollector {
   };
 
   struct UserInfo {
+	  double speed_ = 0;
 	  int num_steps_ = 0;
 	  double covered_distance_ = 0;
 	  MyTime born_time_ = 0;
@@ -54,6 +55,8 @@ class DataCollector {
   std::map<unsigned int, int> num_stored_measures_per_cache_;
   std::map<MeasureKey, MeasureInfo> measures_register_;
   std::map<MeasureKey, unsigned char> measure_data_register_;
+  std::map<unsigned int, std::map<unsigned int, unsigned char>> measure_data_all_register_;
+//  std::map<unsigned int, std::map<MeasureKey, std::pair<unsigned char, unsigned char>>> all_stored_measures_register_;
   std::map<unsigned int, BlacklistInfo> blacklist_register_;
   std::map<unsigned int, UserInfo> user_register_;
 
@@ -66,12 +69,20 @@ class DataCollector {
   void add_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned char /*data*/);
   void record_msr(unsigned int /*msr id*/, unsigned int /*sns id*/, unsigned int /*cache id*/, unsigned int /*sym*/);
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
-  void record_user_movement(unsigned int, double /*distance*/);
+  void record_user_movement(unsigned int, double /*distance*/, double /*speed*/);
   void record_user_rx(unsigned int);
   void record_user_decoding(unsigned int, std::map<MeasureKey, unsigned char>);
   void record_user_query(unsigned int /*user id*/, unsigned int /*node or user id*/, bool /*is a node*/);
 
+  bool check_measure_consistency(std::vector<MeasureKey> /*measure keys*/, unsigned char /*stored data*/);
+  bool check_user_decoding(std::map<MeasureKey, unsigned char>);
+
+//  void record_stored_measure(unsigned int /*msr id*/, unsigned int /*sns id*/,
+//  		  unsigned int /*cache id*/, unsigned char /*received data*/, unsigned char /*stored data*/);
+//  void erase_stored_measure(std::vector<MeasureKey>, unsigned int /*cache id*/, unsigned char /*stored data*/);
+
  private:
+//  bool check_measure_storage();
 };
 
 #endif

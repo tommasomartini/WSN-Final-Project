@@ -171,6 +171,13 @@ void DataCollector::report() {
 				cout << "  " << s << endl;
 			}
 		}
+
+//		cout << " - User list:" << endl;
+//		for (map<unsigned int, UserInfo>::iterator user_it = user_register_.begin(); user_it != user_register_.end(); user_it++) {
+//			unsigned int id = user_it->first;
+//			double speed = user_it->second.speed_;
+//			cout << "  User " << id << " speed " << speed << endl;
+//		}
 	}
 }
 
@@ -184,12 +191,21 @@ void DataCollector::update_num_msr_per_cache(unsigned int cache_id, int num_msrs
 void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id, unsigned char data) {
 	MeasureKey key(sns_id, msr_id);	// create the key
 	MeasureInfo measureInfo;
-//	map<unsigned int, StorageNode> cache_map = MyToolbox::storage_nodes_map_;	// take the map of the storage nodes
-//	map<unsigned int, int> node_map;	// create the node map to associate to this key
 	measureInfo.born_time_ = MyToolbox::current_time_;
-//	measureInfo.node_map_ = node_map;
 	measures_register_.insert(pair<MeasureKey, MeasureInfo>(key, measureInfo));	// store this measure entry
 	measure_data_register_.insert(pair<MeasureKey, unsigned char>(key, data));
+	if (measure_data_all_register_.find(sns_id) == measure_data_all_register_.end()) {	// sensor not yet in the register
+		map<unsigned int, unsigned char> msr_map;
+		msr_map.insert(pair<unsigned int, unsigned char>(msr_id, data));
+		measure_data_all_register_.insert(pair<unsigned int, map<unsigned int, unsigned char>>(sns_id, msr_map));
+	} else {	// sensor already in the register
+		pair<map<unsigned int, unsigned char>::iterator, bool> res_pair;
+		res_pair = measure_data_all_register_.find(sns_id)->second.insert(pair<unsigned int, unsigned char>(msr_id, data));
+		if (!res_pair.second) {	// check if the element is truly inserted
+			cerr << "Data collector (add_msr): measure " << msr_id << " of sensor " << sns_id << " already in the register" << endl;
+			exit(0);
+		}
+	}
 }
 
 void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned int sym) {
@@ -217,6 +233,37 @@ void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigne
 		cout << "Error! Trying to record a measure not in the register!" << endl;
 	}
 }
+
+//void DataCollector::record_stored_measure(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned char received_data, unsigned char stored_data) {
+//	if (all_stored_measures_register_.find(cache_id) == all_stored_measures_register_.end()) {	// cache not yet in the register
+//		MeasureKey key(sns_id, msr_id);
+//		pair<unsigned char, unsigned char> data(received_data, stored_data);
+//		map<MeasureKey, pair<unsigned char, unsigned char>> msr_map;
+//		pair<MeasureKey, pair<unsigned char, unsigned char>> data_entry(key, data);
+//		msr_map.insert(data_entry);
+//		pair<unsigned int, map<MeasureKey, pair<unsigned char, unsigned char>>> cache_entry(cache_id, msr_map);
+//		all_stored_measures_register_.insert(cache_entry);
+//	} else {	// cache already in the register
+//		MeasureKey key(sns_id, msr_id);
+//		pair<unsigned char, unsigned char> data(received_data, stored_data);
+//		pair<MeasureKey, pair<unsigned char, unsigned char>> data_entry(key, data);
+//		pair<map<MeasureKey, pair<unsigned char, unsigned char>>::iterator, bool> res_pair;
+//		res_pair = all_stored_measures_register_.find(cache_id)->second.insert(data_entry);
+//
+//		if (!res_pair.second) {	// check if the element is truly inserted
+//			cerr << "Data collector (record_stored_measure): measure " << msr_id << " of sensor " << sns_id << " already in the register for chace " << cache_id << endl;
+//			exit(0);
+//		}
+//	}
+//}
+
+//void DataCollector::erase_stored_measure(std::vector<MeasureKey>, unsigned int cache_id, unsigned char stored_data) {
+//	if (all_stored_measures_register_.find(cache_id) != all_stored_measures_register_.end()) {	// if the cache is in the register
+//
+//	} else {	// the cache is not in the register
+//		cerr << "(DataCollector::erase_stored_measure): cache " << cache_id << " not in the register" << endl;
+//	}
+//}
 
 void DataCollector::erase_msr(unsigned int msr_id, unsigned int sns_id) {
 	MeasureKey key(sns_id, msr_id);	// key associated with this measure
@@ -277,16 +324,21 @@ void DataCollector::erase_bl(unsigned int sensor_id) {
 	}
 }
 
-void DataCollector::record_user_movement(unsigned int user_id, double distance) {
+void DataCollector::record_user_movement(unsigned int user_id, double distance, double speed) {
 	if (user_register_.find(user_id) == user_register_.end()) {	// if the user is not in the register
 		UserInfo user_info;
 		user_info.born_time_ = MyToolbox::current_time_;
+		user_info.speed_ = speed;
 		user_register_.insert(pair<unsigned int, UserInfo>(user_id, user_info));
 //		cout << "user " << user_id << " added to register" << endl;
 	} else {	// if the user is already in the register
 //		cout << "Error! I'm trying to insert the same user twice!" << endl;
 		user_register_.find(user_id)->second.covered_distance_ += distance;
 		user_register_.find(user_id)->second.num_steps_++;
+		if (user_register_.find(user_id)->second.speed_ != speed) {
+			cerr << "DataCollector::record_user_movement: speeds of user " << user_id << " do not coincide!" << endl;
+			exit(0);
+		}
 	}
 }
 
@@ -354,4 +406,48 @@ double DataCollector::graph_density() {
 	double E = num_outer_edges / 2;
 	double V = double(MyToolbox::num_storage_nodes_);
 	return 2 * E / (V * (V - 1));
+}
+
+bool DataCollector::check_measure_consistency(vector<MeasureKey> measure_keys, unsigned char stored_data) {
+	unsigned char my_xor = 0;
+	for (vector<MeasureKey>::iterator key_it = measure_keys.begin(); key_it != measure_keys.end(); key_it++) {
+		unsigned int sns_id = key_it->sensor_id_;
+		unsigned int msr_id = key_it->measure_id_;
+		if (measure_data_all_register_.find(sns_id) == measure_data_all_register_.end()) {
+			cerr << "DataCollector::check_measure_consistency - sensor " << sns_id << " not in the register" << endl;
+			exit(0);
+		}
+		if (measure_data_all_register_.find(sns_id)->second.find(msr_id) == measure_data_all_register_.find(sns_id)->second.end()) {
+			cerr << "DataCollector::check_measure_consistency - measure " << msr_id << " of sensor " << sns_id << " not in the register" << endl;
+			exit(0);
+		}
+		unsigned char msr_data = measure_data_all_register_.find(sns_id)->second.find(msr_id)->second;
+		my_xor ^= msr_data;
+	}
+	if (stored_data != my_xor) {
+		return false;
+	}
+	return true;
+}
+
+bool DataCollector::check_user_decoding(map<MeasureKey, unsigned char> decoded_symbols) {
+	for (map<MeasureKey, unsigned char>::iterator sym_it = decoded_symbols.begin(); sym_it != decoded_symbols.end(); sym_it++) {
+		MeasureKey key = sym_it->first;
+		unsigned int sns_id = key.sensor_id_;
+		unsigned int msr_id = key.measure_id_;
+		unsigned char user_data = sym_it->second;
+		if (measure_data_all_register_.find(sns_id) == measure_data_all_register_.end()) {
+			cerr << "DataCollector::check_user_decoding - sensor " << sns_id << " not in the register" << endl;
+			exit(0);
+		}
+		if (measure_data_all_register_.find(sns_id)->second.find(msr_id) == measure_data_all_register_.find(sns_id)->second.end()) {
+			cerr << "DataCollector::check_user_decoding - measure " << msr_id << " of sensor " << sns_id << " not in the register" << endl;
+			exit(0);
+		}
+		unsigned char actual_data = measure_data_all_register_.find(sns_id)->second.find(msr_id)->second;
+		if (user_data != actual_data) {
+			return false;
+		}
+	}
+	return true;
 }

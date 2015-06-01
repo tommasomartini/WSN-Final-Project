@@ -39,16 +39,13 @@ vector<Event> SensorNode::generate_measure() {
 //  if (distribution(generator)) {
 //  }
 
-  if (++how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
-	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
-	  failure_event.set_agent(this);
-	  new_events.push_back(failure_event);
-	  return new_events;	// return
-  }
-
-//  if (!first_generated_measure_) {
-//	  old_measure_data = new_measure_data;
+//  if (++how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
+//	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
+//	  failure_event.set_agent(this);
+//	  new_events.push_back(failure_event);
+//	  return new_events;	// return
 //  }
+
   new_measure_data = get_measure_data();  // generate a random measure
   measure_id_++;
 
@@ -101,14 +98,10 @@ vector<Event> SensorNode::ping() {
 }
 
 void SensorNode::set_supervisor() {
-  // choose my supervisor as the first node in my list (does not matter how I choose it)
-//  my_supervisor_id_ = near_storage_nodes_->begin()->first;
   my_supervisor_id_ = get_random_neighbor();
 }
 
 void SensorNode::breakup() {
-//	cout << "Sensor " << node_id_ << " dead" << endl;
-//	data_collector->register_broken_sensor(node_id_);
 	do_ping_ = false;
 }
 
@@ -129,11 +122,6 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 //		cout << " queue not empty" << endl;
 
 		// do not add it! I will use this event to send the actual measure!
-
-//		Event event_to_enqueue(0, Event::storage_node_try_to_send);	// execution time does not matter now...
-//		event_to_enqueue.set_agent(this);
-//		event_to_enqueue.set_message(message);
-//		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
 //		cout << " queue empty" << endl;
 		map<unsigned int, MyTime> timetable = MyToolbox::timetable_;  // download the timetable (I have to upload the updated version later!)
@@ -226,7 +214,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			Event try_again_event(schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
 			try_again_event.set_message(message);
-			// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
+			// FIXME: uncomment the following line to make the node try to send continuously. If the line is commented, if the node is left alone it does not generate new events ever
 			//				new_events.push_back(try_again_event);
 			return new_events;	// return, there's no more I can do!
 		}
