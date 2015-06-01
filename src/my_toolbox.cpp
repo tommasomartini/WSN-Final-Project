@@ -57,8 +57,6 @@ map<unsigned int, User> MyToolbox::users_map_;
 
 default_random_engine MyToolbox::generator_;
 
-bool MyToolbox::end_ = false;
-
 void MyToolbox::set_close_nodes(User* user) {
 	user->near_sensors_.clear();
 	user->near_storage_nodes_.clear();
@@ -114,7 +112,6 @@ void MyToolbox::set_close_nodes(User* user) {
 **************************************/
 void MyToolbox::initialize_toolbox() {
   cout << "Toolbox initialization..." << endl;
-  end_ = false;
   cout << "Setting maximum number of hops: ";
   max_num_hops_ = ceil(C1_ * num_storage_nodes_ * log(num_storage_nodes_));
   cout << max_num_hops_ << endl;

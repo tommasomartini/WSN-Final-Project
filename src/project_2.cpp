@@ -333,14 +333,14 @@ int main() {
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();
+		if (next_event.get_event_type() == Event::event_type_end) {
+			cout << "End reached!" << endl;
+			break;
+		}
 		main_event_queue.pop();
 		vector<Event> new_events = next_event.execute_action();
 		for (vector<Event>::iterator event_it = new_events.begin(); event_it != new_events.end(); event_it++) {
 			main_event_queue.push(*event_it);
-		}
-		if (MyToolbox::end_) {
-			cout << "End reached!" << endl;
-			break;
 		}
 	}
 

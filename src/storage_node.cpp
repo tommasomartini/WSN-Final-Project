@@ -108,6 +108,7 @@ vector<Event> StorageNode::receive_measure2(Measure* measure) {
 		delete measure;	// this measure will be no more used
 	}
 
+	cout << "fine" << endl;
 	return new_events;
 }
 ///*  Receive a measure either from a sensor or from another cache node

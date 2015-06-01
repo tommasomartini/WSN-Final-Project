@@ -121,8 +121,6 @@ class MyToolbox {
 
   static std::default_random_engine generator_;
 
-  static bool end_;	// says whether the program should be terminated
-
   // functions
   static void initialize_toolbox();
   static bool is_node_active(unsigned int /*node_id*/);

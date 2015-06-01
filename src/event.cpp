@@ -152,6 +152,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_cache_gets_blacklist: {
+		cout << "=== event_type_gets blacklist" << endl;
 		new_events = ((StorageNode*)agent_)->spread_blacklist((BlacklistMessage*)message_);
 		break;
 	}
@@ -178,6 +179,7 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_user_receives_user_data: {
+		cout << "=== event_type_user_receives_user_data" << endl;
 		new_events = ((User*)agent_)->receive_user_data((UserInfoMessage*)message_);
 		break;
 	}
@@ -192,10 +194,12 @@ vector<Event> Event::execute_action() {
 		break;
 	}
 	case event_type_sensor_ping: {
+		cout << "=== event_type_ping" << endl;
 		new_events = ((SensorNode*)agent_)->ping();
 		break;
 	}
 	case event_type_cache_checks_sensors: {
+		cout << "=== event_type_check sensors" << endl;
 		new_events = ((StorageNode*)agent_)->check_sensors();
 		break;
 	}
@@ -212,11 +216,6 @@ vector<Event> Event::execute_action() {
 	case event_type_user_gets_user_hello: {
 		cout << "=== event_type_user_gets_user_hello" << endl;
 		new_events = ((User*)agent_)->receive_user_request(message_->get_sender_node_id());
-		break;
-	}
-	case event_type_end: {
-		cout << "=== event_type_end " << endl;
-		MyToolbox::end_ = true;
 		break;
 	}
 	default:
