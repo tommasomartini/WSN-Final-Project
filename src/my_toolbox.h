@@ -95,16 +95,13 @@ class MyToolbox {
 
   static int square_size_;
 
-  static double user_velocity_;
-  static MyTime user_update_time_;
+  static MyTime user_observation_time_;
 
   static MyTime processing_time_;
 
   static MyTime max_tx_offset_;
 
-  static MyTime user_observation_time_;
-
-  static MyTime max_measure_generation_delay_;
+  static MyTime measure_generation_delay_;
   static double sensor_failure_prob_;
   static int num_measures_for_sensor_;
 

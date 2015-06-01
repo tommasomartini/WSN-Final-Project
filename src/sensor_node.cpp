@@ -31,7 +31,7 @@ vector<Event> SensorNode::generate_measure() {
 
 //  default_random_engine generator = MyToolbox::generator_;
 //  uniform_int_distribution<int> unif_distrib(MyToolbox::max_measure_generation_delay_ / 2000, MyToolbox::max_measure_generation_delay_ / 1000);	// between 5ms and 10ms
-  MyTime rndm_time = MyToolbox::max_measure_generation_delay_;	// FIXME not random at all. Uncomment the previous line for randomness
+  MyTime rndm_time = MyToolbox::measure_generation_delay_;	// FIXME not random at all. Uncomment the previous line for randomness
   MyTime time_next_measure_or_failure = MyToolbox::current_time_ + rndm_time;
 
 //	Uncomment the following lines to use random breaks

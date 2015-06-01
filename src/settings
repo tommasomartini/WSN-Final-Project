@@ -1,4 +1,4 @@
-num_storage_nodes=180 180
+num_storage_nodes=150 180
 num_sensors=10 50
 num_users=10
 
@@ -8,27 +8,24 @@ bitrate=10 in MBit/s
 bit_error_prob=0.01
 tx_range=15 15 in m
 
-ping_frequency=1000000000 1000000000
-check_sensors_frequency=2000000000 5000000000  
+ping_frequency=1 h 
+check_sensors_frequency=1 h   
 
-C1=3
+C1=8
 c0_robust=0.2
 delta_robust=0.05
 
 square_size=100 100 in m 
 
-user_velocity=0.8 m/s
-user_update_time=2000000000 ns
+processing_time=1000000 ns (= 1 millisecond)
 
-processing_time=1000 ns
+max_tx_offset=5000000 ns (= 5 milliseconds)
 
-max_tx_offset=1000000000 ns
-
-user_observation_time=1000000000 ns (= 10s)
+user_observation_time=5 s (= 10s)
 intra_user_communication=1  0 for "no", any number different from 0 for "yes"
 
-max_measure_generation_delay=1800000000000 ns 1800000000000
+measure_generation_delay=30 min 
 sensor_failure_prob=0  0.2
 num_measures_for_sensor=3
 
-end_time=1 h
+end_time=24 h

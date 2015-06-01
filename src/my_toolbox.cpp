@@ -38,16 +38,13 @@ double MyToolbox::delta_robust_ = 0;
 
 int MyToolbox::square_size_ = 0;
 
-double MyToolbox::user_velocity_ = 0;
-MyToolbox::MyTime MyToolbox::user_update_time_ = 0;
+MyToolbox::MyTime MyToolbox::user_observation_time_ = 0;
 
 MyToolbox::MyTime MyToolbox::processing_time_ = 0;
 
 MyToolbox::MyTime MyToolbox::max_tx_offset_ = 0;
 
-MyToolbox::MyTime MyToolbox::user_observation_time_ = 0;
-
-MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
+MyToolbox::MyTime MyToolbox::measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
 int MyToolbox::num_measures_for_sensor_ = 0;
 
@@ -140,19 +137,6 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
   }
   return false;
 }
-//	TODO superfluo
-//bool MyToolbox::verify_node_id(unsigned int node_id) {
-//	if (sensors_map_.find(node_id) != sensors_map_.end()) {
-//		return true;
-//	}
-//	if (storage_nodes_map_.find(node_id) != storage_nodes_map_.end()) {
-//		return true;
-//	}
-//	if (users_map_.find(node_id) != users_map_.end()) {
-//		return true;
-//	}
-//	return false;
-//}
 
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
 	vector<unsigned int>::iterator sensor_to_remove = find(alive_sensors_.begin(), alive_sensors_.end(), sensor_id);
@@ -177,9 +161,6 @@ void MyToolbox::remove_sensor(unsigned int sensor_id) {
 			for (map<unsigned int, StorageNode>::iterator node_it = storage_nodes_map_.begin(); node_it != storage_nodes_map_.end(); node_it++) {
 				node_it->second.keep_checking_sensors_ = false;
 			}
-//			for (map<unsigned int, User>::iterator user_it = users_map_.begin(); user_it != users_map_.end(); user_it++) {
-//				user_it->second.keep_moving_ = false;
-//			}
 		}
 	} else {
 		cout << "Toolbox is trying to remove a sensor which doesn't exist!" << endl;
@@ -220,7 +201,6 @@ vector<Event> MyToolbox::replace_user(unsigned int user_id) {
 		new_events.push_back(first_step);
 
 		users_map_.find(user_id)->second.data_collector->record_user_replacement(user_id, new_user.get_node_id());
-		cout << "MyToolbox: new user: " << new_user.get_node_id() << " replaces user " << user_id << endl;
 		users_map_.erase(user_id);
 	}
 
@@ -230,15 +210,6 @@ vector<Event> MyToolbox::replace_user(unsigned int user_id) {
 unsigned int MyToolbox::get_node_id() {
   return node_id_++;
 }
-
-// TODO define this
-//User* MyToolbox::new_user(){
-//    double y_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-//    double x_coord = rand() % (MyToolbox::get_space_precision()* MyToolbox::get_space_precision());
-////    User* new_user = new User(users_.size(),y_coord,x_coord);
-////    users_.push_back (new_user);
-//    return new User();
-//}
 
 int MyToolbox::get_ideal_soliton_distribution_degree() {
   uniform_real_distribution<double> distribution(0.0, 1.0);

@@ -78,25 +78,25 @@ void import_settings() {
 				} else if (value_name == "tx_range") {
 					MyToolbox::tx_range_ = (double)num;
 				} else if (value_name == "ping_frequency") {
-					MyToolbox::ping_frequency_ = (MyTime)num;
+					MyTime val = (int)num * 60 * 60 * pow(10, 9);
+					MyToolbox::ping_frequency_ = val;
 				} else if (value_name == "check_sensors_frequency") {
-					MyToolbox::check_sensors_frequency_ = (MyTime)num;
+					MyTime val = (int)num * 60 * 60 * pow(10, 9);
+					MyToolbox::check_sensors_frequency_ = val;
 				} else if (value_name == "C1") {
 					MyToolbox::C1_ = (double)num;
 				} else if (value_name == "square_size") {
 					MyToolbox::square_size_ = (int)num;
-				} else if (value_name == "user_velocity") {
-					MyToolbox::user_velocity_ = (double)num;
-				} else if (value_name == "user_update_time") {
-					MyToolbox::user_update_time_ = (MyTime)num;
 				} else if (value_name == "processing_time") {
 					MyToolbox::processing_time_ = (MyTime)num;
 				} else if (value_name == "max_tx_offset") {
 					MyToolbox::max_tx_offset_ = (MyTime)num;
 				} else if (value_name == "user_observation_time") {
-					MyToolbox::user_observation_time_ = (MyTime)num;
-				} else if (value_name == "max_measure_generation_delay") {
-					MyToolbox::max_measure_generation_delay_ = (MyTime)num;
+					MyTime val = (int)num * pow(10, 9);
+					MyToolbox::user_observation_time_ = val;
+				} else if (value_name == "measure_generation_delay") {
+					MyTime val = (int)num * 60 * pow(10, 9);
+					MyToolbox::measure_generation_delay_ = val;
 				} else if (value_name == "sensor_failure_prob") {
 					MyToolbox::sensor_failure_prob_ = (double)num;
 				} else if (value_name == "num_measures_for_sensor") {
@@ -216,28 +216,6 @@ bool network_setup() {
 		}
 	}
 
-	// TODO debug
-	//  for (map<unsigned int, Node*>::iterator it = storage_nodes_map.begin(); it != storage_nodes_map.end(); it++) {
-	//  	  double x = it->second->get_x_coord();
-	//  	  double y = it->second->get_y_coord();
-	//  	  cout << "Cache " << it->second->get_node_id() << " (" << x << ", " << y << ")" << endl;
-	//    }
-	//
-	//  for (map<unsigned int, Node*>::iterator it = sensors_map.begin(); it != sensors_map.end(); it++) {
-	//	  double x = it->second->get_x_coord();
-	//	  double y = it->second->get_y_coord();
-	//	  cout << "Sensor " << it->second->get_node_id() << " (" << x << ", " << y << ")" << endl;
-	//	  SensorNode* sns = (SensorNode*)it->second;
-	//	  map<unsigned int, Node*> n_map = *(sns->near_storage_nodes_);
-	//	  for (map<unsigned int, Node*>::iterator iit = n_map.begin(); iit != n_map.end(); iit++) {
-	//		  double xx = iit->second->get_x_coord();
-	//		  double yy = iit->second->get_y_coord();
-	//		  double dd = sqrt(pow(x - xx, 2) + pow(y - yy, 2));
-	//		  cout << " -" << iit->second->get_node_id() << ": (" << xx << ", " << yy << "), d=" << dd << endl;
-	//	  }
-	//  }
-	// end debug
-
 	double density = data_coll->graph_density();
 	cout << "Graph density = " << density << endl;
 
@@ -255,18 +233,15 @@ bool network_setup() {
 	// Set sensors' supervisors
 	for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
 		(sns_it->second).set_supervisor();
-//		cout << "Sensor " << sns_it->second.get_node_id() << " sup " << sns_it->second.get_my_supervisor_id()
-//		    												<< " #neighbours: " << sns_it->second.near_storage_nodes_.size() << endl;
 	}
 
 	return true;
 }
 
 void activate_measure_generation() {
-	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::max_measure_generation_delay_ * 1.0);
+	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::measure_generation_delay_ * 1.0);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
 		Event first_measure(first_measure_distrib(generator), Event::event_type_generated_measure);
-//		cout << "first measure time " << first_measure.get_time() << endl;
 		first_measure.set_agent(&(sensor_pair.second));
 		first_measure.set_agent_id(sensor_pair.first);
 		main_event_queue.push(first_measure);
@@ -297,7 +272,7 @@ void activate_users() {
 	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
 	int counter = 1;	// TODO debug
 	for (auto& user_pair : MyToolbox::users_map_) {
-		MyTime first_step_time = 1 /* * MyToolbox::num_sensors_ */* MyToolbox::max_measure_generation_delay_ + 5 * MyToolbox::get_tx_offset();
+		MyTime first_step_time = 1 /* * MyToolbox::num_sensors_ */* MyToolbox::measure_generation_delay_ + 5 * MyToolbox::get_tx_offset();
 		Event first_step(first_step_time, Event::event_type_user_moves);
 		first_step.set_agent(&(user_pair.second));
 		first_step.set_agent_id(user_pair.first);
@@ -316,6 +291,7 @@ int main() {
 	data_coll = new DataCollector();
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
+
 
 //	if (std::ifstream("move_user.txt")) {
 //		remove("move_user.txt");

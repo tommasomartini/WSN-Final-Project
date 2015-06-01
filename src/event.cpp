@@ -55,82 +55,13 @@ void Event::set_message(Message* message) {
 	message_ = message;
 }
 
-string Event::int2type(int num) {
-	string res = "unknonw";
-	switch (num) {
-	case 0:
-		res = "sensor_generate_measure";
-		break;
-	case 1:
-		res = "sensor_try_to_send";
-		break;
-	case 2:
-		res = "storage_node_try_to_send";
-		break;
-	case 3:
-		res = "storage_node_receive_measure";
-		break;
-	case 4:
-		res = "node_send_to_user";
-		break;
-	case 5:
-		res = "broken_sensor";
-		break;
-	case 6:
-		res = "user_try_to_send";
-		break;
-	case 7:
-		res = "user_try_to_send_to_user";
-		break;
-	case 8:
-		res = "blacklist_sensor";
-		break;
-	case 9:
-		res = "sensor_ping";
-		break;
-	case 10:
-		res = "check_sensors";
-		break;
-	case 11:
-		res = "remove_measure";
-		break;
-	case 12:
-		res = "move_user";
-		break;
-	case 13:
-		res = "user_send_to_user";
-		break;
-	case 14:
-		res = "user_receive_data";
-		break;
-	case 15:
-		res = "new_storage_node";
-		break;
-	case 16:
-		res = "add_sensor";
-		break;
-	case 17:
-		res = "remove_node";
-		break;
-	default:
-		res = "unknown";
-		break;
-	}
-	return res;
-}
-
-
 vector<Event> Event::execute_action() {
-
-	//  unsigned int gh_id = ((Node*)agent_)->get_node_id();
-	//  cout << "EXECUTION: " << MyToolbox::int2nodetype(gh_id) << " " << gh_id << ", event type: " << int2type(event_type_) << ", current time: " << time_ << endl;
-
 	MyToolbox::current_time_ = time_; // keep track of the time flowing by. I must know what time it is in every moment
 	vector<Event> new_events;
 
 	// check whether the agent supposed to execute this action is still existing
 	if (!MyToolbox::is_node_active(agent_id_)) {
-		cout << "Skip this event (type: " << event_type_ << "); unknown agent: " << agent_id_ << "!" << endl;
+//		cout << "Skip this event (type: " << event_type_ << "); unknown agent: " << agent_id_ << "!" << endl;
 		return new_events;
 	}
 
