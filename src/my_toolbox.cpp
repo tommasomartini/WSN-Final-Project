@@ -51,6 +51,8 @@ MyToolbox::MyTime MyToolbox::max_measure_generation_delay_ = 0;
 double MyToolbox::sensor_failure_prob_ = 0;
 int MyToolbox::num_measures_for_sensor_ = 0;
 
+bool MyToolbox::intra_user_communication_ = false;
+
 map<unsigned int, SensorNode> MyToolbox::sensors_map_;
 map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_;
 map<unsigned int, User> MyToolbox::users_map_;
@@ -93,7 +95,7 @@ void MyToolbox::set_close_nodes(User* user) {
 
 	for (auto& us_node_elem : users_map_) {
 		User* us_node = &(us_node_elem.second);
-		if (us_node != user) {  // does not make sense to include myself among my neighbours
+		if (us_node_elem.second.get_node_id() != user->get_node_id()) {  // does not make sense to include myself among my neighbours
 			double his_x = us_node->get_x_coord();
 			double his_y = us_node->get_y_coord();
 			double dist = sqrt(pow(my_x - his_x, 2) + pow(my_y - his_y, 2));  // compute the distance between the two nodes
@@ -118,6 +120,12 @@ void MyToolbox::initialize_toolbox() {
   cout << "Setting default random engine...";
   generator_ = default_random_engine(time(NULL));
   cout << " done!" << endl;
+  cout << "Intra-user communcation";
+  if (intra_user_communication_) {
+	  cout << " activated" << endl;
+  } else {
+	  cout << " not activated" << endl;
+  }
 }
 
 bool MyToolbox::is_node_active(unsigned int node_id) {
@@ -197,7 +205,8 @@ vector<Event> MyToolbox::replace_user(unsigned int user_id) {
 		first_step.set_agent(&(users_map_.find(new_user.get_node_id())->second));
 		new_events.push_back(first_step);
 
-//		cout << "MyToolbox: new user: " << new_user.get_node_id() << " replaces user " << user_id << endl;
+		users_map_.find(user_id)->second.data_collector->record_user_replacement(user_id, new_user.get_node_id());
+		cout << "MyToolbox: new user: " << new_user.get_node_id() << " replaces user " << user_id << endl;
 		users_map_.erase(user_id);
 	}
 

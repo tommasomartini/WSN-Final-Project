@@ -46,8 +46,6 @@ vector<Event> User::move() {
 //		return new_events;
 //	}
 	if (decoding_succeeded && event_queue_.empty()) {
-//		keep_moving_ = false;
-//		cout << " " << node_id_ << " dec ok e coda vuota" << endl;
 		return MyToolbox::replace_user(node_id_);
 //		return new_events;
 	}
@@ -120,10 +118,16 @@ vector<Event> User::move() {
 			}
 		}
 
-		bool interrogate_other_users = false;
+		bool interrogate_other_users = true;
 		if (interrogate_other_users) {
+			cout << "USER " << node_id_ << " interrogate users:" << endl;
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
+				cout << "  - user " << user_it->first;
 				if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), user_it->first) == interrogated_nodes_.end()) {	// if I haven't already queried this node
+//					if (node_id_ == user_it->second->get_node_id()) {
+//						cerr << "qui" << endl;
+//						exit(0);
+//					}
 					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
 					Event hello_event(event_time, Event::event_type_user_gets_user_hello);
 					Message* empty_msg = new Message();
@@ -134,6 +138,9 @@ vector<Event> User::move() {
 					hello_event.set_agent(user_it->second);
 					new_events.push_back(hello_event);
 					interrogated_nodes_.push_back(user_it->first);
+					cout << " -> QUERY (user_it->second = " << user_it->second->get_node_id() << ")" << endl;
+				} else {
+					cout << " -> already queried" << endl;
 				}
 			}
 		}
@@ -377,6 +384,8 @@ vector<Event> User::try_retx(Message* message) {
 vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	vector<Event> new_events;
 
+	cout << " --- user " << node_id_ << " receives info from user " << user_info_msg->get_sender_node_id() << endl;
+
 	if (decoding_succeeded) {	// if I already made the decoding...
 		return new_events;	// ...ignore this message
 	}
@@ -409,41 +418,87 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 		}
 	}
 
-	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
+	// I have stored all the info brought by this node info msg, I don't need it anymore, I can release it
 	delete user_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
 		return new_events;	// ...return and do not do anything more: I have to wait for other output symbols
 	}
 
-	if (message_passing()) {	// message passing succeeded: I have decoded all the symbols
+	bool msg_passing_ok = message_passing();
+	if (msg_passing_ok && data_collector->check_user_decoding(decoded_symbols_)) {	// message passing succeeded: I have decoded all the symbols
+
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
+		data_collector->record_user_decoding(node_id_, decoded_symbols_);
+
 		for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
-			unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
-			int xor_counter = 0;	// ...how many measure I did xor
-			vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
-			vector<MeasureKey> removed;
-			vector<MeasureKey> inserted;
-			for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
-				unsigned int out_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
-				unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data I want
-				ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-				xor_counter++;	// count how many measure I am xoring
-				removed.push_back(*out_it);
-				if (find(dead_sensors_.begin(), dead_sensors_.end(), out_sns_id) == dead_sensors_.end()) {	// if this node is not dead I want to update the measure
-					unsigned int up_msr_id = updated_sensors_measures_.find(out_sns_id)->second;	// get the id of the most updated measure for this sensor
-					MeasureKey key(out_sns_id, up_msr_id);	// create a key
-					unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-					ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
-					inserted.push_back(key);
+			if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbors...
+				unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+				int xor_counter = 0;	// ...how many measure I did xor
+				vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
+				map<unsigned int, vector<unsigned int>> update_info;
+				for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
+					MeasureKey outdated_msr_key = *out_it;	// key of the outdated measure the cache wants to erase
+					unsigned int outdated_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure
+					unsigned int outdated_msr_id = out_it->measure_id_;	// measure id of this outdated measure
+					bool have_decoded_this_measure = decoded_symbols_.find(outdated_msr_key) != decoded_symbols_.end();
+					bool measure_of_dead_sensor = find(dead_sensors_.begin(), dead_sensors_.end(), outdated_sns_id) != dead_sensors_.end();
+					bool have_newer_msr_for_this_sns = false;
+					unsigned int newest_msr_for_this_sns = updated_sensors_measures_.find(outdated_sns_id)->second;
+					if (newest_msr_for_this_sns > outdated_msr_id) {
+						have_newer_msr_for_this_sns = true;
+					}
+					/* TODO
+					 * When I do the message passing, could I decode only some of the measure I collected? Don't know... Just in case I state that the
+					 * message passing is ok only if the most recent measures I have have been decoded!
+					 * Then I could  not have the "pure" measures a cache is looking for. Better to check it!
+					 */
+					if (have_decoded_this_measure) {	// if I have decoded this measure
+						if (measure_of_dead_sensor) {	// if this node is dead I want just to remove this measure
+							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
+							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+							xor_counter++;	// count how many measure I am xoring
+							vector<unsigned int> inner_vec;
+							inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
+							inner_vec.push_back(0);		// store 0 because I don't want to replace this measure
+							inner_vec.push_back(0);		// store a random number, I won't use this value
+							update_info.insert(pair<unsigned int, vector<unsigned int>>(outdated_sns_id, inner_vec));	// add this entry to the map
+						} else if (have_newer_msr_for_this_sns) { // otherwise, if this sensor is not dead and I have a newer measure I want to update it
+							/*
+							 * Scenario: the cache A has (s10, 1), but receives (s10, 3). There is (s10, 2) missing.
+							 * Cache A passes me (s10, 1), but tells me this is an outdated measure. Anyway I only receive measure 1 of sensor 10,
+							 * then (s10, 1) is the most update measure I know for sensor 10.
+							 * It does not make any sense to pass cache A again MY most updated measure, because it is equal to his!
+							 * Moreover, it does not neither make any sense to erase this measure from the cache! Better leave that another user,
+							 * who decoded (s10, 3), updates cache A.
+							 */
+							unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
+							ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+							xor_counter++;	// count how many measure I am xoring
+							MeasureKey key(outdated_sns_id, newest_msr_for_this_sns);	// create a key
+							unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
+							ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+
+							vector<unsigned int> inner_vec;
+							inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
+							inner_vec.push_back(1);		// store 1 because I want to replace this measure
+							inner_vec.push_back(newest_msr_for_this_sns);		// store the id of the newest measure I have for this sensor
+							update_info.insert(pair<unsigned int, vector<unsigned int>>(outdated_sns_id, inner_vec));	// add this entry to the map
+						} else {	// sensor is not dead, but I don't have a newer measure
+							// do nothing
+						}
+					} else {	// I have NOT decoded this measure
+					}
 				}
-			}
-			if (xor_counter > 0) {	// if I have at least one measure to remove or update
-				OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, removed, inserted);	// create an outdated measure message
-				vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
-				for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
-					new_events.push_back(*event_it);
+				if (xor_counter > 0) {	// if I have at least one measure to remove or update for this cache
+					OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, update_info);	// create an outdated measure message
+					vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
+					for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+						new_events.push_back(*event_it);
+					}
 				}
+			} else {	// cache not in my neighborhood
+				// do nothing
 			}
 		}
 	} else {	// message passing failed: symbols not decoded...
@@ -457,8 +512,15 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
  */
 vector<Event> User::receive_user_request(unsigned int next_user_id) {
 	vector<Event> new_events;
-	UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
-	send(next_user_id, user_info_msg);
+	cout << "User " << node_id_ << " receives user request from " << next_user_id << endl;
+	if (near_users_.find(next_user_id) != near_users_.end()) {	// this user is still among my neighbors
+		cout << " still exists" << endl;
+		UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
+		new_events = send(next_user_id, user_info_msg);
+
+	} else {
+		cout << " exists no more" << endl;
+	}
 	return new_events;
 }
 
@@ -514,6 +576,7 @@ bool User::message_passing() {
 			}
 		} else {  // no symbol released at this round
 			if (info.empty()) {  // if no other symbols
+				// FIXME controlla che abbia decodificato tutte le misure per me piu' NUOVE, non che e abbia decodificata una per sensore!
 				vector<unsigned int> seen_sensors;
 				for (map<MeasureKey, unsigned char>::iterator it = resolved_symbols.begin(); it != resolved_symbols.end(); it++) {	// for each resolved symbol...
 					if (find(seen_sensors.begin(), seen_sensors.end(), it->first.sensor_id_) == seen_sensors.end()) {	// ...if I didn't already store a measure of its...

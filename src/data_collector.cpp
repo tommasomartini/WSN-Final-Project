@@ -15,6 +15,12 @@ void DataCollector::report() {
 	cout << " > Report <" << endl;
 	cout << "+ " << MyToolbox::num_storage_nodes_ << " storage nodes" << endl;
 	cout << "+ " << MyToolbox::num_sensors_ << " sensors with " << MyToolbox::num_measures_for_sensor_ << " measures each" << endl;
+	cout << "+ Intra-user communcation";
+	  if (MyToolbox::intra_user_communication_) {
+		  cout << " activated" << endl;
+	  } else {
+		  cout << " not activated" << endl;
+	  }
 
 	// Blacklist
 	if (blacklist_register_.size() > 0) {
@@ -178,6 +184,32 @@ void DataCollector::report() {
 //			double speed = user_it->second.speed_;
 //			cout << "  User " << id << " speed " << speed << endl;
 //		}
+
+		cout << " - User replacements:" << endl;
+		map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
+		vector<unsigned int> to_remove_entries;
+		bool stop = false;
+		while (!stop) {	// while there is still some users...
+			to_remove_entries.clear();	// clear the entries to remove
+			unsigned int replaced_user = replacements_copy.begin()->first;
+			to_remove_entries.push_back(replaced_user);
+			cout << "   - " << replaced_user;
+			while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
+				unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
+				to_remove_entries.push_back(replacing_user);
+				cout << " -> " << replacing_user;	// print it
+				replaced_user = replacing_user;	// now let's see if this user has been replaced again
+			}
+			cout << endl;
+			for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
+				replacements_copy.erase(*it);	// remove it
+			}
+			if (replacements_copy.empty()) {
+				stop = true;
+			} else {
+				stop = false;
+			}
+		}
 	}
 }
 
@@ -393,6 +425,15 @@ void DataCollector::record_user_query(unsigned int user_id, unsigned int queried
 
 	} else {	// if the user is not in the register
 		cout << "Error! I'm trying to update a user not in the register!" << endl;
+	}
+}
+
+void DataCollector::record_user_replacement(unsigned int replaced, unsigned int replacing) {
+	if (user_replacement_register_.find(replaced) == user_replacement_register_.end()) {	// replaced user not yet in the register
+		user_replacement_register_.insert(pair<unsigned int, unsigned int>(replaced, replacing));
+	} else {	// replaced user already in the register
+		cerr << "DataCollector::record_user_replacement: user " << replaced << " already in the replacement register" << endl;
+		exit(0);
 	}
 }
 

@@ -56,9 +56,9 @@ class DataCollector {
   std::map<MeasureKey, MeasureInfo> measures_register_;
   std::map<MeasureKey, unsigned char> measure_data_register_;
   std::map<unsigned int, std::map<unsigned int, unsigned char>> measure_data_all_register_;
-//  std::map<unsigned int, std::map<MeasureKey, std::pair<unsigned char, unsigned char>>> all_stored_measures_register_;
   std::map<unsigned int, BlacklistInfo> blacklist_register_;
   std::map<unsigned int, UserInfo> user_register_;
+  std::map<unsigned int, unsigned int> user_replacement_register_;
 
   void report();
   double graph_density();
@@ -73,16 +73,12 @@ class DataCollector {
   void record_user_rx(unsigned int);
   void record_user_decoding(unsigned int, std::map<MeasureKey, unsigned char>);
   void record_user_query(unsigned int /*user id*/, unsigned int /*node or user id*/, bool /*is a node*/);
+  void record_user_replacement(unsigned int /*replaced user id*/, unsigned int /*replacing user id*/);
 
   bool check_measure_consistency(std::vector<MeasureKey> /*measure keys*/, unsigned char /*stored data*/);
   bool check_user_decoding(std::map<MeasureKey, unsigned char>);
 
-//  void record_stored_measure(unsigned int /*msr id*/, unsigned int /*sns id*/,
-//  		  unsigned int /*cache id*/, unsigned char /*received data*/, unsigned char /*stored data*/);
-//  void erase_stored_measure(std::vector<MeasureKey>, unsigned int /*cache id*/, unsigned char /*stored data*/);
-
  private:
-//  bool check_measure_storage();
 };
 
 #endif

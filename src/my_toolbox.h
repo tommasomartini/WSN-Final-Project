@@ -108,6 +108,8 @@ class MyToolbox {
   static double sensor_failure_prob_;
   static int num_measures_for_sensor_;
 
+  static bool intra_user_communication_;
+
   // Maps <node_id, node_reference>
   static std::map<unsigned int, SensorNode> sensors_map_;
   static std::map<unsigned int, StorageNode> storage_nodes_map_;

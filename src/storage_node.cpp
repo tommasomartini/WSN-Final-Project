@@ -229,21 +229,23 @@ void StorageNode::receive_ping(unsigned int sensor_id) {
  */
 vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 	vector<Event> new_events;
-	vector<MeasureKey> sources;
-	vector<MeasureKey> outdated_measures;
-	vector<unsigned int> dead_sensors;
-	for (map<unsigned int, SensorInfo>::iterator info_it = stored_measures_.begin(); info_it != stored_measures_.end(); info_it++) {
-		SensorInfo sns_info = info_it->second;
-		sources.push_back(sns_info.most_recent_key_);
-		if (!sns_info.following_) {
-			outdated_measures.push_back(sns_info.most_recent_key_);
-			if (!sns_info.alive_) {
-				dead_sensors.push_back(info_it->first);
+	if (near_users_.find(sender_user_id) != near_users_.end()) {	// if this user is still among my neighbors
+		vector<MeasureKey> sources;
+		vector<MeasureKey> outdated_measures;
+		vector<unsigned int> dead_sensors;
+		for (map<unsigned int, SensorInfo>::iterator info_it = stored_measures_.begin(); info_it != stored_measures_.end(); info_it++) {
+			SensorInfo sns_info = info_it->second;
+			sources.push_back(sns_info.most_recent_key_);
+			if (!sns_info.following_) {
+				outdated_measures.push_back(sns_info.most_recent_key_);
+				if (!sns_info.alive_) {
+					dead_sensors.push_back(info_it->first);
+				}
 			}
 		}
+		NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, sources, outdated_measures, dead_sensors);
+		new_events = send(sender_user_id, node_info_msg);
 	}
-	NodeInfoMessage* node_info_msg = new NodeInfoMessage(node_id_, xored_measure_, sources, outdated_measures, dead_sensors);
-	new_events = send(sender_user_id, node_info_msg);
 	return new_events;
 }
 

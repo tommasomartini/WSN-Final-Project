@@ -107,6 +107,13 @@ void import_settings() {
 					MyToolbox::delta_robust_ = (double)num;
 				} else if (value_name == "end_time") {
 					end_time = (int)num;
+				} else if (value_name == "intra_user_communication") {
+					int val = (int)num;
+					if (val == 0) {
+						MyToolbox::intra_user_communication_ = false;
+					} else {
+						MyToolbox::intra_user_communication_ = true;
+					}
 				}
 			}
 		}
