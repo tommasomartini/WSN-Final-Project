@@ -39,6 +39,7 @@ class Event {
 
   MyTime time_;
   Agent* agent_;
+  unsigned int agent_id_;
   Message* message_;
   Event::EventTypes event_type_;
 
@@ -52,12 +53,14 @@ class Event {
   // getters
   MyTime get_time() {return time_;}
   Agent* get_agent() {return agent_;}
+  unsigned int get_agent_id() {return agent_id_;}
   Message* get_message() {return message_;}
   EventTypes get_event_type() {return event_type_;}
 
   // setters
   void set_time(MyTime);
   void set_agent(Agent*);
+  void set_agent_id(unsigned int);
   void set_message(Message*);
   
   // functions

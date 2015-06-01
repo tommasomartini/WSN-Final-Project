@@ -282,6 +282,7 @@ vector<Event> StorageNode::check_sensors() {
 		//	if (ping_check_counter_ < num_ping_checks_) {
 		Event new_event(MyToolbox::current_time_ + MyToolbox::check_sensors_frequency_, Event::event_type_cache_checks_sensors);
 		new_event.set_agent(this);
+		new_event.set_agent_id(node_id_);
 		new_events.push_back(new_event);
 		//	}
 	}
@@ -486,6 +487,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 //		cout << " queue not empty" << endl;
 		Event event_to_enqueue(0, Event::event_type_cache_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
+		event_to_enqueue.set_agent_id(node_id_);
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
@@ -498,6 +500,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
@@ -506,6 +509,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
@@ -541,6 +545,7 @@ vector<Event> StorageNode::send(unsigned int next_node_id, Message* message) {
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
 			receive_message_event.set_agent(agent);
+			receive_message_event.set_agent_id(next_node_id);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -605,6 +610,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 
 				Event try_again_event(schedule_time, Event::event_type_cache_re_send);
 				try_again_event.set_agent(this);
+				try_again_event.set_agent_id(node_id_);
 				try_again_event.set_message(message);
 				// FIXME: uncomment the following line to make the node try to send undefinitely. If the line is commented, if the node is left alone it does not generate new events ever
 //				new_events.push_back(try_again_event);
@@ -626,6 +632,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -634,6 +641,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_cache_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -669,6 +677,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
 		receive_message_event.set_agent(agent);
+		receive_message_event.set_agent_id(next_node_id);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -691,6 +700,7 @@ vector<Event> StorageNode::re_send(Message* message) {
 			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();
 			Event next_send_event(sched_time, event_queue_.front().get_event_type());
 			next_send_event.set_agent(this);
+			next_send_event.set_agent_id(node_id_);
 			next_send_event.set_message(event_queue_.front().get_message());
 			new_events.push_back(next_send_event); // schedule the next event
 		}

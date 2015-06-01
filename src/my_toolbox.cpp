@@ -140,6 +140,19 @@ bool MyToolbox::is_node_active(unsigned int node_id) {
   }
   return false;
 }
+//	TODO superfluo
+//bool MyToolbox::verify_node_id(unsigned int node_id) {
+//	if (sensors_map_.find(node_id) != sensors_map_.end()) {
+//		return true;
+//	}
+//	if (storage_nodes_map_.find(node_id) != storage_nodes_map_.end()) {
+//		return true;
+//	}
+//	if (users_map_.find(node_id) != users_map_.end()) {
+//		return true;
+//	}
+//	return false;
+//}
 
 void MyToolbox::remove_sensor(unsigned int sensor_id) {
 	vector<unsigned int>::iterator sensor_to_remove = find(alive_sensors_.begin(), alive_sensors_.end(), sensor_id);
@@ -203,6 +216,7 @@ vector<Event> MyToolbox::replace_user(unsigned int user_id) {
 		MyTime first_step_time = current_time_ + user_observation_time_ + get_tx_offset();
 		Event first_step(first_step_time, Event::event_type_user_moves);
 		first_step.set_agent(&(users_map_.find(new_user.get_node_id())->second));
+		first_step.set_agent_id(new_user.get_node_id());
 		new_events.push_back(first_step);
 
 		users_map_.find(user_id)->second.data_collector->record_user_replacement(user_id, new_user.get_node_id());

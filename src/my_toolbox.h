@@ -126,6 +126,7 @@ class MyToolbox {
   // functions
   static void initialize_toolbox();
   static bool is_node_active(unsigned int /*node_id*/);
+  static bool verify_node_id(unsigned int);		// TODO superfluo
   static unsigned int get_node_id();
   static int get_ideal_soliton_distribution_degree();
   static int get_robust_soliton_distribution_degree();  // still to implement!

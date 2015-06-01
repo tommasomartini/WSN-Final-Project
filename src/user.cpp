@@ -102,6 +102,7 @@ vector<Event> User::move() {
 				empty_msg->set_receiver_node_id(node_it->first);
 				empty_msg->set_sender_node_id(node_id_);
 				hello_event.set_agent(node_it->second);
+				hello_event.set_agent_id(node_it->first);
 				hello_event.set_message(empty_msg);
 				new_events.push_back(hello_event);
 				interrogated_nodes_.push_back(node_it->first);
@@ -136,6 +137,7 @@ vector<Event> User::move() {
 					empty_msg->set_sender_node_id(node_id_);
 					hello_event.set_message(empty_msg);
 					hello_event.set_agent(user_it->second);
+					hello_event.set_agent_id(user_it->first);
 					new_events.push_back(hello_event);
 					interrogated_nodes_.push_back(user_it->first);
 					cout << " -> QUERY (user_it->second = " << user_it->second->get_node_id() << ")" << endl;
@@ -149,6 +151,7 @@ vector<Event> User::move() {
 	MyTime event_time = MyToolbox::current_time_ + MyToolbox::user_observation_time_;
 	Event new_event(event_time, Event::event_type_user_moves);	// set the new move_user event
 	new_event.set_agent(this);
+	new_event.set_agent_id(node_id_);
 	new_events.push_back(new_event);
 
 	return new_events;
@@ -614,6 +617,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 //		cout << " coda piena" << endl;
 		Event event_to_enqueue(0, Event::event_type_user_re_send);	// execution time does not matter now...
 		event_to_enqueue.set_agent(this);
+		event_to_enqueue.set_agent_id(node_id_);
 		event_to_enqueue.set_message(message);
 		event_queue_.push(event_to_enqueue);
 	} else {  // no pending events
@@ -627,6 +631,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
@@ -635,6 +640,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
 			new_events.push_back(try_again_event);
@@ -665,6 +671,7 @@ vector<Event> User::send(unsigned int next_node_id, Message* message) {
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
 			receive_message_event.set_agent(my_agent);
+			receive_message_event.set_agent_id(next_node_id);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -714,6 +721,7 @@ vector<Event> User::re_send(Message* message) {
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -722,6 +730,7 @@ vector<Event> User::re_send(Message* message) {
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_user_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -754,6 +763,7 @@ vector<Event> User::re_send(Message* message) {
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
 		receive_message_event.set_agent(my_agent);
+		receive_message_event.set_agent_id(next_node_id);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -776,6 +786,7 @@ vector<Event> User::re_send(Message* message) {
 			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();
 			Event next_send_event(sched_time, event_queue_.front().get_event_type());
 			next_send_event.set_agent(this);
+			next_send_event.set_agent_id(node_id_);
 			next_send_event.set_message(event_queue_.front().get_message());
 			new_events.push_back(next_send_event); // schedule the next event
 		}

@@ -268,6 +268,7 @@ void activate_measure_generation() {
 		Event first_measure(first_measure_distrib(generator), Event::event_type_generated_measure);
 //		cout << "first measure time " << first_measure.get_time() << endl;
 		first_measure.set_agent(&(sensor_pair.second));
+		first_measure.set_agent_id(sensor_pair.first);
 		main_event_queue.push(first_measure);
 	}
 }
@@ -277,6 +278,7 @@ void activate_ping_generation() {
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
 		Event first_ping(first_ping_distrib(generator), Event::event_type_sensor_ping);
 		first_ping.set_agent(&(sensor_pair.second));
+		first_ping.set_agent_id(sensor_pair.first);
 		main_event_queue.push(first_ping);
 	}
 }
@@ -286,6 +288,7 @@ void activate_ping_check() {
 	for (auto& cache_pair : MyToolbox::storage_nodes_map_) {
 		Event first_check(first_check_distrib(generator), Event::event_type_cache_checks_sensors);
 		first_check.set_agent(&(cache_pair.second));
+		first_check.set_agent_id(cache_pair.first);
 		main_event_queue.push(first_check);
 	}
 }
@@ -297,6 +300,7 @@ void activate_users() {
 		MyTime first_step_time = 1 /* * MyToolbox::num_sensors_ */* MyToolbox::max_measure_generation_delay_ + 5 * MyToolbox::get_tx_offset();
 		Event first_step(first_step_time, Event::event_type_user_moves);
 		first_step.set_agent(&(user_pair.second));
+		first_step.set_agent_id(user_pair.first);
 		main_event_queue.push(first_step);
 
 		counter++;

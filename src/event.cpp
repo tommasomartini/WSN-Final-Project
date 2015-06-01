@@ -19,6 +19,7 @@ Event::Event(MyTime event_time) {
 	event_type_ = Event::event_type_null;
 	time_ = event_time;
 	agent_ = nullptr;
+	agent_id_ = 0;
 	message_ = nullptr;
 }
 
@@ -26,6 +27,7 @@ Event::Event(MyTime event_time, Event::EventTypes event_type) {
 	time_ = event_time;
 	event_type_ = event_type;
 	agent_ = nullptr;
+	agent_id_ = 0;
 	message_ = nullptr;
 }
 
@@ -43,6 +45,10 @@ void Event::set_time(MyTime time) {
 
 void Event::set_agent(Agent *agent) {
 	agent_ = agent;
+}
+
+void Event::set_agent_id(unsigned int agent_id) {
+	agent_id_ = agent_id;
 }
 
 void Event::set_message(Message* message) {
@@ -123,10 +129,8 @@ vector<Event> Event::execute_action() {
 	vector<Event> new_events;
 
 	// check whether the agent supposed to execute this action is still existing
-	Node* current_agent = (Node*)agent_;
-	unsigned int current_node_id = current_agent->get_node_id();
-	if (!MyToolbox::is_node_active(current_node_id)) {
-		cout << "Skip this event (" << event_type_ << "): dead agent " << current_node_id << "!" << endl;
+	if (!MyToolbox::is_node_active(agent_id_)) {
+		cout << "Skip this event (type: " << event_type_ << "); unknown agent: " << agent_id_ << "!" << endl;
 		return new_events;
 	}
 

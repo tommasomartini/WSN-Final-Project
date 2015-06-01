@@ -4,6 +4,7 @@
 #include "user.h"
 
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -185,31 +186,61 @@ void DataCollector::report() {
 //			cout << "  User " << id << " speed " << speed << endl;
 //		}
 
-		cout << " - User replacements:" << endl;
-		map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
-		vector<unsigned int> to_remove_entries;
-		bool stop = false;
-		while (!stop) {	// while there is still some users...
-			to_remove_entries.clear();	// clear the entries to remove
-			unsigned int replaced_user = replacements_copy.begin()->first;
-			to_remove_entries.push_back(replaced_user);
-			cout << "   - " << replaced_user;
-			while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
-				unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
-				to_remove_entries.push_back(replacing_user);
-				cout << " -> " << replacing_user;	// print it
-				replaced_user = replacing_user;	// now let's see if this user has been replaced again
+//		cout << " - User replacements:" << endl;
+//		map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
+//		vector<unsigned int> to_remove_entries;
+//		bool stop = false;
+//		while (!stop) {	// while there is still some users...
+//			to_remove_entries.clear();	// clear the entries to remove
+//			unsigned int replaced_user = replacements_copy.begin()->first;
+//			to_remove_entries.push_back(replaced_user);
+//			cout << "   - " << replaced_user;
+//			while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
+//				unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
+//				to_remove_entries.push_back(replacing_user);
+//				cout << " -> " << replacing_user;	// print it
+//				replaced_user = replacing_user;	// now let's see if this user has been replaced again
+//			}
+//			cout << endl;
+//			for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
+//				replacements_copy.erase(*it);	// remove it
+//			}
+//			if (replacements_copy.empty()) {
+//				stop = true;
+//			} else {
+//				stop = false;
+//			}
+//		}
+
+		ofstream myfile("user_replacement.txt", ios::app);
+		if (myfile.is_open()) {
+			map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
+			vector<unsigned int> to_remove_entries;
+			bool stop = false;
+			while (!stop) {	// while there is still some users...
+				to_remove_entries.clear();	// clear the entries to remove
+				unsigned int replaced_user = replacements_copy.begin()->first;
+				to_remove_entries.push_back(replaced_user);
+				myfile << "   - " << replaced_user;
+				while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
+					unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
+					to_remove_entries.push_back(replacing_user);
+					myfile << " -> " << replacing_user;	// print it
+					replaced_user = replacing_user;	// now let's see if this user has been replaced again
+				}
+				myfile << endl;
+				for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
+					replacements_copy.erase(*it);	// remove it
+				}
+				if (replacements_copy.empty()) {
+					stop = true;
+				} else {
+					stop = false;
+				}
 			}
-			cout << endl;
-			for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
-				replacements_copy.erase(*it);	// remove it
-			}
-			if (replacements_copy.empty()) {
-				stop = true;
-			} else {
-				stop = false;
-			}
+			myfile.close();
 		}
+		else cout << "Unable to open file";
 	}
 }
 

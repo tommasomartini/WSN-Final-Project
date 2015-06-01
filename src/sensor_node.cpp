@@ -42,6 +42,7 @@ vector<Event> SensorNode::generate_measure() {
 //  if (++how_many_measures_ > MyToolbox::num_measures_for_sensor_) {	// I don't have to generate other measures
 //	  Event failure_event(time_next_measure_or_failure, Event::event_type_sensor_breaks);	// create the failure event
 //	  failure_event.set_agent(this);
+//  failure_event.set_agent_id(node_id_);
 //	  new_events.push_back(failure_event);
 //	  return new_events;	// return
 //  }
@@ -56,6 +57,7 @@ vector<Event> SensorNode::generate_measure() {
 
   Event next_measure_event(time_next_measure_or_failure, Event::event_type_generated_measure);
   next_measure_event.set_agent(this);
+  next_measure_event.set_agent_id(node_id_);
   new_events.push_back(next_measure_event);
 
   return new_events;
@@ -74,6 +76,7 @@ vector<Event> SensorNode::ping() {
 //		do_ping_ = false;
 //		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_breaks);
 //		new_event.set_agent(this);
+//		new_event.set_agent_id(node_id_);
 //		new_events.push_back(new_event);
 //	}
 	if (do_ping_) {
@@ -89,6 +92,7 @@ vector<Event> SensorNode::ping() {
 		((StorageNode*)supervisor_it->second)->receive_ping(node_id_);	// send the hello ping
 		Event new_event(MyToolbox::current_time_ + MyToolbox::ping_frequency_, Event::event_type_sensor_ping);
 		new_event.set_agent(this);
+		new_event.set_agent_id(node_id_);
 		new_events.push_back(new_event);
 
 //		cout << "Sensor " << node_id_ << " this ping " << MyToolbox::current_time_ << endl;
@@ -132,6 +136,7 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 //			cout << " me not available. Try at " << new_schedule_time << endl;
 			event_queue_.push(try_again_event);	// goes in first position because the queue is empty
@@ -140,6 +145,7 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 			MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 			Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 //			cout << " other node not available. Try at " << new_schedule_time << ": " << next_node_available_time << " + " << off << endl;
 //			cout << "sum = " << next_node_available_time << " + " << off << " = " << off + next_node_available_time << endl;
@@ -169,6 +175,7 @@ vector<Event> SensorNode::send(unsigned int next_node_id, Message* message) {
 			}
 			Event receive_message_event(new_schedule_time, this_event_type);
 			receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+			receive_message_event.set_agent_id(next_node_id);
 			receive_message_event.set_message(message);
 			new_events.push_back(receive_message_event);
 
@@ -213,6 +220,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 
 			Event try_again_event(schedule_time, Event::event_type_sensor_re_send);
 			try_again_event.set_agent(this);
+			try_again_event.set_agent_id(node_id_);
 			try_again_event.set_message(message);
 			// FIXME: uncomment the following line to make the node try to send continuously. If the line is commented, if the node is left alone it does not generate new events ever
 			//				new_events.push_back(try_again_event);
@@ -234,6 +242,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		MyTime new_schedule_time = my_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -242,6 +251,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		MyTime new_schedule_time = next_node_available_time + MyToolbox::get_tx_offset();
 		Event try_again_event(new_schedule_time, Event::event_type_sensor_re_send);
 		try_again_event.set_agent(this);
+		try_again_event.set_agent_id(node_id_);
 		try_again_event.set_message(message);
 		new_events.push_back(try_again_event);
 		return new_events;
@@ -268,6 +278,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 		}
 		Event receive_message_event(new_schedule_time, this_event_type);
 		receive_message_event.set_agent(near_storage_nodes_.find(next_node_id)->second);
+		receive_message_event.set_agent_id(next_node_id);
 		receive_message_event.set_message(message);
 		new_events.push_back(receive_message_event);
 
@@ -296,6 +307,7 @@ vector<Event> SensorNode::re_send(Message* message) {
 			MyTime sched_time = new_schedule_time + MyToolbox::get_tx_offset();
 			Event next_send_event(sched_time, event_queue_.front().get_event_type());
 			next_send_event.set_agent(this);
+			next_send_event.set_agent_id(node_id_);
 			next_send_event.set_message(event_queue_.front().get_message());
 			new_events.push_back(next_send_event); // schedule the next event
 		}
