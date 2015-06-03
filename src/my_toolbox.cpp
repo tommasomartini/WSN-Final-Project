@@ -290,7 +290,7 @@ MyToolbox::MyTime MyToolbox::get_random_processing_time() {
 }
 
 MyToolbox::MyTime MyToolbox::get_tx_offset() {
-  uniform_int_distribution<int> distribution(max_tx_offset_ / 2000, max_tx_offset_ / 1000);	// between 5ms and 10ms
+  uniform_int_distribution<int> distribution(max_tx_offset_ / 2000, max_tx_offset_ / 1000);
   int offset = distribution(generator_);
   return (MyTime)(offset * 1000);
 }

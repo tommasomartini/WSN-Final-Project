@@ -1,6 +1,6 @@
 num_storage_nodes=150 180
-num_sensors=10 50
-num_users=10
+num_sensors=20 50
+num_users=30
 
 num_bits_for_measure=80000
 
@@ -11,7 +11,7 @@ tx_range=15 15 in m
 ping_frequency=1 h 
 check_sensors_frequency=1 h   
 
-C1=8
+C1=5
 c0_robust=0.2
 delta_robust=0.05
 

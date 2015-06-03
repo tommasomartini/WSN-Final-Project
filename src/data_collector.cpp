@@ -212,35 +212,35 @@ void DataCollector::report() {
 //			}
 //		}
 
-		ofstream myfile("user_replacement.txt", ios::app);
-		if (myfile.is_open()) {
-			map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
-			vector<unsigned int> to_remove_entries;
-			bool stop = false;
-			while (!stop) {	// while there is still some users...
-				to_remove_entries.clear();	// clear the entries to remove
-				unsigned int replaced_user = replacements_copy.begin()->first;
-				to_remove_entries.push_back(replaced_user);
-				myfile << "   - " << replaced_user;
-				while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
-					unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
-					to_remove_entries.push_back(replacing_user);
-					myfile << " -> " << replacing_user;	// print it
-					replaced_user = replacing_user;	// now let's see if this user has been replaced again
-				}
-				myfile << endl;
-				for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
-					replacements_copy.erase(*it);	// remove it
-				}
-				if (replacements_copy.empty()) {
-					stop = true;
-				} else {
-					stop = false;
-				}
-			}
-			myfile.close();
-		}
-		else cout << "Unable to open file";
+//		ofstream myfile("user_replacement.txt", ios::app);
+//		if (myfile.is_open()) {
+//			map<unsigned int, unsigned int> replacements_copy = user_replacement_register_;
+//			vector<unsigned int> to_remove_entries;
+//			bool stop = false;
+//			while (!stop) {	// while there is still some users...
+//				to_remove_entries.clear();	// clear the entries to remove
+//				unsigned int replaced_user = replacements_copy.begin()->first;
+//				to_remove_entries.push_back(replaced_user);
+//				myfile << "   - " << replaced_user;
+//				while (replacements_copy.find(replaced_user) != replacements_copy.end()) {	// while this user has been replaced...
+//					unsigned int replacing_user = replacements_copy.find(replaced_user)->second;	// get the user whoe repaced it
+//					to_remove_entries.push_back(replacing_user);
+//					myfile << " -> " << replacing_user;	// print it
+//					replaced_user = replacing_user;	// now let's see if this user has been replaced again
+//				}
+//				myfile << endl;
+//				for (vector<unsigned int>::iterator it = to_remove_entries.begin(); it != to_remove_entries.end(); it++) {	// for each entry to remove
+//					replacements_copy.erase(*it);	// remove it
+//				}
+//				if (replacements_copy.empty()) {
+//					stop = true;
+//				} else {
+//					stop = false;
+//				}
+//			}
+//			myfile.close();
+//		}
+//		else cout << "Unable to open file";
 	}
 }
 
@@ -273,23 +273,27 @@ void DataCollector::add_msr(unsigned int msr_id, unsigned int sns_id, unsigned c
 
 void DataCollector::record_msr(unsigned int msr_id, unsigned int sns_id, unsigned int cache_id, unsigned int sym) {
 	MeasureKey key(sns_id, msr_id);	// key associated with this measure
-	if (measures_register_.find(key) != measures_register_.end()) {	// if this measure is still in the register
+	if (measures_register_.find(key) != measures_register_.end()) {	// if this measure is in the register
 		measures_register_.find(key)->second.hop_number_++;
 		if (!measures_register_.find(key)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = measures_register_.find(key)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this measure
-//				cout << "Cache " << cache_id << " saw (s" << sns_id << ", " << msr_id << ")" << endl;
 				measures_register_.find(key)->second.node_map_.insert(pair<unsigned int, int>(cache_id, 1));
 			} else {	// this node already saw this measure
 				// do nothing
 			}
-			int num_visits = measures_register_.find(key)->second.node_map_.size();	// how many cache saw this measure
+			int num_visits = measures_register_.find(key)->second.node_map_.size();	// how many caches saw this measure
 			if (num_visits == MyToolbox::num_storage_nodes_) {	// if every cache saw this measure at least once
 				measures_register_.find(key)->second.crossed_the_network_ = true;
 				measures_register_.find(key)->second.spreading_time_ = MyToolbox::current_time_;
-				measures_register_.find(key)->second.spreading_duration_ = measures_register_.find(key)->second.spreading_time_ - measures_register_.find(key)->second.born_time_;
-//				cout << "Measure (s" << key.sensor_id_ << ", " << key.measure_id_ << ") crossed all the networks in " << measures_register_.find(key)->second.spreading_duration_ * 1. / 1000000000 << "s" << endl;
-				//			msr_register2.erase(key);	// remove this measure
+				MyTime spr_duration = measures_register_.find(key)->second.spreading_time_ - measures_register_.find(key)->second.born_time_;
+				measures_register_.find(key)->second.spreading_duration_ = spr_duration;
+
+				ofstream msr_spreading_file("./../data_simulation_folder/measure_spreading.txt", ios::app);
+				if (msr_spreading_file.is_open()) {
+					msr_spreading_file << MyToolbox::current_time_ << ",(s" << sns_id << "-" << msr_id << ")," << spr_duration << endl;
+					msr_spreading_file.close();
+				}
 			}
 		}
 	} else {
@@ -333,10 +337,8 @@ void DataCollector::erase_msr(unsigned int msr_id, unsigned int sns_id) {
 	if (measures_register_.find(key) != measures_register_.end()) {	// if this measure is still in the register
 		measures_register_.find(key)->second.death_time_ = MyToolbox::current_time_;
 		measures_register_.find(key)->second.travel_duration_ = measures_register_.find(key)->second.death_time_ - measures_register_.find(key)->second.born_time_;
-//		cout << "Measure (s" << key.sensor_id_ << ", " << key.measure_id_ << ") was alive for " << measures_register_.find(key)->second.travel_duration_ * 1. / 1000000000 << "s" << endl;
-//		measures_register.erase(key);	// remove this measure
 	} else {	// I cannot find the measure
-//		cout << "Error! Measure (s" << sns_id << ", " << msr_id << ") lost!" << endl;
+
 	}
 }
 
@@ -345,7 +347,6 @@ void DataCollector::register_broken_sensor(unsigned int sensor_id_) {
 		BlacklistInfo bl_info;
 		bl_info.born_time_ = MyToolbox::current_time_;
 		blacklist_register_.insert(pair<unsigned int, BlacklistInfo>(sensor_id_, bl_info));
-//		cout << "Blacklist " << sensor_id_ << " added" << endl;
 	} else {
 		cout << "Error! Trying to remove a sensor twice!" << endl;
 		exit(0);
@@ -358,7 +359,6 @@ void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 		if (!blacklist_register_.find(sensor_id)->second.crossed_the_network_) {	// this measure didn't cross all the network yet
 			map<unsigned int, int> node_map = blacklist_register_.find(sensor_id)->second.node_map_;	// get the map associated with this measure
 			if (node_map.find(cache_id) == node_map.end()) {	// first time this node sees this blacklist
-//				cout << "Cache " << cache_id << " saw bl" << sensor_id << endl;
 				blacklist_register_.find(sensor_id)->second.node_map_.insert(pair<unsigned int, int>(cache_id, 1));
 			} else {	// this node already saw this measure
 				// do nothing
@@ -368,7 +368,6 @@ void DataCollector::record_bl(unsigned int cache_id, unsigned int sensor_id) {
 				blacklist_register_.find(sensor_id)->second.crossed_the_network_ = true;
 				blacklist_register_.find(sensor_id)->second.spreading_time_ = MyToolbox::current_time_;
 				blacklist_register_.find(sensor_id)->second.spreading_duration_ = blacklist_register_.find(sensor_id)->second.spreading_time_ - blacklist_register_.find(sensor_id)->second.born_time_;
-//				cout << "Blacklist " << sensor_id << " crossed all the networks in " << blacklist_register_.find(sensor_id)->second.spreading_duration_ * 1. / 1000000000 << "s" << endl;
 			}
 		}
 	} else {
@@ -417,10 +416,18 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
 		if (!user_register_.find(user_id)->second.decoded_) {	// first time this user decodes
 			user_register_.find(user_id)->second.decoding_time_ = MyToolbox::current_time_;
-			user_register_.find(user_id)->second.decoding_distance_ = user_register_.find(user_id)->second.covered_distance_;
+			double dec_dist = user_register_.find(user_id)->second.covered_distance_;
+			user_register_.find(user_id)->second.decoding_distance_ = dec_dist;
 			user_register_.find(user_id)->second.decoding_steps_ = user_register_.find(user_id)->second.num_steps_;
-			user_register_.find(user_id)->second.decoding_duration_ = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
+			MyTime dec_duration = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
+			user_register_.find(user_id)->second.decoding_duration_ = dec_duration;
 			user_register_.find(user_id)->second.decoded_ = true;
+
+			ofstream user_decoding_file("./../data_simulation_folder/user_decoding.txt", ios::app);
+			if (user_decoding_file.is_open()) {
+				user_decoding_file << MyToolbox::current_time_ << ",u" << user_id << "," << dec_duration << "," << dec_dist << endl;
+				user_decoding_file.close();
+			}
 
 			// Check the correct decoding
 			for (map<MeasureKey, unsigned char>::iterator symb_it = decoded_symbols.begin(); symb_it != decoded_symbols.end(); symb_it++) {	// for each decoded symbol

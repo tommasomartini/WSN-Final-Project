@@ -239,7 +239,7 @@ bool network_setup() {
 }
 
 void activate_measure_generation() {
-	uniform_int_distribution<MyTime> first_measure_distrib(0.0, MyToolbox::measure_generation_delay_ * 1.0);
+	uniform_int_distribution<MyTime> first_measure_distrib(0, MyToolbox::measure_generation_delay_);
 	for (auto& sensor_pair : MyToolbox::sensors_map_) {
 		Event first_measure(first_measure_distrib(generator), Event::event_type_generated_measure);
 		first_measure.set_agent(&(sensor_pair.second));
@@ -269,16 +269,12 @@ void activate_ping_check() {
 }
 
 void activate_users() {
-	uniform_int_distribution<int> first_step_distrib(MyToolbox::check_sensors_frequency_ / 2, MyToolbox::check_sensors_frequency_);
-	int counter = 1;	// TODO debug
 	for (auto& user_pair : MyToolbox::users_map_) {
-		MyTime first_step_time = 1 /* * MyToolbox::num_sensors_ */* MyToolbox::measure_generation_delay_ + 5 * MyToolbox::get_tx_offset();
+		MyTime first_step_time = MyToolbox::measure_generation_delay_ + 15 * 12 * 10 * MyToolbox::get_tx_offset();	// every user is generated with a max delay of 15 minutes
 		Event first_step(first_step_time, Event::event_type_user_moves);
 		first_step.set_agent(&(user_pair.second));
 		first_step.set_agent_id(user_pair.first);
 		main_event_queue.push(first_step);
-
-		counter++;
 	}
 }
 
@@ -292,12 +288,17 @@ int main() {
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
 
+	if (ifstream("./../data_simulation_folder/measure_spreading.txt")) {
+		remove("./../data_simulation_folder/measure_spreading.txt");
+	}
+	ofstream msr_spreading_file("./../data_simulation_folder/measure_spreading.txt");
+	msr_spreading_file.close();
 
-//	if (std::ifstream("move_user.txt")) {
-//		remove("move_user.txt");
-//	}
-//	ofstream outfile("move_user.txt");
-//	outfile.close();
+	if (ifstream("./../data_simulation_folder/user_decoding.txt")) {
+		remove("./../data_simulation_folder/user_decoding.txt");
+	}
+	ofstream user_decoding_file("./../data_simulation_folder/user_decoding.txt");
+	user_decoding_file.close();
 
 	bool setup_succeeded = network_setup();
 	if (!setup_succeeded) {
