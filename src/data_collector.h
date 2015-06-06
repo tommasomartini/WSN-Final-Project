@@ -47,18 +47,21 @@ class DataCollector {
 	  int num_interrogated_caches_ = 0;
 	  int num_interrogated_users_ = 0;
 	  std::map<MeasureKey, int> decoding_result_;
+	  int num_updated_measures = 0;		// how many measures are the most updated measures
+	  int freshness_difference = 0;		// sum of the differences between the ids of the most updated measures and my decoded measures
   };
 
  public:
   DataCollector();
 
-  std::map<unsigned int, int> num_stored_measures_per_cache_;
-  std::map<MeasureKey, MeasureInfo> measures_register_;
-  std::map<MeasureKey, unsigned char> measure_data_register_;
-  std::map<unsigned int, std::map<unsigned int, unsigned char>> measure_data_all_register_;
+  std::map<unsigned int, int> num_stored_measures_per_cache_;	// for each cache, how many measure it stores
+  std::map<MeasureKey, MeasureInfo> measures_register_;		// for each measure, its info about spreading
+  std::map<MeasureKey, unsigned char> measure_data_register_;	// for each measure, its data
+  std::map<unsigned int, std::map<unsigned int, unsigned char>> measure_data_all_register_;		// for each sensor, the map of measure generated
   std::map<unsigned int, BlacklistInfo> blacklist_register_;
   std::map<unsigned int, UserInfo> user_register_;
   std::map<unsigned int, unsigned int> user_replacement_register_;
+  std::map<unsigned int, std::pair<int, int>> cache_freshness_register_;	// for each cache stores: how many updated measures, freshness difference
 
   void report();
   double graph_density();

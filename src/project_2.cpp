@@ -114,6 +114,13 @@ void import_settings() {
 					} else {
 						MyToolbox::intra_user_communication_ = true;
 					}
+				} else if (value_name == "backward_communication") {
+					int val = (int)num;
+					if (val == 0) {
+						MyToolbox::backward_communication_ = false;
+					} else {
+						MyToolbox::backward_communication_ = true;
+					}
 				}
 			}
 		}
@@ -321,6 +328,7 @@ int main() {
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();
 		if (next_event.get_event_type() == Event::event_type_end) {
+//			data_coll->check_cache_freshness();
 			cout << "End reached!" << endl;
 			break;
 		}

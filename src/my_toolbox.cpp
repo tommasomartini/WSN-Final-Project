@@ -49,6 +49,7 @@ double MyToolbox::sensor_failure_prob_ = 0;
 int MyToolbox::num_measures_for_sensor_ = 0;
 
 bool MyToolbox::intra_user_communication_ = false;
+bool MyToolbox::backward_communication_ = false;
 
 map<unsigned int, SensorNode> MyToolbox::sensors_map_;
 map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_;

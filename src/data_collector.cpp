@@ -133,8 +133,8 @@ void DataCollector::report() {
 		double avg_user_dec_time = 0;
 		double avg_dec_num_steps = 0;
 		double avg_dec_distance = 0;
-		double avg_interr_caches = 0;
-		double avg_interr_users = 0;
+//		double avg_interr_caches = 0;
+//		double avg_interr_users = 0;
 		int decoding_number = 0;
 		int num_usrs = user_register_.size();
 		for (map<unsigned int, UserInfo>::iterator it = user_register_.begin(); it != user_register_.end(); it++) {
@@ -143,25 +143,25 @@ void DataCollector::report() {
 				avg_user_dec_time += it->second.decoding_duration_;
 				avg_dec_num_steps += it->second.decoding_steps_;
 				avg_dec_distance += it->second.decoding_distance_;
-				avg_interr_caches += it->second.num_interrogated_caches_;
-				avg_interr_users += it->second.num_interrogated_users_;
+//				avg_interr_caches += it->second.num_interrogated_caches_;
+//				avg_interr_users += it->second.num_interrogated_users_;
 			}
 		}
 		avg_user_dec_time = avg_user_dec_time / decoding_number;
 		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
 		avg_dec_distance = avg_dec_distance / decoding_number;
-		avg_interr_caches = avg_interr_caches / decoding_number;
-		avg_interr_users = avg_interr_users / decoding_number;
+//		avg_interr_caches = avg_interr_caches / decoding_number;
+//		avg_interr_users = avg_interr_users / decoding_number;
 
 		cout << "+ USER" << endl;
 		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
 		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
 		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
-		cout << " - Avg number of interrogated caches: " << avg_interr_caches << " out of " << MyToolbox::num_storage_nodes_
-						<< " (" << avg_interr_caches * 100.0 / MyToolbox::num_storage_nodes_ << "%)" << endl;
-		cout << " - Avg number of interrogated users: " << avg_interr_users << " out of " << MyToolbox::num_users_
-								<< " (" << avg_interr_users * 100.0 / MyToolbox::num_users_ << "%)" << endl;
-		cout << " - Avg number of interrogated nodes: " << avg_interr_caches + avg_interr_users << " (minimum = " << MyToolbox::num_sensors_ << ")" << endl;
+//		cout << " - Avg number of interrogated caches: " << avg_interr_caches << " out of " << MyToolbox::num_storage_nodes_
+//						<< " (" << avg_interr_caches * 100.0 / MyToolbox::num_storage_nodes_ << "%)" << endl;
+//		cout << " - Avg number of interrogated users: " << avg_interr_users << " out of " << MyToolbox::num_users_
+//								<< " (" << avg_interr_users * 100.0 / MyToolbox::num_users_ << "%)" << endl;
+//		cout << " - Avg number of interrogated nodes: " << avg_interr_caches + avg_interr_users << " (minimum = " << MyToolbox::num_sensors_ << ")" << endl;
 		cout << " - " << decoding_number << " users out of " << num_usrs << " (" << decoding_number * 100.0 / num_usrs << "%) decoded the messages" << endl;
 		cout << " - Decoding errors:" << endl;
 		for (map<unsigned int, UserInfo>::iterator user_it = user_register_.begin(); user_it != user_register_.end(); user_it++) {
@@ -423,15 +423,13 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 			user_register_.find(user_id)->second.decoding_duration_ = dec_duration;
 			user_register_.find(user_id)->second.decoded_ = true;
 
-			ofstream user_decoding_file("./../data_simulation_folder/user_decoding.txt", ios::app);
-			if (user_decoding_file.is_open()) {
-				user_decoding_file << MyToolbox::current_time_ << ",u" << user_id << "," << dec_duration << "," << dec_dist << endl;
-				user_decoding_file.close();
-			}
-
-			// Check the correct decoding
+			int fresh_diff = 0;		// freshness difference
+			int num_up_measures = 0;	// num updted measures
+			// Check the correct decoding and the freshness decoding
 			for (map<MeasureKey, unsigned char>::iterator symb_it = decoded_symbols.begin(); symb_it != decoded_symbols.end(); symb_it++) {	// for each decoded symbol
 				MeasureKey this_key = symb_it->first;
+				unsigned int this_sns = this_key.sensor_id_;
+				unsigned int this_msr = this_key.measure_id_;
 				unsigned char my_data = symb_it->second;
 				unsigned char actual_data = measure_data_register_.find(this_key)->second;
 				if (my_data == actual_data) {
@@ -439,6 +437,28 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 				} else {
 					user_register_.find(user_id)->second.decoding_result_.insert(pair<MeasureKey, int>(this_key, 0));
 				}
+
+				unsigned int next_msr_id = this_msr + 1;	// the measure successive to the one I decoded
+				MeasureKey next_key(this_sns, next_msr_id);
+				if (measure_data_register_.find(next_key) != measure_data_register_.end()) {	// there is a more recent measure
+					// do not increment user's number of update measure. This measure is not the most recent
+					fresh_diff++;	// difference is at least one
+					next_key.measure_id_++;		// the next measure
+					while (measure_data_register_.find(next_key) != measure_data_register_.end()) {
+						fresh_diff++;
+						next_key.measure_id_++;
+					}
+				} else {	// there is no measure more recent than the one I have
+					num_up_measures++;
+				}
+			}
+			user_register_.find(user_id)->second.freshness_difference = fresh_diff;
+			user_register_.find(user_id)->second.num_updated_measures = num_up_measures;
+
+			ofstream user_decoding_file("./../data_simulation_folder/user_decoding.txt", ios::app);
+			if (user_decoding_file.is_open()) {
+				user_decoding_file << MyToolbox::current_time_ << ",u" << user_id << "," << dec_duration << "," << dec_dist << "," << num_up_measures << "," << fresh_diff << endl;
+				user_decoding_file.close();
 			}
 		} else {	// this user already decoded
 			cout << "Error! This user already decoded!" << endl;
@@ -530,3 +550,7 @@ bool DataCollector::check_user_decoding(map<MeasureKey, unsigned char> decoded_s
 	}
 	return true;
 }
+
+//void DataCollector::check_cache_freshness() {
+//
+//}

@@ -106,6 +106,7 @@ class MyToolbox {
   static int num_measures_for_sensor_;
 
   static bool intra_user_communication_;
+  static bool backward_communication_;
 
   // Maps <node_id, node_reference>
   static std::map<unsigned int, SensorNode> sensors_map_;

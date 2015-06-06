@@ -80,7 +80,7 @@ vector<Event> Event::execute_action() {
 	}
 	case event_type_cache_receives_measure: {
 		if(debug)cout << "=== event_type_cache receives measure " << ((StorageNode*)agent_)->get_node_id() << endl;
-		new_events = ((StorageNode*)agent_)->receive_measure2((Measure*)message_);
+		new_events = ((StorageNode*)agent_)->receive_measure((Measure*)message_);
 		break;
 	}
 	case event_type_cache_re_send: {
