@@ -315,9 +315,6 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 					int xor_counter = 0;	// ...how many measure I did xor
 					vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
 					map<unsigned int, vector<unsigned int>> update_info;
-					if (outdated_tmp.size() > 0) {
-						cout << "yy" << endl;
-					}
 					for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
 						MeasureKey outdated_msr_key = *out_it;	// key of the outdated measure the cache wants to erase
 						unsigned int outdated_sns_id = out_it->sensor_id_;	// sensor id of this outdated measure

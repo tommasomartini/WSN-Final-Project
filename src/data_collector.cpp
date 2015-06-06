@@ -425,6 +425,7 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 
 			int fresh_diff = 0;		// freshness difference
 			int num_up_measures = 0;	// num updted measures
+			map<unsigned int, unsigned int> updated_sns_measures = MyToolbox::users_map_.find(user_id)->second.get_updated_sensors_measures();
 			// Check the correct decoding and the freshness decoding
 			for (map<MeasureKey, unsigned char>::iterator symb_it = decoded_symbols.begin(); symb_it != decoded_symbols.end(); symb_it++) {	// for each decoded symbol
 				MeasureKey this_key = symb_it->first;
@@ -438,18 +439,20 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 					user_register_.find(user_id)->second.decoding_result_.insert(pair<MeasureKey, int>(this_key, 0));
 				}
 
-				unsigned int next_msr_id = this_msr + 1;	// the measure successive to the one I decoded
-				MeasureKey next_key(this_sns, next_msr_id);
-				if (measure_data_register_.find(next_key) != measure_data_register_.end()) {	// there is a more recent measure
-					// do not increment user's number of update measure. This measure is not the most recent
-					fresh_diff++;	// difference is at least one
-					next_key.measure_id_++;		// the next measure
-					while (measure_data_register_.find(next_key) != measure_data_register_.end()) {
-						fresh_diff++;
-						next_key.measure_id_++;
+				if (updated_sns_measures.find(this_sns)->second == this_msr) {	// for this user this measure is an updated one
+					unsigned int next_msr_id = this_msr + 1;	// the measure successive to the one I decoded
+					MeasureKey next_key(this_sns, next_msr_id);
+					if (measure_data_register_.find(next_key) != measure_data_register_.end()) {	// there is a more recent measure
+						// do not increment user's number of update measure. This measure is not the most recent
+						fresh_diff++;	// difference is at least one
+						next_key.measure_id_++;		// the next measure
+						while (measure_data_register_.find(next_key) != measure_data_register_.end()) {
+							fresh_diff++;
+							next_key.measure_id_++;
+						}
+					} else {	// there is no measure more recent than the one I have
+						num_up_measures++;
 					}
-				} else {	// there is no measure more recent than the one I have
-					num_up_measures++;
 				}
 			}
 			user_register_.find(user_id)->second.freshness_difference = fresh_diff;
@@ -530,6 +533,10 @@ bool DataCollector::check_measure_consistency(vector<MeasureKey> measure_keys, u
 }
 
 bool DataCollector::check_user_decoding(map<MeasureKey, unsigned char> decoded_symbols) {
+	if (decoded_symbols.size() < unsigned int(MyToolbox::num_sensors_)) {
+		cout << "troppi pochi!" << endl;
+		return false;
+	}
 	for (map<MeasureKey, unsigned char>::iterator sym_it = decoded_symbols.begin(); sym_it != decoded_symbols.end(); sym_it++) {
 		MeasureKey key = sym_it->first;
 		unsigned int sns_id = key.sensor_id_;
@@ -545,6 +552,20 @@ bool DataCollector::check_user_decoding(map<MeasureKey, unsigned char> decoded_s
 		}
 		unsigned char actual_data = measure_data_all_register_.find(sns_id)->second.find(msr_id)->second;
 		if (user_data != actual_data) {
+			return false;
+		}
+	}
+	for (map<unsigned int, map<unsigned int, unsigned char>>::iterator msr_it = measure_data_all_register_.begin(); msr_it != measure_data_all_register_.end(); msr_it++) {
+		unsigned int sns_id = msr_it->first;
+		bool there_is = false;
+		for (map<MeasureKey, unsigned char>::iterator sym_it = decoded_symbols.begin(); sym_it != decoded_symbols.end(); sym_it++) {
+			MeasureKey key = sym_it->first;
+			unsigned int my_sns_id = key.sensor_id_;
+			if (sns_id == my_sns_id) {
+				there_is = true;
+			}
+		}
+		if (!there_is) {
 			return false;
 		}
 	}

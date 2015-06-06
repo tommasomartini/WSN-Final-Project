@@ -32,6 +32,8 @@ class User: public Node {
   std::vector<Event> user_receive_data_from_user(int, Message*);
   std::vector<Event> try_retx(Message*);
 
+  std::map<unsigned int, unsigned int> get_updated_sensors_measures() {return updated_sensors_measures_;}
+
  protected:
   typedef std::map<unsigned int, unsigned char>::iterator my_iterator;  // define my type of iterator
   
