@@ -533,7 +533,7 @@ bool DataCollector::check_measure_consistency(vector<MeasureKey> measure_keys, u
 }
 
 bool DataCollector::check_user_decoding(map<MeasureKey, unsigned char> decoded_symbols) {
-	if (decoded_symbols.size() < unsigned int(MyToolbox::num_sensors_)) {
+	if (int(decoded_symbols.size()) < MyToolbox::num_sensors_) {
 		cout << "troppi pochi!" << endl;
 		return false;
 	}
