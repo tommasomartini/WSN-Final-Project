@@ -24,6 +24,7 @@ class StorageNode : public Node {
   unsigned char xored_measure_ = (unsigned char)0;
 //  std::map<unsigned int, unsigned int> last_measures_; // pairs <sensor_id, last_measure_id>s sns_id	// TODO to deprecate
   bool keep_checking_sensors_ = true;
+  std::map<unsigned int, unsigned int> last_msr_without_backward_;
 
   // Event execution methods
 //  std::vector<Event> receive_measure(Measure*);
@@ -32,9 +33,12 @@ class StorageNode : public Node {
   std::vector<Event> receive_user_request(unsigned int /*sender user id*/);
   std::vector<Event> check_sensors();
   std::vector<Event> spread_blacklist(BlacklistMessage*);
+  void refresh_xored_data3(OutdatedMeasure*);
   void refresh_xored_data2(OutdatedMeasure*);
   void refresh_xored_data(OutdatedMeasure*);
   void receive_ping(unsigned int /*sensor id*/);	// from sensor
+
+  std::map<unsigned int, unsigned int> get_most_recent_measures();
 
  private:
   typedef MyToolbox::MyTime MyTime;

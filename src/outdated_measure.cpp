@@ -4,8 +4,17 @@ using namespace std;
 
 OutdatedMeasure::OutdatedMeasure() {
 	message_type_ = Message::message_type_user_info_for_cache;
-    hop_counter_ = 0;
-    xored_data_ = 0;
+	hop_counter_ = 0;
+	xored_data_ = 0;
+}
+
+OutdatedMeasure::OutdatedMeasure(std::map<unsigned int, unsigned char> replacements, std::map<unsigned int, std::vector<unsigned int>> update_infos) {
+	message_type_ = Message::message_type_user_info_for_cache;
+	hop_counter_ = 0;
+
+	xored_data_ = 0;
+	replacements_ = replacements;
+	update_infos_ = update_infos;
 }
 
 OutdatedMeasure::OutdatedMeasure(unsigned char xored_data, map<unsigned int, vector<unsigned int>> update_infos) {
@@ -30,5 +39,5 @@ int OutdatedMeasure::increase_hop_counter() {
 }
 
 unsigned int OutdatedMeasure::get_message_size() {
-  return MyToolbox::num_bits_for_measure_;
+  return MyToolbox::num_bits_for_measure_ * replacements_.size();
 }

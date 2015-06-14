@@ -103,9 +103,11 @@ vector<Event> StorageNode::receive_measure(Measure* measure) {
 //					}
 					//				cout << "Cache " << node_id_ << ": " << int(xored_measure_) << endl;
 				} else if (measure->measure_id_ > last_measure_id + 1) {	// out of order update measure
-//					cout << "cache" << node_id_ << " sensor " << source_id << endl;
 					stored_measures_.find(source_id)->second.following_ = false;
-					data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
+					if (last_msr_without_backward_.find(source_id) == last_msr_without_backward_.end()) {	// not yet this sensor
+						// If I didn't have the backward, last_msr_id would be the last msr id from this sensor
+						last_msr_without_backward_.insert(pair<unsigned int, unsigned int>(source_id, last_measure_id));
+					}
 				}
 			}
 		}
@@ -158,7 +160,7 @@ vector<Event> StorageNode::receive_user_request(unsigned int sender_user_id) {
 			SensorInfo sns_info = info_it->second;
 			sources.push_back(sns_info.most_recent_key_);
 			if (!sns_info.following_) {
-				cout << "cache" << node_id_ << " inserito sensore " << sns_info.sensor_id_ << " in blacklist" << endl;
+//				cout << "cache" << node_id_ << " inserito sensore " << sns_info.sensor_id_ << " in blacklist" << endl;
 				outdated_measures.push_back(sns_info.most_recent_key_);
 				if (!sns_info.alive_) {
 					dead_sensors.push_back(info_it->first);
@@ -241,62 +243,138 @@ vector<Event> StorageNode::spread_blacklist(BlacklistMessage* list) {
 	return new_events;
 }
 
-/*  A user informs me about what measures are obsolete
- */
-void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
-//	cout << "Cache " << node_id_ << " rx rfresh message" << endl;
+void StorageNode::refresh_xored_data3(OutdatedMeasure* refresh_message){
+	map<unsigned int, unsigned char> replacements = refresh_message->replacements_;	// download the data replacements
  	map<unsigned int, vector<unsigned int>> update_info = refresh_message->update_infos_;	// download the info structure
-
- 	cout << "backward" << endl;
 
  	if (!MyToolbox::backward_communication_) {
  		cerr << "Error! Received a message from a user when backward communication is not active!" << endl;
  		exit(0);
  	}
 
-// 	// TODO super debug
-// 	for (auto& elem : update_info) {
-// 		cout << "  " << elem.first << " - " << elem.second.at(0) << ", " << elem.second.at(1) << ", " << elem.second.at(2) << "(" << stored_measures_.find(elem.first)->second.most_recent_key_.measure_id_ << ")" << endl;
-// 	}
+ 	cout << "Cache " << node_id_ << endl;
+ 	for (auto& inf : stored_measures_) {
+ 		unsigned int sns_id = inf.second.sensor_id_;
+ 		cout << " - s" << sns_id << " msr " << inf.second.most_recent_key_.measure_id_;
+ 		if (!inf.second.alive_) {
+ 			cout << " dead" << endl;
+ 		} else if (!inf.second.following_) {
+ 			cout << " outdated" << endl;
+ 		} else {
+ 			cout << " ok" << endl;
+ 		}
+ 	}
+
+ 	cout << " updating" << endl;
+ 	int num_updated_data = 0;
+	map<unsigned int, vector<unsigned int>>::iterator info_it = update_info.begin();	// extract the iterator
+	for (; info_it != update_info.end(); info_it++) {	// for each sensor of the structure
+		bool can_update = true;	// can I update the info relative to this sensor?
+		cout << "  sensor " << info_it->first << endl;
+		if (stored_measures_.find(info_it->first) == stored_measures_.end()) {	// this sensor is not composing my xor
+			cout << "   no this sensor in my stored measures" << endl;
+			can_update = false;
+		}
+		unsigned int my_measure_id = stored_measures_.find(info_it->first)->second.most_recent_key_.measure_id_;	// measure id I have from this sensor
+		unsigned int to_remove_measure_id = info_it->second.at(0);	// first field of the vector: measure id I am trying to remove
+		cout << "  trying to remove msr" << to_remove_measure_id << endl;
+		if (my_measure_id != to_remove_measure_id) {	// not the measure composing my xor
+			cout << "   don't have this measure" << endl;
+			can_update = false;
+		}
+		if (stored_measures_.find(info_it->first)->second.following_) {	// I am following this sensor. It is ok, no need to remove the measure
+			cout << "   following this sensor" << endl;
+			can_update = false;
+		}
+		if (info_it->second.at(1) == 0) {	// I want to erase this measure without replacing (the sensor should be dead)
+			cout << "   just erase" << endl;
+			if (stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is alive
+				cout << "    sensor alive" << endl;
+				can_update = false;
+			}
+		} else if (info_it->second.at(1) == 1) {	// I want to replace this measure
+			cout << "   replace" << endl;
+			if (!stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is not alive anymore. Makes no sense to replace its measure
+				cout << "    sensor dead" << endl;
+				can_update = false;
+			}
+			unsigned int new_measure_id = info_it->second.at(2);	// id of the new measure I am inserting
+			cout << "   replace with " << new_measure_id << endl;
+			if (new_measure_id < my_measure_id) {	// I am trying to insert an older measure
+				cout << "    not a more recent measure" << endl;
+				can_update = false;
+			}
+		}
+
+		if (can_update) {	// if I can perform the xor while preserving consistency
+			cout << "  can update" << endl;
+
+			num_updated_data++;
+
+			unsigned char replacement = replacements.find(info_it->first)->second;	// the data I have to xor to perform the replacement
+			xored_measure_ ^= replacement;
+			bool replaced = info_it->second.at(1) == 1;	// did I removed or replaced this measure?
+			if (!replaced) {	// I just removed it
+				stored_measures_.erase(info_it->first);		// erase the measure info from my list
+			} else if (replaced) {	// I replaced this measure
+				unsigned int new_measure_id = info_it->second.at(2);	// take the id of the just inserted measure
+				stored_measures_.find(info_it->first)->second.following_ = true;
+				stored_measures_.find(info_it->first)->second.most_recent_key_.measure_id_ = new_measure_id;	// replace the measure id in the most recent key
+			}
+			data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
+		}
+	}
+
+	cout << "c" << node_id_ << " updated " << num_updated_data << " measures out of " << replacements.size() << endl;
+
+	if (!check_consistency()) {
+		cerr << "Cache " << node_id_ << " has no consistent xor" << endl;
+		exit(0);
+	}
+//	cout << " end method" << endl;
+
+	delete refresh_message;
+}
+
+/*  A user informs me about what measures are obsolete
+ */
+void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
+ 	map<unsigned int, vector<unsigned int>> update_info = refresh_message->update_infos_;	// download the info structure
+
+ 	if (!MyToolbox::backward_communication_) {
+ 		cerr << "Error! Received a message from a user when backward communication is not active!" << endl;
+ 		exit(0);
+ 	}
 
 	map<unsigned int, vector<unsigned int>>::iterator info_it = update_info.begin();	// extract the iterator
  	bool can_update = true;
 	for (; info_it != update_info.end(); info_it++) {	// for each sensor of the structure
-//		cout << " sensor " << info_it->first << endl;
 		if (stored_measures_.find(info_it->first) == stored_measures_.end()) {	// this sensor is not composing my xor
-//			cout << "  not xoring its measure" << endl;
 			can_update = false;
 			break;
 		}
 		unsigned int my_measure_id = stored_measures_.find(info_it->first)->second.most_recent_key_.measure_id_;	// measure id I have from this sensor
 		unsigned int to_remove_measure_id = info_it->second.at(0);	// first field of the vector: measure id I am trying to remove
 		if (my_measure_id != to_remove_measure_id) {	// not the measure composing my xor
-//			cout << "  xoring its measure, but not this one: " << to_remove_measure_id << endl;
 			can_update = false;
 			break;
 		}
 		if (stored_measures_.find(info_it->first)->second.following_) {	// I am following this sensor. It is ok, no need to remove the measure
-//			cout << "  xoring this measure, but not following" << endl;
 			can_update = false;
 			break;
 		}
 		if (info_it->second.at(1) == 0) {	// I want to erase this measure without replacing
-//			cout << "  wants to erase " << to_remove_measure_id << endl;
 			if (stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is alive
-//				cout << "   sensor alive" << endl;
 				can_update = false;
 				break;
 			}
 		} else if (info_it->second.at(1) == 1) {	// I want to replace this measure
-//			cout << "  wants to replace " << to_remove_measure_id << " with " << info_it->second.at(2) << endl;
 			if (!stored_measures_.find(info_it->first)->second.alive_) {	// this sensor is not alive anymore. Makes no sense to replace its measure
-//				cout << "   sensor dead" << endl;
 				can_update = false;
 				break;
 			}
 			unsigned int new_measure_id = info_it->second.at(2);	// id of the new measure I am inserting
 			if (new_measure_id < my_measure_id) {	// I am trying to insert an older measure
-//				cout << "   sensor alive, but my measure " << my_measure_id << " is newer than " << new_measure_id << endl;
 				can_update = false;
 				break;
 			}
@@ -304,7 +382,6 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 	}
 
 	if (can_update) {	// if I can perform the xor while preserving consistency
-//		cout << " I can update!" << endl;
 		xored_measure_ ^= refresh_message->xored_data_;
 		for (info_it = update_info.begin(); info_it != update_info.end(); info_it++) {	// for each sensor of the structure
 			bool replaced = info_it->second.at(1) == 1;	// did I removed or replaced this measure?
@@ -316,6 +393,7 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 				stored_measures_.find(info_it->first)->second.most_recent_key_.measure_id_ = new_measure_id;	// replace the measure id in the most recent key
 			}
 		}
+		data_collector->update_num_msr_per_cache(node_id_, stored_measures_.size());
 	}
 
 	if (!check_consistency()) {
@@ -325,6 +403,16 @@ void StorageNode::refresh_xored_data2(OutdatedMeasure* refresh_message){
 //	cout << " end method" << endl;
 
 	delete refresh_message;
+}
+
+map<unsigned int, unsigned int> StorageNode::get_most_recent_measures() {
+	map<unsigned int, unsigned int> my_most_recent_measures;
+	for (map<unsigned int, SensorInfo>::iterator info_it = stored_measures_.begin(); info_it != stored_measures_.end(); info_it++) {	// for each stored mesaure
+		unsigned int sns_id = info_it->second.most_recent_key_.sensor_id_;
+		unsigned int msr_id = info_it->second.most_recent_key_.measure_id_;
+		my_most_recent_measures.insert(pair<unsigned int, unsigned int>(sns_id, msr_id));
+	}
+	return my_most_recent_measures;
 }
 
 ///*  A user informs me about what measures are obsolete

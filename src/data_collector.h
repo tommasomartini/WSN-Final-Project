@@ -78,6 +78,8 @@ class DataCollector {
   void record_user_query(unsigned int /*user id*/, unsigned int /*node or user id*/, bool /*is a node*/);
   void record_user_replacement(unsigned int /*replaced user id*/, unsigned int /*replacing user id*/);
 
+  void clear_registers();
+
   bool check_measure_consistency(std::vector<MeasureKey> /*measure keys*/, unsigned char /*stored data*/);
   bool check_user_decoding(std::map<MeasureKey, unsigned char>);
 

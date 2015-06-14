@@ -95,16 +95,18 @@ vector<Event> Event::execute_action() {
 	}
 	case event_type_cache_receives_user_info: {
 		if(debug)cout << "=== event_type_cache_receives_user_info" << endl;
-		((StorageNode*)agent_)->refresh_xored_data2((OutdatedMeasure*)message_);
+		((StorageNode*)agent_)->refresh_xored_data3((OutdatedMeasure*)message_);
 		break;
 	}
 	case event_type_user_moves: {
 		if(debug)cout << "=== event_type_user_moves " << ((User*)agent_)->get_node_id() << endl;
+//		cout << "=== event_type_user_moves " << ((User*)agent_)->get_node_id() << endl;
 		new_events = ((User*)agent_)->move();
 		break;
 	}
 	case event_type_cache_receives_user_request: {
 		if(debug)cout << "=== event_type_cache_receives_user_request" << endl;
+//		cout << "=== event_type_cache_receives_user_request from u" << message_->get_sender_node_id() << endl;
 		new_events = ((StorageNode*)agent_)->receive_user_request(message_->get_sender_node_id());
 		delete message_;
 		break;
@@ -122,6 +124,7 @@ vector<Event> Event::execute_action() {
 	}
 	case event_type_user_re_send: {
 		if(debug)cout << "=== event_type_user_resend " << ((User*)agent_)->get_node_id() << endl;
+//		cout << "=== event_type_user_resend " << ((User*)agent_)->get_node_id() << endl;
 		new_events = ((User*)agent_)->try_retx(message_);
 		break;
 	}

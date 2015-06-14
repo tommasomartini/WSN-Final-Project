@@ -136,6 +136,11 @@ bool network_setup() {
 	double x_coord;
 	uniform_real_distribution<double> distribution(0.0, MyToolbox::square_size_ * 1.0);
 
+	MyToolbox::sensors_map_.clear();
+	MyToolbox::storage_nodes_map_.clear();
+	MyToolbox::users_map_.clear();
+	MyToolbox::timetable_.clear();
+
 	// Create the sensors
 	for (int i = 1; i <= MyToolbox::num_sensors_; i++) {
 		y_coord = distribution(generator);
@@ -237,7 +242,7 @@ bool network_setup() {
 		return false;
 	}
 
-	// Set sensors' supervisors
+	//	 Set sensors' supervisors
 	for (map<unsigned int, SensorNode>::iterator sns_it = MyToolbox::sensors_map_.begin(); sns_it != MyToolbox::sensors_map_.end(); sns_it++) {
 		(sns_it->second).set_supervisor();
 	}
@@ -289,8 +294,15 @@ int main() {
 
 	import_settings();
 
+	//	if (ifstream("./../data_simulation_folder/c1_simul.txt")) {
+	//		remove("./../data_simulation_folder/c1_simul.txt");
+	//	}
+	//	ofstream conn_file("./../data_simulation_folder/c1_simul.txt");
+	//	conn_file.close();
+
 	MyToolbox::initialize_toolbox();
 
+	delete data_coll;
 	data_coll = new DataCollector();
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
@@ -307,6 +319,18 @@ int main() {
 	ofstream user_decoding_file("./../data_simulation_folder/user_decoding.txt");
 	user_decoding_file.close();
 
+	if (ifstream("./../data_simulation_folder/user_replacement.txt")) {
+		remove("./../data_simulation_folder/user_replacement.txt");
+	}
+	ofstream usr_replacem_file("./../data_simulation_folder/user_replacement.txt");
+	usr_replacem_file.close();
+
+	if (ifstream("./../data_simulation_folder/cache_freshness.txt")) {
+		remove("./../data_simulation_folder/cache_freshness.txt");
+	}
+	ofstream cache_freshness_file("./../data_simulation_folder/cache_freshness.txt");
+	cache_freshness_file.close();
+
 	bool setup_succeeded = network_setup();
 	if (!setup_succeeded) {
 		cout << "Network setup failed. Quit program!" << endl;
@@ -315,22 +339,34 @@ int main() {
 	cout << "Network correctly set-up!" << endl;
 
 	activate_measure_generation();
-//	activate_ping_generation();
-//	activate_ping_check();
+	//	activate_ping_generation();
+	//	activate_ping_check();
 	activate_users();
 
 	MyTime end_time_ns = end_time * 60 * 60 * pow(10, 9);
 	Event end_event(end_time_ns, Event::event_type_end);
 	main_event_queue.push(end_event);
 
+	for (int i = 0; i < end_time / 6; i++) {
+		MyTime flag_time = i * 6 * 60 * 60 * pow(10, 9);
+		Event flag_time_event(flag_time, Event::event_type_time_flag);
+		main_event_queue.push(flag_time_event);
+	}
+
 	cout << "- - - Starting the Program - - -" << endl;
 
 	while (!main_event_queue.empty()) {
 		Event next_event = main_event_queue.top();
 		if (next_event.get_event_type() == Event::event_type_end) {
-//			data_coll->check_cache_freshness();
+			//			data_coll->check_cache_freshness();
 			cout << "End reached!" << endl;
 			break;
+		}
+		if (next_event.get_event_type() == Event::event_type_time_flag) {
+			//			data_coll->check_cache_freshness();
+			cout << "> TIME: " << next_event.get_time() / (pow(10, 9) * 60 * 60) << endl;
+			main_event_queue.pop();
+			continue;
 		}
 		main_event_queue.pop();
 		vector<Event> new_events = next_event.execute_action();
@@ -344,6 +380,5 @@ int main() {
 	data_coll->report();
 
 	cout << "Bye!" << endl;
-
 	return 0;
 }

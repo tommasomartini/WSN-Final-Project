@@ -45,7 +45,8 @@ class User: public Node {
   std::map<MeasureKey, unsigned char> decoded_symbols_;	// input symbols eventually decoded (contains ALL the measures I have received, also the older ones)
   std::map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent
   std::vector<unsigned int> dead_sensors_;		// dead sensors ids
-  std::vector<unsigned int> interrogated_nodes_;	// list of the nodes I have queried info (I don't want to query a node twice!)
+  std::vector<unsigned int> interrogated_caches_;	// list of the nodes I have queried info (I don't want to query a node twice!)
+  std::vector<unsigned int> interrogated_users_;	// list of the nodes I have queried info (I don't want to query a node twice!)
 
   std::vector<Event> send(unsigned int, Message*);
   std::vector<Event> re_send(Message*);

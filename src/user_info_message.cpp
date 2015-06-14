@@ -14,5 +14,5 @@ UserInfoMessage::UserInfoMessage(map<unsigned int, OutputSymbol> symbols, std::v
 }
 
 unsigned int UserInfoMessage::get_message_size() {
-	return MyToolbox::num_bits_for_measure_;
+	return MyToolbox::num_bits_for_measure_ * symbols_.size();
 }

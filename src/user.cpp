@@ -42,7 +42,24 @@ vector<Event> User::move() {
 	vector<Event> new_events;
 
 	if (decoding_succeeded && event_queue_.empty()) {
+//		cout << round(MyToolbox::current_time_ / pow(10, 9)) << " ------------------------------------------------------------------ u" << node_id_ << " replaced" << endl;
 		return MyToolbox::replace_user(node_id_);
+	}
+
+	if (int(nodes_info_.size()) >= MyToolbox::num_storage_nodes_) {
+//		cout << "u" << node_id_ << " failed. Ho " << nodes_info_.size() << " output symbols " << MyToolbox::current_time_ / (pow(10, 9) * 3600) << endl;
+//		return MyToolbox::replace_user(node_id_);
+	}
+
+	vector<unsigned int> caches_to_reinsert;
+	for (vector<unsigned int>::iterator cache_it = interrogated_caches_.begin(); cache_it != interrogated_caches_.end(); cache_it++) {	// for each cache I queried smoe data
+		if (near_storage_nodes_.find(*cache_it) == near_storage_nodes_.end()) {		// this cache is no more my neighbor
+			caches_to_reinsert.push_back(*cache_it);	// when it will be my neighbor again I can query him
+		}
+	}
+	for (vector<unsigned int>::iterator cache_it = caches_to_reinsert.begin(); cache_it != caches_to_reinsert.end(); cache_it++) {	// for each cache I queried smoe data
+		vector<unsigned int>::iterator to_remove_it = find(interrogated_caches_.begin(), interrogated_caches_.end(), *cache_it);
+		interrogated_caches_.erase(to_remove_it);
 	}
 
 	default_random_engine generator = MyToolbox::generator_;
@@ -73,7 +90,7 @@ vector<Event> User::move() {
 
 	if (!decoding_succeeded) {	// not yet decoded all the input symbols
 		for (map<unsigned int, StorageNode*>::iterator node_it = near_storage_nodes_.begin(); node_it != near_storage_nodes_.end(); node_it++) {
-			if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), node_it->first) == interrogated_nodes_.end()) {	// if I haven't already queried this node
+			if (find(interrogated_caches_.begin(), interrogated_caches_.end(), node_it->first) == interrogated_caches_.end()) {	// if I haven't already queried this node
 				MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
 				Event hello_event(event_time, Event::event_type_cache_gets_user_hello);
 				Message* empty_msg = new Message();
@@ -84,15 +101,15 @@ vector<Event> User::move() {
 				hello_event.set_agent_id(node_it->first);
 				hello_event.set_message(empty_msg);
 				new_events.push_back(hello_event);
-				interrogated_nodes_.push_back(node_it->first);
+				interrogated_caches_.push_back(node_it->first);
 				data_collector->record_user_query(node_id_, node_it->first, true);
 			}
 		}
 
 		if (MyToolbox::intra_user_communication_) {
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
-				if (find(interrogated_nodes_.begin(), interrogated_nodes_.end(), user_it->first) == interrogated_nodes_.end()) {	// if I haven't already queried this node
-					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset();
+				if (find(interrogated_users_.begin(), interrogated_users_.end(), user_it->first) == interrogated_users_.end()) {	// if I haven't already queried this node
+					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset() * 100 ;
 					Event hello_event(event_time, Event::event_type_user_gets_user_hello);
 					Message* empty_msg = new Message();
 					empty_msg->message_type_ = Message::message_type_user_hello;
@@ -102,7 +119,7 @@ vector<Event> User::move() {
 					hello_event.set_agent(user_it->second);
 					hello_event.set_agent_id(user_it->first);
 					new_events.push_back(hello_event);
-					interrogated_nodes_.push_back(user_it->first);
+					interrogated_users_.push_back(user_it->first);
 				}
 			}
 		}
@@ -157,7 +174,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		}
 	}
 
-	// I have stored all the info brught by this node info msg, I don't need it anymore, I can release it
+	// I have stored all the info brought by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
 
 	if (int(nodes_info_.size()) < MyToolbox::num_sensors_) {	// if I have less output symbols than input it's not possible to complete message passing...
@@ -166,13 +183,15 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 	bool msg_passing_ok = message_passing();
 	if (msg_passing_ok && data_collector->check_user_decoding(decoded_symbols_)) {	// message passing succeeded: I have decoded all the symbols
+//		cout << "u" << node_id_ << "__" << endl;
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		data_collector->record_user_decoding(node_id_, decoded_symbols_);
 		if (MyToolbox::backward_communication_) {
 			for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 				if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbours...
-					unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
-					int xor_counter = 0;	// ...how many measure I did xor
+//					unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+//					int xor_counter = 0;	// ...how many measure I did xor
+					map<unsigned int, unsigned char> replacements;	// data to replace
 					vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
 					map<unsigned int, vector<unsigned int>> update_info;
 					for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
@@ -194,8 +213,9 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 						if (have_decoded_this_measure) {	// if I have decoded this measure
 							if (measure_of_dead_sensor) {	// if this node is dead I want just to remove this measure
 								unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
-								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-								xor_counter++;	// count how many measure I am xoring
+//								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+//								xor_counter++;	// count how many measure I am xoring
+								replacements.insert(pair<unsigned int, unsigned char>(outdated_sns_id, out_data));
 								vector<unsigned int> inner_vec;
 								inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
 								inner_vec.push_back(0);		// store 0 because I don't want to replace this measure
@@ -211,11 +231,14 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 								 * who decoded (s10, 3), updates cache A.
 								 */
 								unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
-								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-								xor_counter++;	// count how many measure I am xoring
+//								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+//								xor_counter++;	// count how many measure I am xoring
 								MeasureKey key(outdated_sns_id, newest_msr_for_this_sns);	// create a key
 								unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-								ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+//								ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+
+								unsigned char replacement_data = out_data ^ up_data;	// xor old and new measure;
+								replacements.insert(pair<unsigned int, unsigned char>(outdated_sns_id, replacement_data));
 
 								vector<unsigned int> inner_vec;
 								inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
@@ -229,9 +252,8 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 						}
 					}
-					if (xor_counter > 0) {	// if I have at least one measure to remove or update
-						cout << "at least one" << endl;
-						OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, update_info);	// create an outdated measure message
+					if (replacements.size() > 0) {	// if I have at least one measure to remove or update
+						OutdatedMeasure* outdated_measure = new OutdatedMeasure(replacements, update_info);	// create an outdated measure message
 						vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
 						for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
 							new_events.push_back(*event_it);
@@ -249,12 +271,6 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 	return new_events;
 }
 
-vector<Event> User::try_retx(Message* message) {
-	vector<Event> new_events;
-	new_events = re_send(message);
-	return new_events;
-}
-
 vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	vector<Event> new_events;
 
@@ -264,6 +280,7 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	}
 
 	if (decoding_succeeded) {	// if I already made the decoding...
+		delete user_info_msg;
 		return new_events;	// ...ignore this message
 	}
 
@@ -305,14 +322,18 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	bool msg_passing_ok = message_passing();
 	if (msg_passing_ok && data_collector->check_user_decoding(decoded_symbols_)) {	// message passing succeeded: I have decoded all the symbols
 
+//		cout << "u" << node_id_ << "__" << endl;
+
 		decoding_succeeded = true;	// from now on do not accept other caches' answers
 		data_collector->record_user_decoding(node_id_, decoded_symbols_);
 
 		if (MyToolbox::backward_communication_) {
 			for (map<unsigned int, OutputSymbol>::iterator out_sym_it = nodes_info_.begin(); out_sym_it != nodes_info_.end(); out_sym_it++) {	// for each cache which answered me...
 				if (near_storage_nodes_.find(out_sym_it->first) != near_storage_nodes_.end()) {	// if this cache is among my neighbors...
-					unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
-					int xor_counter = 0;	// ...how many measure I did xor
+//					unsigned char ad_hoc_msg = 0;	// ...xored message I have to send him...
+//					int xor_counter = 0;	// ...how many measure I did xor
+					map<unsigned int, unsigned char> replacements;	// data to replace
+
 					vector<MeasureKey> outdated_tmp = out_sym_it->second.outdated_;
 					map<unsigned int, vector<unsigned int>> update_info;
 					for (vector<MeasureKey>::iterator out_it = outdated_tmp.begin(); out_it != outdated_tmp.end(); out_it++) {	// for each (pure) measure the cache needs
@@ -334,8 +355,11 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 						if (have_decoded_this_measure) {	// if I have decoded this measure
 							if (measure_of_dead_sensor) {	// if this node is dead I want just to remove this measure
 								unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
-								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-								xor_counter++;	// count how many measure I am xoring
+//								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+//								xor_counter++;	// count how many measure I am xoring
+
+								replacements.insert(pair<unsigned int, unsigned char>(outdated_sns_id, out_data));
+
 								vector<unsigned int> inner_vec;
 								inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
 								inner_vec.push_back(0);		// store 0 because I don't want to replace this measure
@@ -351,11 +375,14 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 								 * who decoded (s10, 3), updates cache A.
 								 */
 								unsigned char out_data = decoded_symbols_.find(*out_it)->second;	// get the data he wants
-								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
-								xor_counter++;	// count how many measure I am xoring
+//								ad_hoc_msg ^= out_data;	// xor only the data of the outdated measure, in this way I am erasing the outdated measure
+//								xor_counter++;	// count how many measure I am xoring
 								MeasureKey key(outdated_sns_id, newest_msr_for_this_sns);	// create a key
 								unsigned char up_data = decoded_symbols_.find(key)->second;		// get the data related to the most update measure
-								ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+//								ad_hoc_msg ^= up_data;	// xor the updated data so that I now have an updated measure
+
+								unsigned char replacement_data = out_data ^ up_data;	// xor old and new measure;
+								replacements.insert(pair<unsigned int, unsigned char>(outdated_sns_id, replacement_data));
 
 								vector<unsigned int> inner_vec;
 								inner_vec.push_back(outdated_msr_id);	// store the id of the measure to remove
@@ -368,14 +395,20 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 						} else {	// I have NOT decoded this measure
 						}
 					}
-					if (xor_counter > 0) {	// if I have at least one measure to remove or update for this cache
-						cout << "at least one" << endl;
-						OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, update_info);	// create an outdated measure message
+					if (replacements.size() > 0) {	// if I have at least one measure to remove or update for this cache
+						OutdatedMeasure* outdated_measure = new OutdatedMeasure(replacements, update_info);	// create an outdated measure message
 						vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
 						for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
 							new_events.push_back(*event_it);
 						}
 					}
+//					if (xor_counter > 0) {	// if I have at least one measure to remove or update for this cache
+//						OutdatedMeasure* outdated_measure = new OutdatedMeasure(ad_hoc_msg, update_info);	// create an outdated measure message
+//						vector<Event> curr_events = send(out_sym_it->first, outdated_measure);		// send it
+//						for (vector<Event>::iterator event_it = curr_events.begin(); event_it != curr_events.end(); event_it++) {	// add the returned events to the list new_events
+//							new_events.push_back(*event_it);
+//						}
+//					}
 				} else {	// cache not in my neighborhood
 					// do nothing
 				}
@@ -388,6 +421,12 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	return new_events;
 }
 
+vector<Event> User::try_retx(Message* message) {
+	vector<Event> new_events;
+	new_events = re_send(message);
+	return new_events;
+}
+
 /*  This user receives a "beep" from another user, asking him to send him his measures
  */
 vector<Event> User::receive_user_request(unsigned int next_user_id) {
@@ -397,8 +436,15 @@ vector<Event> User::receive_user_request(unsigned int next_user_id) {
 		exit(0);
 	}
 	if (near_users_.find(next_user_id) != near_users_.end()) {	// this user is still among my neighbors
-		UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
-		new_events = send(next_user_id, user_info_msg);
+//		if (int(nodes_info_.size()) > 1) {
+//			map<unsigned int, OutputSymbol>vv;
+//			map<unsigned int, OutputSymbol>::iterator my_it = nodes_info_.begin();
+//			vv.insert(pair<unsigned int, OutputSymbol>(my_it->first, my_it->second));
+//			my_it++;
+//			vv.insert(pair<unsigned int, OutputSymbol>(nodes_info_.begin()->first, nodes_info_.begin()->second));
+			UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
+			new_events = send(next_user_id, user_info_msg);
+//		}
 	}
 	return new_events;
 }

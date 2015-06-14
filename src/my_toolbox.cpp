@@ -111,18 +111,18 @@ void MyToolbox::set_close_nodes(User* user) {
     Functions
 **************************************/
 void MyToolbox::initialize_toolbox() {
-  cout << "Toolbox initialization..." << endl;
-  cout << "Setting maximum number of hops: ";
+//  cout << "Toolbox initialization..." << endl;
+//  cout << "Setting maximum number of hops: ";
   max_num_hops_ = ceil(C1_ * num_storage_nodes_ * log(num_storage_nodes_));
-  cout << max_num_hops_ << endl;
-  cout << "Setting default random engine...";
+//  cout << max_num_hops_ << endl;
+//  cout << "Setting default random engine...";
   generator_ = default_random_engine(time(NULL));
-  cout << " done!" << endl;
-  cout << "Intra-user communcation";
+//  cout << " done!" << endl;
+//  cout << "Intra-user communcation";
   if (intra_user_communication_) {
-	  cout << " activated" << endl;
+//	  cout << " activated" << endl;
   } else {
-	  cout << " not activated" << endl;
+//	  cout << " not activated" << endl;
   }
 }
 
