@@ -47,6 +47,17 @@ vector<Event> User::move() {
 	}
 
 	if (int(nodes_info_.size()) >= MyToolbox::num_storage_nodes_) {
+//		cout << "n" << node_id_;
+//		for (auto& aa : nodes_info_) {
+//			cout << " -";
+//			for (auto& bb : aa.second.sources_) {
+//				unsigned int sns = bb.sensor_id_;
+//				unsigned msr = bb.measure_id_;
+//				cout << " (s" << sns << "," << msr << ")";
+//			}
+//			cout << endl;
+//		}
+//		exit(0);
 //		cout << "u" << node_id_ << " failed. Ho " << nodes_info_.size() << " output symbols " << MyToolbox::current_time_ / (pow(10, 9) * 3600) << endl;
 //		return MyToolbox::replace_user(node_id_);
 	}
@@ -152,7 +163,7 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 		data_collector->record_user_rx(node_id_);	// record it to the data collector
 	}
 
-	OutputSymbol curr_output_symbol_(node_info_msg->output_message_, node_info_msg->sources_, node_info_msg->outdated_measures_);	// create a new output symbol
+	OutputSymbol curr_output_symbol_(MyToolbox::current_time_, node_info_msg->output_message_, node_info_msg->sources_, node_info_msg->outdated_measures_);	// create a new output symbol
 	pair<unsigned int, OutputSymbol> new_output_symbol(node_info_msg->node_id_, curr_output_symbol_);	// associate it to the cache
 	map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(node_info_msg->node_id_);	// the entry belonging to this cache in my map
 	if (info_it != nodes_info_.end()) {	// if there is already an entry related to this cache...
@@ -173,6 +184,8 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 			}
 		}
 	}
+
+//	cout << "@@u" << node_id_ << " rx from c" << node_info_msg->get_sender_node_id() << endl;
 
 	// I have stored all the info brought by this node info msg, I don't need it anymore, I can release it
 	delete node_info_msg;
@@ -290,11 +303,21 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 		}
 	}
 
+//	cout << "##u" << node_id_ << " rx from u" << user_info_msg->get_sender_node_id() << ". Have " << nodes_info_.size() << " msrs" << endl;
 	for (map<unsigned int, OutputSymbol>::iterator sym_it = user_info_msg->symbols_.begin(); sym_it != user_info_msg->symbols_.end(); sym_it++) {	// for each symbol passed by the other user
+		OutputSymbol out_sym = sym_it->second;	// symbol in exam
 		map<unsigned int, OutputSymbol>::iterator info_it = nodes_info_.find(sym_it->first);	// the entry belonging to this cache in my map
-		if (info_it == nodes_info_.end()) {	// if there is NOT an entry related to this cache...
-			OutputSymbol out_sym = sym_it->second;
+		if (info_it == nodes_info_.end()) {	// if there is NOT an entry related to this cache (keep it anyway)
+
 			nodes_info_.insert(pair<unsigned int, OutputSymbol>(sym_it->first, out_sym));	// ...insert it into the map
+
+//			cout << " insert symbol from cache c" << sym_it->first;
+//			for (auto& aa : out_sym.sources_) {
+//				unsigned int sns = aa.sensor_id_;
+//				unsigned msr = aa.measure_id_;
+//				cout << " (s" << sns << "," << msr << ")";
+//			}
+//			cout << endl;
 
 			// Update the measure id
 			for (vector<MeasureKey>::iterator msr_key_it_ = out_sym.sources_.begin(); msr_key_it_ != out_sym.sources_.end(); msr_key_it_++) {	// for each of the measure just received...
@@ -309,8 +332,30 @@ vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 					}
 				}
 			}
+		} else {	// if there already is an entry related to this cache (keep it only if updated)
+			MyTime his_sym_time = out_sym.generation_time_;		// time this symbol has been generated
+			MyTime my_sym_time = info_it->second.generation_time_;		// time my symbol has been generated
+			if (his_sym_time > my_sym_time) {	// if his measure is more recent keep it
+				nodes_info_.erase(info_it->first);
+				nodes_info_.insert(pair<unsigned int, OutputSymbol>(sym_it->first, out_sym));	// ...insert it into the map
+
+				// Update the measure id
+				for (vector<MeasureKey>::iterator msr_key_it_ = out_sym.sources_.begin(); msr_key_it_ != out_sym.sources_.end(); msr_key_it_++) {	// for each of the measure just received...
+					unsigned int current_sns_id = (*msr_key_it_).sensor_id_;	// id of the sensor which generated this measure
+					unsigned int current_msr_id = (*msr_key_it_).measure_id_;	// id of the measure
+					if (updated_sensors_measures_.find(current_sns_id) == updated_sensors_measures_.end()) {	// never received a measure from this sensor
+						updated_sensors_measures_.insert(pair<unsigned int, unsigned int>(current_sns_id, current_msr_id));	// add the new sensor and the relative measure
+					} else {	// already received a measure from this sensor -> update it if the new measure is newer
+						unsigned int current_updated_msr_id = updated_sensors_measures_.find(current_sns_id)->second;	// the most updated measure I have from this sensor
+						if (current_msr_id > current_updated_msr_id) {	// the just received measure is more recent than the one I had
+							updated_sensors_measures_.find(current_sns_id)->second = current_msr_id;	// replace the old measure with the new one, just received
+						}
+					}
+				}
+			}
 		}
 	}
+//	cout << "now have " << nodes_info_.size() << " msrs" << endl;
 
 	// I have stored all the info brought by this node info msg, I don't need it anymore, I can release it
 	delete user_info_msg;

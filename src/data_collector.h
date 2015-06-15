@@ -43,6 +43,7 @@ class DataCollector {
 	  double decoding_distance_ = 0;
 	  int decoding_steps_ = 0;
 	  int num_rx_node_info_ = 0;
+	  int num_output_symbol_ = 0;
 	  bool decoded_ = false;
 	  int num_interrogated_caches_ = 0;
 	  int num_interrogated_users_ = 0;

@@ -1,6 +1,6 @@
 num_storage_nodes=200 180
 num_sensors=20 20
-num_users=50 50 
+num_users=100 50 
 
 num_bits_for_measure=80000
 
@@ -22,11 +22,11 @@ processing_time=1000000 ns (= 1 millisecond)
 max_tx_offset=5000000 ns (= 5 milliseconds)
 
 user_observation_time=5 s (= 10s)
-intra_user_communication=1  0 for "no", any number different from 0 for "yes"
-backward_communication=1 0 for "no", any number different from 0 for "yes"
+intra_user_communication=1      0 for "no", any number different from 0 for "yes"
+backward_communication=1        0 for "no", any number different from 0 for "yes"
 
 measure_generation_delay=60   30 min 
 sensor_failure_prob=0  0.2
 num_measures_for_sensor=3
 
-end_time=12 h
+end_time=24 h

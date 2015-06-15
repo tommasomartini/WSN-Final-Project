@@ -243,6 +243,7 @@ void DataCollector::report() {
 		double avg_user_dec_time = 0;
 		double avg_dec_num_steps = 0;
 		double avg_dec_distance = 0;
+		double avg_num_output_symbol = 0;
 //		double avg_interr_caches = 0;
 //		double avg_interr_users = 0;
 		int decoding_number = 0;
@@ -253,6 +254,7 @@ void DataCollector::report() {
 				avg_user_dec_time += it->second.decoding_duration_;
 				avg_dec_num_steps += it->second.decoding_steps_;
 				avg_dec_distance += it->second.decoding_distance_;
+				avg_num_output_symbol += it->second.num_output_symbol_;
 //				avg_interr_caches += it->second.num_interrogated_caches_;
 //				avg_interr_users += it->second.num_interrogated_users_;
 			}
@@ -260,6 +262,7 @@ void DataCollector::report() {
 		avg_user_dec_time = avg_user_dec_time / decoding_number;
 		avg_dec_num_steps = avg_dec_num_steps / decoding_number;
 		avg_dec_distance = avg_dec_distance / decoding_number;
+		avg_num_output_symbol = avg_num_output_symbol / decoding_number;
 //		avg_interr_caches = avg_interr_caches / decoding_number;
 //		avg_interr_users = avg_interr_users / decoding_number;
 
@@ -267,6 +270,7 @@ void DataCollector::report() {
 		cout << " - Avg decoding time: " << avg_user_dec_time * 1. / pow(10, 9) << "s" << endl;
 		cout << " - Avg decoding distance: " << avg_dec_distance << "m" << endl;
 		cout << " - Avg decoding number of steps: " << avg_dec_num_steps << endl;
+		cout << " - Avg number of decoding symbols: " << avg_num_output_symbol << endl;
 //		cout << " - Avg number of interrogated caches: " << avg_interr_caches << " out of " << MyToolbox::num_storage_nodes_
 //						<< " (" << avg_interr_caches * 100.0 / MyToolbox::num_storage_nodes_ << "%)" << endl;
 //		cout << " - Avg number of interrogated users: " << avg_interr_users << " out of " << MyToolbox::num_users_
@@ -543,6 +547,7 @@ void DataCollector::record_user_decoding(unsigned int user_id, map<MeasureKey, u
 			MyTime dec_duration = user_register_.find(user_id)->second.decoding_time_ - user_register_.find(user_id)->second.born_time_;
 			user_register_.find(user_id)->second.decoding_duration_ = dec_duration;
 			user_register_.find(user_id)->second.decoded_ = true;
+			user_register_.find(user_id)->second.num_output_symbol_ = MyToolbox::users_map_.find(user_id)->second.get_num_output_symbols();
 
 			int fresh_diff = 0;		// freshness difference
 			int num_up_measures = 0;	// num updted measures

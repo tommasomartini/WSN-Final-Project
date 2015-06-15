@@ -51,17 +51,6 @@ class MyToolbox {
 //	}
   };
 
-  struct OutputSymbol {
-	  unsigned char xored_msg_;
-	  std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
-	  std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
-	  OutputSymbol(unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
-		  xored_msg_ = xored_msg;
-		  sources_ = sources;
-		  outdated_ = outdated;
-	  }
-  };
-
   // TODO replace all the unsigned char with this
   struct MeasureData {
     unsigned int data_;
@@ -72,6 +61,19 @@ class MyToolbox {
 
   typedef unsigned long MyTime;
   typedef unsigned int IdType;
+
+  struct OutputSymbol {
+  	  MyTime generation_time_;
+  	  unsigned char xored_msg_;
+  	  std::vector<MeasureKey> sources_;	// keys of the measures which compose the xor
+  	  std::vector<MeasureKey> outdated_;	// keys of the outdated measures (subset of sources)
+  	  OutputSymbol(MyTime gen_time, unsigned char xored_msg, std::vector<MeasureKey> sources, std::vector<MeasureKey> outdated) {
+  		  generation_time_ = gen_time;
+  		  xored_msg_ = xored_msg;
+  		  sources_ = sources;
+  		  outdated_ = outdated;
+  	  }
+    };
 
   //  Global values
   static int num_storage_nodes_;
