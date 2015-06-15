@@ -120,17 +120,20 @@ vector<Event> User::move() {
 		if (MyToolbox::intra_user_communication_) {
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
 				if (find(interrogated_users_.begin(), interrogated_users_.end(), user_it->first) == interrogated_users_.end()) {	// if I haven't already queried this node
-					MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset() * 100 ;
-					Event hello_event(event_time, Event::event_type_user_gets_user_hello);
-					Message* empty_msg = new Message();
-					empty_msg->message_type_ = Message::message_type_user_hello;
-					empty_msg->set_receiver_node_id(user_it->first);
-					empty_msg->set_sender_node_id(node_id_);
-					hello_event.set_message(empty_msg);
-					hello_event.set_agent(user_it->second);
-					hello_event.set_agent_id(user_it->first);
-					new_events.push_back(hello_event);
-					interrogated_users_.push_back(user_it->first);
+
+//					if () {
+						MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset(); //* 100 ;
+						Event hello_event(event_time, Event::event_type_user_gets_user_hello);
+						Message* empty_msg = new Message();
+						empty_msg->message_type_ = Message::message_type_user_hello;
+						empty_msg->set_receiver_node_id(user_it->first);
+						empty_msg->set_sender_node_id(node_id_);
+						hello_event.set_message(empty_msg);
+						hello_event.set_agent(user_it->second);
+						hello_event.set_agent_id(user_it->first);
+						new_events.push_back(hello_event);
+						interrogated_users_.push_back(user_it->first);
+//					}
 				}
 			}
 		}
