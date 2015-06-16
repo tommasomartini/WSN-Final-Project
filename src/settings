@@ -24,6 +24,7 @@ max_tx_offset=5000000 ns (= 5 milliseconds)
 user_observation_time=5 s (= 10s)
 intra_user_communication=1      0 for "no", any number different from 0 for "yes"
 backward_communication=1        0 for "no", any number different from 0 for "yes"
+max_num_measures=5  5
 
 measure_generation_delay=60   30 min 
 sensor_failure_prob=0  0.2

@@ -121,6 +121,8 @@ void import_settings() {
 					} else {
 						MyToolbox::backward_communication_ = true;
 					}
+				} else if (value_name == "max_num_measures") {
+					MyToolbox::max_num_measures_ = (double)num;
 				}
 			}
 		}
@@ -306,6 +308,7 @@ int main() {
 	data_coll = new DataCollector();
 	main_event_queue = priority_queue<Event, vector<Event>, EventComparator>();
 	generator = MyToolbox::generator_;
+
 
 	if (ifstream("./../data_simulation_folder/measure_spreading.txt")) {
 		remove("./../data_simulation_folder/measure_spreading.txt");

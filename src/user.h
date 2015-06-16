@@ -42,6 +42,7 @@ class User: public Node {
   bool decoding_succeeded = false;	// when message passing succeeds I ignore other messages sent by the cache (I could interrogate 100 caches but decode the measures after 10 answers!)
   double speed_;  // user's speed in meters / seconds
   int direction_; // number from 0 to 359, represents a degree
+  double covered_distance_ = 0;
   std::map<unsigned int, OutputSymbol> nodes_info_;	// output symbols <cache id, info about the cache and the output symbol>
   std::map<MeasureKey, unsigned char> decoded_symbols_;	// input symbols eventually decoded (contains ALL the measures I have received, also the older ones)
   std::map<unsigned int, unsigned int> updated_sensors_measures_;	// for each sensor, the measure of its I consider the most recent

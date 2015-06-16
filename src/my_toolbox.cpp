@@ -51,6 +51,8 @@ int MyToolbox::num_measures_for_sensor_ = 0;
 bool MyToolbox::intra_user_communication_ = false;
 bool MyToolbox::backward_communication_ = false;
 
+int MyToolbox::max_num_measures_ = 0;
+
 map<unsigned int, SensorNode> MyToolbox::sensors_map_;
 map<unsigned int, StorageNode> MyToolbox::storage_nodes_map_;
 map<unsigned int, User> MyToolbox::users_map_;

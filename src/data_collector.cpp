@@ -355,6 +355,19 @@ void DataCollector::report() {
 			myfile.close();
 		}
 		else cout << "Unable to open file";
+
+
+		ofstream intra_file("./../data_simulation_folder/intra_user.txt");
+		if (intra_file.is_open()) {
+			for (auto& uu : user_register_) {
+				int nn = uu.second.num_interrogated_users_;
+				int mm = uu.second.num_user_answers_;
+				unsigned int ii = uu.first;
+				intra_file << "u" << ii << ": " << mm << " users answered out of " << nn << " interrogated" << endl;
+			}
+			intra_file.close();
+		}
+		else cout << "Unable to open file";
 	}
 }
 
@@ -532,6 +545,22 @@ void DataCollector::record_user_movement(unsigned int user_id, double distance, 
 void DataCollector::record_user_rx(unsigned int user_id) {
 	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
 		user_register_.find(user_id)->second.num_rx_node_info_++;
+	} else {	// if the user is not in the register
+		cout << "Error! I'm trying to update a user not in the register!" << endl;
+	}
+}
+
+void DataCollector::record_user_req_user(unsigned int user_id) {
+	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
+		user_register_.find(user_id)->second.num_interrogated_users_++;
+	} else {	// if the user is not in the register
+		cout << "Error! I'm trying to update a user not in the register!" << endl;
+	}
+}
+
+void DataCollector::record_user_rx_from_user(unsigned int user_id) {
+	if (user_register_.find(user_id) != user_register_.end()) {	// if the user is in the register
+		user_register_.find(user_id)->second.num_user_answers_++;
 	} else {	// if the user is not in the register
 		cout << "Error! I'm trying to update a user not in the register!" << endl;
 	}

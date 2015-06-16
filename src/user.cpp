@@ -41,7 +41,7 @@ User::User(unsigned int node_id, double y_coord, double x_coord) : Node (node_id
 vector<Event> User::move() {
 	vector<Event> new_events;
 
-	if (decoding_succeeded && event_queue_.empty()) {
+	if ((decoding_succeeded && event_queue_.empty()) || covered_distance_ > 500) {
 //		cout << round(MyToolbox::current_time_ / pow(10, 9)) << " ------------------------------------------------------------------ u" << node_id_ << " replaced" << endl;
 		return MyToolbox::replace_user(node_id_);
 	}
@@ -78,6 +78,7 @@ vector<Event> User::move() {
 	int deviation = distribution(generator);
 	direction_ += deviation;	// change a bit my direction
 	double dist = speed_ * (MyToolbox::user_observation_time_ * 1.0 / pow(10, 9));
+	covered_distance_ += dist;
 
 	double new_x = x_coord_ + dist * sin(direction_ * PI / 180) /* MyToolbox::space_precision_*/;	// compute my new position
 	double new_y = y_coord_ + dist * cos(direction_ * PI / 180) /* MyToolbox::space_precision_*/;
@@ -120,8 +121,9 @@ vector<Event> User::move() {
 		if (MyToolbox::intra_user_communication_) {
 			for (map<unsigned int, User*>::iterator user_it = near_users_.begin(); user_it != near_users_.end(); user_it++) {
 				if (find(interrogated_users_.begin(), interrogated_users_.end(), user_it->first) == interrogated_users_.end()) {	// if I haven't already queried this node
-
-//					if () {
+//					bernoulli_distribution distribution(0.2);	// interrogate another user with probability 1 / 5
+//					if (distribution(MyToolbox::generator_)) {
+					if (MyToolbox::users_map_.find(user_it->first)->second.decoding_succeeded == false) {
 						MyTime event_time = MyToolbox::current_time_ + MyToolbox::get_tx_offset(); //* 100 ;
 						Event hello_event(event_time, Event::event_type_user_gets_user_hello);
 						Message* empty_msg = new Message();
@@ -133,7 +135,9 @@ vector<Event> User::move() {
 						hello_event.set_agent_id(user_it->first);
 						new_events.push_back(hello_event);
 						interrogated_users_.push_back(user_it->first);
-//					}
+						data_collector->record_user_req_user(node_id_);
+					}
+					//					}
 				}
 			}
 		}
@@ -289,6 +293,8 @@ vector<Event> User::receive_node_data(NodeInfoMessage* node_info_msg) {
 
 vector<Event> User::receive_user_data(UserInfoMessage* user_info_msg) {
 	vector<Event> new_events;
+
+	data_collector->record_user_rx_from_user(node_id_);
 
 	if (!MyToolbox::intra_user_communication_) {
 		cerr << "Error! Received a message from a user when intra-user communication is not active!" << endl;
@@ -479,20 +485,33 @@ vector<Event> User::try_retx(Message* message) {
  */
 vector<Event> User::receive_user_request(unsigned int next_user_id) {
 	vector<Event> new_events;
-	if (!MyToolbox::intra_user_communication_) {
-		cerr << "Error! Received a request from a user when intra-user communication is not active!" << endl;
-		exit(0);
-	}
-	if (near_users_.find(next_user_id) != near_users_.end()) {	// this user is still among my neighbors
-//		if (int(nodes_info_.size()) > 1) {
-//			map<unsigned int, OutputSymbol>vv;
-//			map<unsigned int, OutputSymbol>::iterator my_it = nodes_info_.begin();
-//			vv.insert(pair<unsigned int, OutputSymbol>(my_it->first, my_it->second));
-//			my_it++;
-//			vv.insert(pair<unsigned int, OutputSymbol>(nodes_info_.begin()->first, nodes_info_.begin()->second));
-			UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);
-			new_events = send(next_user_id, user_info_msg);
-//		}
+	if (!decoding_succeeded) {
+		if (!MyToolbox::intra_user_communication_) {
+			cerr << "Error! Received a request from a user when intra-user communication is not active!" << endl;
+			exit(0);
+		}
+		if (near_users_.find(next_user_id) != near_users_.end()) {	// this user is still among my neighbors
+			if (int(nodes_info_.size()) > 0) {	// if I have something to pass
+				int M = MyToolbox::max_num_measures_;
+				if (int(nodes_info_.size()) <= M) {	// I have M measures or less
+					UserInfoMessage* user_info_msg = new UserInfoMessage(nodes_info_, dead_sensors_);	// send all
+					new_events = send(next_user_id, user_info_msg);
+				} else {	// I have more than M measures
+					map<unsigned int, OutputSymbol> symbols_to_send;	// map of the symbols I have to send
+					map<unsigned int, OutputSymbol>::iterator my_it = nodes_info_.begin();	// iterator pointing to the first element
+					int steps = rand() % (nodes_info_.size() - M);	// take a random starting point between 0 and (last - M)
+					for (int i = 0; i < steps; i++) {	// take the iterator to the starting point
+						my_it++;
+					}
+					for (int i = 0; i < M; i++) {	// for each of the following M symbols
+						symbols_to_send.insert(pair<unsigned int, OutputSymbol>(my_it->first, my_it->second));	// insert it in the list
+						my_it++;	// increment the iterator
+					}
+					UserInfoMessage* user_info_msg = new UserInfoMessage(symbols_to_send, dead_sensors_);
+					new_events = send(next_user_id, user_info_msg);		// send it
+				}
+			}
+		}
 	}
 	return new_events;
 }

@@ -47,6 +47,7 @@ class DataCollector {
 	  bool decoded_ = false;
 	  int num_interrogated_caches_ = 0;
 	  int num_interrogated_users_ = 0;
+	  int num_user_answers_ = 0;
 	  std::map<MeasureKey, int> decoding_result_;
 	  int num_updated_measures = 0;		// how many measures are the most updated measures
 	  int freshness_difference = 0;		// sum of the differences between the ids of the most updated measures and my decoded measures
@@ -75,6 +76,8 @@ class DataCollector {
   void erase_msr(unsigned int /*msr id*/, unsigned int /*sns id*/);
   void record_user_movement(unsigned int, double /*distance*/, double /*speed*/);
   void record_user_rx(unsigned int);
+  void record_user_req_user(unsigned int user_id);
+  void record_user_rx_from_user(unsigned int user_id);
   void record_user_decoding(unsigned int, std::map<MeasureKey, unsigned char>);
   void record_user_query(unsigned int /*user id*/, unsigned int /*node or user id*/, bool /*is a node*/);
   void record_user_replacement(unsigned int /*replaced user id*/, unsigned int /*replacing user id*/);
